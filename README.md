@@ -12,3 +12,8 @@ Sử dụng ngôn ngữ HTML, CSS, JavaScript
 - Tên file không dấu, không khoảng trắng, dùng đường dẫn tương đối
 - Không fetch json
 - Mỗi người làm trên 1 nhánh riêng sau đó merge vào nhánh `main` 
+
+#### Bảo mật
+- Có validate form (đúng dạng mail, số điện thoại, không được bỏ trống  )
+- Có xử lý XSS
+
