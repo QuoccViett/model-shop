@@ -1,18 +1,9 @@
-### model-shop
-Website bán mô hình (Gundam, Lego, GragonBall, OnePice)
+# Website bán mô hình
 
-Sử dụng ngôn ngữ HTML, CSS, JavaScript
+**Sản phẩm bán:** Mô hình (Gundam, OnePiece, DragonBall, Lego, ....)
+**Công nghệ:** Frontend HTML/CSS/JS thuần 
 
-### Tên file không dấu, không khoảng trắng, dùng đường dẫn tương đối
-- Không fetch json
-- Mỗi người làm trên 1 nhánh riêng sau đó merge vào nhánh `main` 
-- Đặt tên các nhánh feature/tên_công_việc
-
-### Bảo mật
-- Có validate form (đúng dạng mail, số điện thoại, không được bỏ trống  )
-- Có xử lý XSS
-
-### Phân tích nghiệp vụ
+## Phân tích nghiệp vụ
 
 ### Tác nhân
 
@@ -26,15 +17,15 @@ Sử dụng ngôn ngữ HTML, CSS, JavaScript
 |---|---|
 | **Phiếu nhập** | 2 trạng thái: *Nháp* và *Đã hoàn thành*. Chỉ sửa / xóa khi còn Nháp. Bấm "Hoàn thành" mới cộng tồn và cập nhật giá vốn. Không có nhà cung cấp (đúng đề). |
 | **Giá vốn** | Bình quân gia quyền: `giá vốn mới = (tồn cũ × giá vốn cũ + SL nhập × giá nhập) / (tồn cũ + SL nhập)` |
-| **Giá bán** | `giá bán = giá vốn × (1 + %LN / 100)` |
+| **Giá bán** | `giá bán = giá vốn × (1 + %LN / 100)`, làm tròn đến nghìn |
 | **% Lợi nhuận** | Đặt theo loại (mặc định cho mọi SP trong loại) và có thể đặt riêng theo sản phẩm. **Ưu tiên: %LN của sản phẩm > %LN của loại.** |
 | **Đơn hàng** | *Mới đặt → Đã xử lý → Đã giao*, hoặc *Hủy*. Trừ tồn khi chuyển sang **Đã xử lý**. Hủy đơn đã xử lý thì hoàn tồn. Đơn đã giao / đã hủy không đổi ngược. |
-| **Giá trên đơn** | Lưu **giá bán tại thời điểm đặt** vào chi tiết đơn, giá đổi sau này không làm sai đơn cũ. |
+| **Đặt hàng** | Kiểm tra tồn khi đặt (không cho đặt quá số lượng còn); chốt **giá bán tại thời điểm đặt** vào chi tiết đơn, giá đổi sau này không làm sai đơn cũ. |
 | **Tồn kho** | Không chỉ lưu một con số, mà lưu **sổ biến động kho** (mỗi lần nhập / xuất là một dòng). Nhờ đó tra được tồn tại một thời điểm và làm báo cáo nhập - xuất - tồn. |
 | **Cảnh báo sắp hết** | Mỗi SP có `ngưỡng cảnh báo` (mặc định 5); tồn ≤ ngưỡng thì hiện cảnh báo trên dashboard. |
-| **Xóa / Ẩn** | SP / loại đã phát sinh nhập hoặc bán thì **chỉ ẩn**; chưa phát sinh thì xóa hẳn. |
+| **Xóa / Ẩn** | SP / loại đã phát sinh nhập hoặc bán thì **chỉ ẩn**; chưa phát sinh thì xóa hẳn. SP thuộc loại đã ẩn cũng không hiển thị cho khách. |
 | **Khóa tài khoản** | Tài khoản bị khóa không đăng nhập được. Reset mật khẩu về mật khẩu mặc định (`123456`). |
-| **Giỏ hàng** | Bắt buộc đăng nhập. Chưa đăng nhập bấm "Mua" thì chuyển sang trang đăng nhập. |
+| **Giỏ hàng** | Bắt buộc đăng nhập. Chưa đăng nhập bấm "Mua" thì chuyển sang trang đăng nhập. Giỏ lưu phía trình duyệt theo từng khách; tồn và giá được kiểm tra lại khi đặt hàng. |
 | **Thanh toán** | Mặc định **Tiền mặt khi nhận hàng**; ngoài ra Chuyển khoản, Thanh toán trực tuyến (có thể giả lập thanh toán VNPay nếu có thời gian). |
 | **Địa chỉ giao hàng** | Chọn địa chỉ trong tài khoản (chỉ đọc) **hoặc** nhập địa chỉ mới (form đủ trường: người nhận, SĐT, số nhà - đường, phường, quận, tỉnh / thành). |
 
@@ -63,8 +54,6 @@ Sử dụng ngôn ngữ HTML, CSS, JavaScript
 ---
 
 ## Thiết kế cơ sở dữ liệu
-
-File `schema.sql` (PostgreSQL) đã có đầy đủ: tạo bảng, ràng buộc, index, view giá bán, view cảnh báo, hai hàm nghiệp vụ, dữ liệu mẫu và các truy vấn mẫu.
 
 ### ERD
 
@@ -180,7 +169,7 @@ erDiagram
 
 ### Công thức
 
-- **Giá bán hiệu lực** = `giá vốn × (1 + COALESCE(products.profit_percent, categories.profit_percent) / 100)`, làm tròn đến nghìn (view `v_product_price`).
+- **Giá bán hiệu lực** = `giá vốn × (1 + COALESCE(products.profit_percent, categories.profit_percent) / 100)`, làm tròn đến nghìn.
 - **Tồn tại ngày D** = tổng `quantity` trong `stock_movements` với `movement_date ≤ D`.
 - **Nhập - xuất - tồn từ A đến B:** tồn đầu (trước A) + nhập (A..B) − xuất ròng (A..B) = tồn cuối. Xuất ròng = xuất − hàng hoàn do hủy đơn.
 
@@ -193,39 +182,60 @@ erDiagram
 - 4 sản phẩm sắp hết hàng (GD006, FG003, XE003, KT006) để demo cảnh báo.
 - 3 sản phẩm có %LN riêng (GD003 = 35%, FG002 = 40%, XE003 = 25%) để demo ưu tiên %LN của SP so với của loại.
 
----
-
-## Cấu trúc prototype và `data.js`
-
-### Cấu trúc thư mục
+## Cấu trúc thư mục
 
 ```
-/ (Dự án gốc)
-├── frontend/                     --> Dùng để nộp file local & Deploy Static lên Vercel
-│   ├── index.html                --> Trang chủ
-│   ├── login.html, register.html, profile.html
-│   ├── category.html, product.html, search.html
-│   ├── cart.html, checkout.html, order-review.html, my-orders.html
-│   ├── data.js                   --> Dữ liệu mẫu ban đầu + Mock Storage
-│   ├── common.js, common.css     --> Hàm dùng chung, Auto-detect API/Local Storage
-│   ├── assets/
-│   │   ├── css/, js/, fonts/     --> Lib local (@font-face, không dùng CDN)
-│   │   └── img/products/         --> Ảnh sản phẩm local (mã_SP.jpg)
-│   └── admin/
-│       ├── login.html            --> Đăng nhập Admin riêng biệt
-│       ├── index.html            --> Dashboard + Menu + Cảnh báo tồn
-│       ├── customers.html, categories.html, products.html, product-form.html
-│       ├── imports.html, import-form.html
-│       ├── pricing.html, orders.html, order-detail.html, inventory.html
+model-shop/ (Dự án gốc)
+├── .gitignore                    --> node_modules/, dist/, .env (KHÔNG commit .env)
+├── README.md
 │
-└── backend/                      --> NestJS + Prisma ORM + PostgreSQL (Deploy Render)
+├── frontend/                    
+│   ├── index.html                --> Trang chủ
+│   ├── pages/                    --> Các trang dành cho khách hàng
+│   │   ├── login.html, register.html, profile.html
+│   │   ├── category.html, product.html, search.html
+│   │   └── cart.html, checkout.html, order-review.html, my-orders.html
+│   ├── admin/                    --> Các trang quản trị
+│   │   ├── login.html            --> Đăng nhập Admin riêng biệt
+│   │   ├── index.html            --> Dashboard + Menu + Cảnh báo tồn
+│   │   ├── customers.html, categories.html, products.html, product-form.html
+│   │   ├── imports.html, import-form.html
+│   │   └── pricing.html, orders.html, order-detail.html, inventory.html
+│   ├── js/
+│   │   ├── data.js               --> Cấu trúc CSDL (DB_SCHEMA) + dữ liệu mẫu (DB_SEED), KHÔNG có logic
+│   │   ├── common.js             --> Service/API: tự chọn chế độ Local hoặc gọi API backend
+│   │   ├── layout.js             --> (tùy chọn) dựng header/footer/menu admin dùng chung
+│   │   ├── pages/                --> (tùy chọn) script riêng từng trang khách: category.js, cart.js...
+│   │   └── admin/                --> (tùy chọn) script riêng từng trang admin: orders.js, imports.js...
+│   ├── css/
+│   │   ├── style.css             --> Style phần khách hàng
+│   │   └── admin.css             --> Style phần quản trị
+│   └── assets/
+│       ├── fonts/                --> Font tiếng Việt local (@font-face, không dùng CDN)
+│       ├── img/products/         --> Ảnh sản phẩm local (mã_SP.jpg, ví dụ GD001.jpg)
+│       └── vendor/               --> (tùy chọn) Bootstrap, icon... tải về local
+│
+└── backend/                      --> NestJS + Prisma ORM + PostgreSQL (Deploy Render, Root Directory = backend)
     ├── prisma/
     │   ├── schema.prisma         --> Sơ đồ Entities/Tables
-    │   └── seed.ts               --> Script nạp dữ liệu ban đầu
+    │   └── seed.ts               --> Nạp dữ liệu ban đầu (đọc ../../frontend/js/data.js)
+    ├── database/
+    │   └── schema.sql            --> SQL thuần của cùng cấu trúc, chỉ để xem / chạy thử trong psql
     ├── src/
-    │   ├── modules/ (auth, users, products, categories, imports, orders, ...)
+    │   ├── modules/
+    │   │   ├── auth/             --> Đăng ký, đăng nhập khách, đăng nhập admin, JWT
+    │   │   ├── users/            --> Hồ sơ cá nhân (khách) + quản lý khách (admin)
+    │   │   ├── categories/, products/
+    │   │   ├── imports/          --> Phiếu nhập, hoàn thành phiếu
+    │   │   ├── pricing/          --> %LN, giá vốn, giá bán
+    │   │   ├── orders/           --> Đặt hàng (khách) + quản lý đơn (admin)
+    │   │   ├── inventory/        --> Tồn tại thời điểm, cảnh báo, nhập - xuất - tồn
+    │   │   └── health/           --> GET /api/health
+    │   ├── common/               --> JwtAuthGuard, RolesGuard, @Roles(), filter lỗi
+    │   ├── prisma/               --> PrismaService (dùng chung)
     │   ├── app.module.ts
     │   └── main.ts
+    ├── .env.example              --> DATABASE_URL, JWT_SECRET, CORS_ORIGIN, PORT
     ├── package.json
     └── nest-cli.json
 ```
@@ -251,14 +261,13 @@ erDiagram
 | Trang | Nội dung |
 |---|---|
 | `index.html` | Trang chủ, thanh tìm kiếm cơ bản |
-| `register.html`, `login.html`, `profile.html` | Đăng ký, đăng nhập / đăng xuất (hiện tên tài khoản), xem / sửa thông tin cá nhân |
-| `category.html?id=` | Danh sách theo loại **có phân trang** |
-| `product.html?id=` | Chi tiết (tỉ lệ, hãng, chất liệu, kích thước...), nút thêm giỏ |
-| `search.html` | Tìm cơ bản theo tên; **tìm nâng cao: tên + loại + khoảng giá kết hợp**, kết quả **có phân trang** |
-| `cart.html` | Thêm / bớt số lượng, xóa dòng |
-| `checkout.html` | Chọn địa chỉ từ tài khoản **hoặc** nhập địa chỉ mới; chọn thanh toán (mặc định tiền mặt) |
-| `order-review.html` | Xem lại đơn khi kết thúc |
-| `my-orders.html` | Lịch sử đơn hàng đã mua |
+| `pages/register.html`, `pages/login.html`, `pages/profile.html` | Đăng ký, đăng nhập / đăng xuất (hiện tên tài khoản), xem / sửa thông tin cá nhân |
+| `pages/category.html?id=` | Danh sách theo loại **có phân trang** |
+| `pages/product.html?id=` | Chi tiết (tỉ lệ, hãng, chất liệu, kích thước...), nút thêm giỏ |
+| `pages/search.html` | Tìm cơ bản theo tên; **tìm nâng cao: tên + loại + khoảng giá kết hợp**, kết quả **có phân trang** |
+| `pages/cart.html` | Thêm / bớt số lượng, xóa dòng |
+| `pages/checkout.html` | Chọn địa chỉ từ tài khoản **hoặc** nhập địa chỉ mới; chọn thanh toán (mặc định tiền mặt) |
+| `pages/order-review.html` | Xem lại đơn khi kết thúc |
+| `pages/my-orders.html` | Lịch sử đơn hàng đã mua |
 
 ---
-
