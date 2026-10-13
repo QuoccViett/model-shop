@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - ModelShop</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+
+<body class="auth-page">
+    <main class="auth-box">
+        <a class="auth-logo" href="../index.html">ModelShop</a>
+        <div class="form-card">
+            <h1>Đăng ký tài khoản</h1>
+            <div id="form-error" class="alert alert-error" hidden></div>
+
+            <form action="" id="register-form" novalidate>
+
+                <div class="form-group">
+                    <label for="full_name">Họ và tên</label>
+                    <input type="text" name="full_name" id="full_name" autocomplete="name">
+                </div>
+
+                <div class="form-group">
+                    <label for="phone">Số điện thoại</label>
+                    <input type="tel" name="phone" id="phone" autocomplete="tel">
+                </div>
+
+                <div class="form-group">
+                    <label for="username">Tên đăng nhập</label>
+                    <input type="text" name="username" id="username" autocomplete="username">
+                    <div class="hint">4-20 ký tự: chữ không dấu, số, dấu gạch ngang</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Mật khẩu</label>
+                    <input type="password" name="password" id="password" autocomplete="new-password">
+                    <div class="hint">Tối thiểu 6 ký tự</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="confirm">Nhập lại mật khẩu</label>
+                    <input type="password" name="confirm" id="confirm" autocomplete="new-password">
+                </div>
+
+                <button type="submit" class="btn">Đăng ký</button>
+            </form>
+
+            <p class="form-foot">Đã có tài khoản ?<a href="login.html"> Đăng nhập</a></p>
+            <p class="form-foot"><a href="../index.html">&larr; Về trang chủ</a></p>
+        </div>
+    </main>
+
+    <script src="../js/data.js"></script>
+    <script src="../js/common.js"></script>
+    <script src="../js/layout.js"></script>
+    <script src="../js/pages/register.js"></script>
+</body>
+</html>
