@@ -3,20 +3,31 @@
 
     const root = document.body.dataset.root || ''
     const file = location.pathname.split('/').pop();
-    const category = new URLSearchParams(location.search).get('category');
 
-    let active = '';
-    if (file === '' | file === 'index.html') active = 'home';
-    else if (file === 'products.html') active = category ? 'cat-' + category : 'all';
+
+    const MENU = [
+        { key: 'home', label: 'Trang chủ', href: 'index.html' },
+        { key: 'products', label: 'Sản phẩm', href: 'pages/products.html' },
+        { key: 'about', label: 'Giới thiệu', href: 'pages/about.html' },
+        { key: 'contact', label: 'Liên hệ', href: 'pages/contact.html' },
+        { key: 'news', label: 'Tin tức', href: 'pages/news.html' }
+    ];
+
+    const ACTIVE_OF = {
+        '': 'home', 'index.html': 'home',
+        'products.html': 'products', 'product.html': 'products',
+        'about.html': 'about', 'contact.html': 'contact',
+        'news.html': 'news', 'news-detail.html': 'news'
+    };
+
+    const active = ACTIVE_OF[file] || '';
 
     function menuLink(href, label, key) {
         return '<a href="' + root + href + '"' + (key === active ? ' class="active"' : '') + '>' + label + '</a>';
     }
 
     function headerHTML() {
-        const cats = Shop.getCategories().map(function (c) {
-            return menuLink('pages/products.html?category=' + c.id, Shop.escapeHtml(c.name), 'cat-' + c.id);
-        }).join('');
+        const menu = MENU.map(function (m) { return menuLink(m.href, m.label, m.key); }).join('');
 
         return '' +
             '<div class="topbar"><div class="container">' +
@@ -32,9 +43,7 @@
             '<a class="cart-link" href="' + root + 'pages/cart.html">Giỏ hàng<span class="cart-count" id="cart-count">0</span></a>' +
             '</div></header>' +
             '<nav class="main-nav"><div class="container">' +
-            menuLink('index.html', 'Trang chủ', 'home') +
-            menuLink('pages/products.html', 'Tất cả sản phẩm', 'all') +
-            cats +
+            menu +
             '</div></nav>';
     }
 
