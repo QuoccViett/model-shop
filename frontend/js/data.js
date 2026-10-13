@@ -44,9 +44,10 @@
     products: {
       columns: {
         id: 'int pk', category_id: 'int fk categories.id', code: 'string unique', name: 'string',
-        image: 'string?', description: 'text?', brand: 'string?', scale: 'string?', material: 'string?',
+        image: 'string? (link ảnh; sau này thay bằng ảnh lưu trong DB)', description: 'text?', brand: 'string?', scale: 'string?', material: 'string?',
         size: 'string?', profit_percent: 'number? (null = theo loại)', cost_price: 'int default 0',
-        stock_qty: 'int default 0', low_stock_threshold: 'int default 5', is_hidden: 'boolean default false'
+        stock_qty: 'int default 0', low_stock_threshold: 'int default 5', is_hidden: 'boolean default false',
+        sale_percent: 'int default 0 (% giảm giá hiển thị, 0 = không sale)'
       }
     },
     import_receipts: {
@@ -108,39 +109,39 @@
     ],
 
     // [id, category_id, code, name, image, description, brand, scale, material, size,
-    //  profit_percent, cost_price, stock_qty, low_stock_threshold, is_hidden]
+    //  profit_percent, cost_price, stock_qty, low_stock_threshold, is_hidden, sale_percent]
     // cost_price và stock_qty khớp với phiếu nhập hoàn thành + đơn đã xử lý/đã giao bên dưới
     products: [
-      [1, 1, 'GD001', 'HG RX-78-2 Gundam (Revive)', 'assets/img/products/GD001.jpg', 'Mô hình lắp ráp Gundam đầu tiên, bản Revive với khớp và màu sắc được cải tiến.', 'Bandai', '1/144', 'Nhựa PS', '13 cm', null, 180000, 19, 5, false],
-      [2, 1, 'GD002', 'HG Gundam Barbatos', 'assets/img/products/GD002.jpg', 'Gundam Barbatos phong cách chiến đấu hoang dã, nhựa PS không cần keo.', 'Bandai', '1/144', 'Nhựa PS', '13 cm', null, 200000, 15, 5, false],
-      [3, 1, 'GD003', 'MG Strike Freedom Gundam', 'assets/img/products/GD003.jpg', 'Strike Freedom Gundam cấp độ MG, bộ giáp chi tiết, cánh Dragoon rời.', 'Bandai', '1/100', 'Nhựa PS', '18 cm', 35, 1100000, 8, 5, false],
-      [4, 1, 'GD004', 'RG Nu Gundam', 'assets/img/products/GD004.jpg', 'RG Nu Gundam khung xương Advanced MS Joint, kèm Fin Funnel.', 'Bandai', '1/144', 'Nhựa PS', '13 cm', null, 520000, 9, 5, false],
-      [5, 1, 'GD005', 'HG Wing Gundam Zero EW', 'assets/img/products/GD005.jpg', 'Wing Gundam Zero bản Endless Waltz, cánh thiên thần có thể xếp gọn.', 'Bandai', '1/144', 'Nhựa PS', '13 cm', null, 210000, 12, 5, false],
-      [6, 1, 'GD006', 'MG Sazabi Ver.Ka', 'assets/img/products/GD006.jpg', 'Sazabi bản Ver.Ka màu đỏ đặc trưng, chi tiết cao cấp.', 'Bandai', '1/100', 'Nhựa PS', '20 cm', null, 1500000, 2, 5, false],
-      [7, 2, 'FG001', 'Figure Luffy Gear 5', 'assets/img/products/FG001.jpg', 'Luffy ở trạng thái Gear 5, tư thế chiến đấu sống động.', 'Banpresto', '1/8', 'PVC', '20 cm', null, 650000, 9, 5, false],
-      [8, 2, 'FG002', 'Figma Hatsune Miku', 'assets/img/products/FG002.jpg', 'Figma Hatsune Miku có khớp linh hoạt, kèm nhiều phụ kiện và biểu cảm.', 'Max Factory', '1/12', 'PVC', '14 cm', 40, 900000, 8, 5, false],
-      [9, 2, 'FG003', 'Nendoroid Rem', 'assets/img/products/FG003.jpg', 'Nendoroid Rem phong cách chibi dễ thương, kèm mặt thay thế.', 'Good Smile Company', 'Chibi', 'PVC/ABS', '10 cm', null, 1100000, 2, 5, false],
-      [10, 2, 'FG004', 'Figure Goku Ultra Instinct', 'assets/img/products/FG004.jpg', 'Goku Ultra Instinct tạo dáng chiến đấu, hiệu ứng khí bao quanh.', 'Banpresto', '1/8', 'PVC', '22 cm', null, 480000, 12, 5, false],
-      [11, 2, 'FG005', 'Figure Zoro Wano', 'assets/img/products/FG005.jpg', 'Zoro bản Wano với ba thanh kiếm, tạo hình mạnh mẽ.', 'Banpresto', '1/8', 'PVC', '21 cm', null, 520000, 10, 5, false],
-      [12, 2, 'FG006', 'Figure Naruto Sage Mode', 'assets/img/products/FG006.jpg', 'Naruto Sage Mode với đôi mắt đặc trưng và tư thế kết ấn.', 'Banpresto', '1/8', 'PVC', '20 cm', null, 500000, 9, 5, false],
-      [13, 3, 'XE001', 'Ferrari 488 GTB', 'assets/img/products/XE001.jpg', 'Ferrari 488 GTB đúc hợp kim, cửa và nắp capo mở được.', 'Bburago', '1/24', 'Hợp kim', '19 cm', null, 350000, 9, 5, false],
-      [14, 3, 'XE002', 'Lamborghini Aventador', 'assets/img/products/XE002.jpg', 'Lamborghini Aventador màu cam, chi tiết nội thất đầy đủ.', 'Maisto', '1/24', 'Hợp kim', '20 cm', null, 340000, 10, 5, false],
-      [15, 3, 'XE003', 'Porsche 911 GT3 RS', 'assets/img/products/XE003.jpg', 'Porsche 911 GT3 RS tỉ lệ lớn, sơn bóng, cửa và cốp mở được.', 'Minichamps', '1/18', 'Hợp kim', '25 cm', 25, 1200000, 4, 5, false],
-      [16, 3, 'XE004', 'Toyota Supra MK4', 'assets/img/products/XE004.jpg', 'Toyota Supra MK4 huyền thoại, mô hình nhỏ gọn dễ trưng bày.', 'Jada', '1/32', 'Hợp kim', '14 cm', null, 280000, 12, 5, false],
-      [17, 3, 'XE005', 'Nissan GT-R R35', 'assets/img/products/XE005.jpg', 'Nissan GT-R R35 ngoại hình hầm hố, bánh xe quay được.', 'Maisto', '1/24', 'Hợp kim', '19 cm', null, 360000, 8, 5, false],
-      [18, 3, 'XE006', 'Ford Mustang GT', 'assets/img/products/XE006.jpg', 'Ford Mustang GT phong cách muscle car Mỹ, sơn bóng.', 'Bburago', '1/24', 'Hợp kim', '20 cm', null, 330000, 9, 5, false],
-      [19, 4, 'KT001', 'Thiết giáp hạm Yamato', 'assets/img/products/KT001.jpg', 'Thiết giáp hạm Yamato lắp ráp tỉ lệ 1/700, chi tiết boong tàu.', 'Tamiya', '1/700', 'Nhựa PS', '38 cm', null, 850000, 6, 5, false],
-      [20, 4, 'KT002', 'Máy bay Mitsubishi Zero A6M', 'assets/img/products/KT002.jpg', 'Máy bay chiến đấu Zero A6M của Nhật, kèm decal đầy đủ.', 'Tamiya', '1/48', 'Nhựa PS', '24 cm', null, 420000, 10, 5, false],
-      [21, 4, 'KT003', 'Xe tăng Tiger I', 'assets/img/products/KT003.jpg', 'Xe tăng Tiger I của Đức, xích lắp ráp chi tiết.', 'Tamiya', '1/35', 'Nhựa PS', '25 cm', null, 450000, 8, 5, false],
-      [22, 4, 'KT004', 'Tàu Titanic', 'assets/img/products/KT004.jpg', 'Tàu Titanic lắp ráp tỉ lệ 1/700, dành cho người sưu tầm.', 'Revell', '1/700', 'Nhựa PS', '38 cm', null, 600000, 7, 5, false],
-      [23, 4, 'KT005', 'Máy bay F-16C', 'assets/img/products/KT005.jpg', 'Máy bay tiêm kích F-16C, kèm giá đỡ và decal.', 'Hasegawa', '1/72', 'Nhựa PS', '21 cm', null, 300000, 9, 5, false],
-      [24, 4, 'KT006', 'Xe tăng M1A2 Abrams', 'assets/img/products/KT006.jpg', 'Xe tăng chủ lực M1A2 Abrams, tháp pháo xoay được.', 'Dragon', '1/35', 'Nhựa PS', '28 cm', null, 900000, 5, 5, false],
-      [25, 5, 'PK001', 'Kìm cắt nhựa chuyên dụng', 'assets/img/products/PK001.jpg', 'Kìm cắt nhựa lưỡi mỏng, cắt sát và ít để lại vết.', 'GodHand', null, 'Thép', '14 cm', null, 120000, 29, 5, false],
-      [26, 5, 'PK002', 'Bộ bút sơn Gundam Marker', 'assets/img/products/PK002.jpg', 'Bộ bút sơn marker để tô chi tiết và đi line cho mô hình.', 'GSI Creos', null, 'Sơn', '12 bút', null, 150000, 25, 5, false],
-      [27, 5, 'PK003', 'Hộp trưng bày acrylic', 'assets/img/products/PK003.jpg', 'Hộp acrylic trong suốt chống bụi cho mô hình.', 'OEM', null, 'Acrylic', '20x20x30 cm', null, 90000, 15, 5, false],
-      [28, 5, 'PK004', 'Đế trưng bày Action Base', 'assets/img/products/PK004.jpg', 'Đế trưng bày Action Base giúp tạo dáng mô hình ở nhiều góc.', 'Bandai', null, 'Nhựa', '15 cm', null, 60000, 20, 5, false],
-      [29, 5, 'PK005', 'Keo dán nhựa Tamiya', 'assets/img/products/PK005.jpg', 'Keo dán nhựa chuyên dụng cho mô hình lắp ráp.', 'Tamiya', null, 'Dung môi', '40 ml', null, 25000, 40, 5, false],
-      [30, 5, 'PK006', 'Bộ dũa và giấy nhám', 'assets/img/products/PK006.jpg', 'Bộ dũa và giấy nhám nhiều độ mịn để xử lý bề mặt.', 'OEM', null, 'Kim loại / giấy', 'Bộ 12 món', null, 45000, 30, 5, false]
+      [1, 1, 'GD001', 'HG RX-78-2 Gundam (Revive)', 'https://placehold.co/600x600/e8590c/ffffff?text=GD001', 'Mô hình lắp ráp Gundam đầu tiên, bản Revive với khớp và màu sắc được cải tiến.', 'Bandai', '1/144', 'Nhựa PS', '13 cm', null, 180000, 19, 5, false, 0],
+      [2, 1, 'GD002', 'HG Gundam Barbatos', 'https://placehold.co/600x600/e8590c/ffffff?text=GD002', 'Gundam Barbatos phong cách chiến đấu hoang dã, nhựa PS không cần keo.', 'Bandai', '1/144', 'Nhựa PS', '13 cm', null, 200000, 15, 5, false, 15],
+      [3, 1, 'GD003', 'MG Strike Freedom Gundam', 'https://placehold.co/600x600/e8590c/ffffff?text=GD003', 'Strike Freedom Gundam cấp độ MG, bộ giáp chi tiết, cánh Dragoon rời.', 'Bandai', '1/100', 'Nhựa PS', '18 cm', 35, 1100000, 8, 5, false, 0],
+      [4, 1, 'GD004', 'RG Nu Gundam', 'https://placehold.co/600x600/e8590c/ffffff?text=GD004', 'RG Nu Gundam khung xương Advanced MS Joint, kèm Fin Funnel.', 'Bandai', '1/144', 'Nhựa PS', '13 cm', null, 520000, 9, 5, false, 0],
+      [5, 1, 'GD005', 'HG Wing Gundam Zero EW', 'https://placehold.co/600x600/e8590c/ffffff?text=GD005', 'Wing Gundam Zero bản Endless Waltz, cánh thiên thần có thể xếp gọn.', 'Bandai', '1/144', 'Nhựa PS', '13 cm', null, 210000, 12, 5, false, 10],
+      [6, 1, 'GD006', 'MG Sazabi Ver.Ka', 'https://placehold.co/600x600/e8590c/ffffff?text=GD006', 'Sazabi bản Ver.Ka màu đỏ đặc trưng, chi tiết cao cấp.', 'Bandai', '1/100', 'Nhựa PS', '20 cm', null, 1500000, 2, 5, false, 0],
+      [7, 2, 'FG001', 'Figure Luffy Gear 5', 'https://placehold.co/600x600/e8590c/ffffff?text=FG001', 'Luffy ở trạng thái Gear 5, tư thế chiến đấu sống động.', 'Banpresto', '1/8', 'PVC', '20 cm', null, 650000, 9, 5, false, 0],
+      [8, 2, 'FG002', 'Figma Hatsune Miku', 'https://placehold.co/600x600/e8590c/ffffff?text=FG002', 'Figma Hatsune Miku có khớp linh hoạt, kèm nhiều phụ kiện và biểu cảm.', 'Max Factory', '1/12', 'PVC', '14 cm', 40, 900000, 8, 5, false, 0],
+      [9, 2, 'FG003', 'Nendoroid Rem', 'https://placehold.co/600x600/e8590c/ffffff?text=FG003', 'Nendoroid Rem phong cách chibi dễ thương, kèm mặt thay thế.', 'Good Smile Company', 'Chibi', 'PVC/ABS', '10 cm', null, 1100000, 2, 5, false, 0],
+      [10, 2, 'FG004', 'Figure Goku Ultra Instinct', 'https://placehold.co/600x600/e8590c/ffffff?text=FG004', 'Goku Ultra Instinct tạo dáng chiến đấu, hiệu ứng khí bao quanh.', 'Banpresto', '1/8', 'PVC', '22 cm', null, 480000, 12, 5, false, 20],
+      [11, 2, 'FG005', 'Figure Zoro Wano', 'https://placehold.co/600x600/e8590c/ffffff?text=FG005', 'Zoro bản Wano với ba thanh kiếm, tạo hình mạnh mẽ.', 'Banpresto', '1/8', 'PVC', '21 cm', null, 520000, 10, 5, false, 10],
+      [12, 2, 'FG006', 'Figure Naruto Sage Mode', 'https://placehold.co/600x600/e8590c/ffffff?text=FG006', 'Naruto Sage Mode với đôi mắt đặc trưng và tư thế kết ấn.', 'Banpresto', '1/8', 'PVC', '20 cm', null, 500000, 9, 5, false, 0],
+      [13, 3, 'XE001', 'Ferrari 488 GTB', 'https://placehold.co/600x600/e8590c/ffffff?text=XE001', 'Ferrari 488 GTB đúc hợp kim, cửa và nắp capo mở được.', 'Bburago', '1/24', 'Hợp kim', '19 cm', null, 350000, 9, 5, false, 0],
+      [14, 3, 'XE002', 'Lamborghini Aventador', 'https://placehold.co/600x600/e8590c/ffffff?text=XE002', 'Lamborghini Aventador màu cam, chi tiết nội thất đầy đủ.', 'Maisto', '1/24', 'Hợp kim', '20 cm', null, 340000, 10, 5, false, 0],
+      [15, 3, 'XE003', 'Porsche 911 GT3 RS', 'https://placehold.co/600x600/e8590c/ffffff?text=XE003', 'Porsche 911 GT3 RS tỉ lệ lớn, sơn bóng, cửa và cốp mở được.', 'Minichamps', '1/18', 'Hợp kim', '25 cm', 25, 1200000, 4, 5, false, 0],
+      [16, 3, 'XE004', 'Toyota Supra MK4', 'https://placehold.co/600x600/e8590c/ffffff?text=XE004', 'Toyota Supra MK4 huyền thoại, mô hình nhỏ gọn dễ trưng bày.', 'Jada', '1/32', 'Hợp kim', '14 cm', null, 280000, 12, 5, false, 15],
+      [17, 3, 'XE005', 'Nissan GT-R R35', 'https://placehold.co/600x600/e8590c/ffffff?text=XE005', 'Nissan GT-R R35 ngoại hình hầm hố, bánh xe quay được.', 'Maisto', '1/24', 'Hợp kim', '19 cm', null, 360000, 8, 5, false, 0],
+      [18, 3, 'XE006', 'Ford Mustang GT', 'https://placehold.co/600x600/e8590c/ffffff?text=XE006', 'Ford Mustang GT phong cách muscle car Mỹ, sơn bóng.', 'Bburago', '1/24', 'Hợp kim', '20 cm', null, 330000, 9, 5, false, 0],
+      [19, 4, 'KT001', 'Thiết giáp hạm Yamato', 'https://placehold.co/600x600/e8590c/ffffff?text=KT001', 'Thiết giáp hạm Yamato lắp ráp tỉ lệ 1/700, chi tiết boong tàu.', 'Tamiya', '1/700', 'Nhựa PS', '38 cm', null, 850000, 6, 5, false, 0],
+      [20, 4, 'KT002', 'Máy bay Mitsubishi Zero A6M', 'https://placehold.co/600x600/e8590c/ffffff?text=KT002', 'Máy bay chiến đấu Zero A6M của Nhật, kèm decal đầy đủ.', 'Tamiya', '1/48', 'Nhựa PS', '24 cm', null, 420000, 10, 5, false, 10],
+      [21, 4, 'KT003', 'Xe tăng Tiger I', 'https://placehold.co/600x600/e8590c/ffffff?text=KT003', 'Xe tăng Tiger I của Đức, xích lắp ráp chi tiết.', 'Tamiya', '1/35', 'Nhựa PS', '25 cm', null, 450000, 8, 5, false, 0],
+      [22, 4, 'KT004', 'Tàu Titanic', 'https://placehold.co/600x600/e8590c/ffffff?text=KT004', 'Tàu Titanic lắp ráp tỉ lệ 1/700, dành cho người sưu tầm.', 'Revell', '1/700', 'Nhựa PS', '38 cm', null, 600000, 7, 5, false, 0],
+      [23, 4, 'KT005', 'Máy bay F-16C', 'https://placehold.co/600x600/e8590c/ffffff?text=KT005', 'Máy bay tiêm kích F-16C, kèm giá đỡ và decal.', 'Hasegawa', '1/72', 'Nhựa PS', '21 cm', null, 300000, 9, 5, false, 0],
+      [24, 4, 'KT006', 'Xe tăng M1A2 Abrams', 'https://placehold.co/600x600/e8590c/ffffff?text=KT006', 'Xe tăng chủ lực M1A2 Abrams, tháp pháo xoay được.', 'Dragon', '1/35', 'Nhựa PS', '28 cm', null, 900000, 5, 5, false, 0],
+      [25, 5, 'PK001', 'Kìm cắt nhựa chuyên dụng', 'https://placehold.co/600x600/e8590c/ffffff?text=PK001', 'Kìm cắt nhựa lưỡi mỏng, cắt sát và ít để lại vết.', 'GodHand', null, 'Thép', '14 cm', null, 120000, 29, 5, false, 0],
+      [26, 5, 'PK002', 'Bộ bút sơn Gundam Marker', 'https://placehold.co/600x600/e8590c/ffffff?text=PK002', 'Bộ bút sơn marker để tô chi tiết và đi line cho mô hình.', 'GSI Creos', null, 'Sơn', '12 bút', null, 150000, 25, 5, false, 25],
+      [27, 5, 'PK003', 'Hộp trưng bày acrylic', 'https://placehold.co/600x600/e8590c/ffffff?text=PK003', 'Hộp acrylic trong suốt chống bụi cho mô hình.', 'OEM', null, 'Acrylic', '20x20x30 cm', null, 90000, 15, 5, false, 0],
+      [28, 5, 'PK004', 'Đế trưng bày Action Base', 'https://placehold.co/600x600/e8590c/ffffff?text=PK004', 'Đế trưng bày Action Base giúp tạo dáng mô hình ở nhiều góc.', 'Bandai', null, 'Nhựa', '15 cm', null, 60000, 20, 5, false, 0],
+      [29, 5, 'PK005', 'Keo dán nhựa Tamiya', 'https://placehold.co/600x600/e8590c/ffffff?text=PK005', 'Keo dán nhựa chuyên dụng cho mô hình lắp ráp.', 'Tamiya', null, 'Dung môi', '40 ml', null, 25000, 40, 5, false, 30],
+      [30, 5, 'PK006', 'Bộ dũa và giấy nhám', 'https://placehold.co/600x600/e8590c/ffffff?text=PK006', 'Bộ dũa và giấy nhám nhiều độ mịn để xử lý bề mặt.', 'OEM', null, 'Kim loại / giấy', 'Bộ 12 món', null, 45000, 30, 5, false, 0]
     ],
 
     // [id, import_date, status, note, created_at, completed_at]
