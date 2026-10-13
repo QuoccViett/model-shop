@@ -280,7 +280,7 @@
 
     function loginCustomer(username, password) {
         const name = String(username).trim().toLowerCase();
-        const user = loadDB.customers.find(function (c) {
+        const user = loadDB().customers.find(function (c) {
             return c.username.toLowerCase() === name && c.password === password;
         });
 
