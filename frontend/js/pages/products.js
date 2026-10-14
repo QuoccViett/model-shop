@@ -12,6 +12,7 @@
     const SORTS = [
         { value: '', label: 'Mặc định' },
         { value: 'newest', label: 'Mới nhập nhất' },
+        { value: 'bestseller', label: 'Bán chạy nhất' },
         { value: 'price-asc', label: 'Giá tăng dần' },
         { value: 'price-desc', label: 'Giá giảm dần' },
         { value: 'name-asc', label: 'Tên A đến Z' },
@@ -23,6 +24,7 @@
     const brand = params.get('brand') || '';
     const priceKey = params.get('price') || '';
     const sort = params.get('sort') || '';
+    const onSale = params.get('sale') === '1';
     const form = document.getElementById('filter-form');
     const esc = Shop.escapeHtml;
 
@@ -50,6 +52,8 @@
         return '<option value="' + s.value + '"' + (s.value === sort ? ' selected' : '') + '>' + s.label + '</option>';
     }).join('');
 
+    document.getElementById('filter-sale').checked = onSale;
+
     form.addEventListener('change', function () {
         const q = new URLSearchParams();
         new FormData(form).forEach(function (value, key) { if (value) q.set(key, value); });
@@ -62,6 +66,7 @@
     const list = Shop.queryProducts({
         categoryId: categoryId,
         brand: brand,
+        onSale: onSale,
         minPrice: range ? range.min : 0,
         maxPrice: range ? range.max : 0,
         sort: sort
@@ -71,7 +76,8 @@
     const category = categories.find(function (c) { return String(c.id) === categoryId; });
     let title = 'Tất cả sản phẩm';
     if (categoryId) title = category ? category.name : 'Không tìm thấy loại sản phẩm';
-
+    else if (onSale) title = 'Sản phẩm đang giảm giá';
+    
     document.title = title + ' - ModelShop';
     document.getElementById('list-title').textContent = title;
     document.getElementById('list-count').textContent = 'Tìm thấy ' + pg.total + ' sản phẩm';

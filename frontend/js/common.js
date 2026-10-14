@@ -146,19 +146,29 @@
         return getVisibleProducts().filter(function (p) { return p.sale_percent > 0; }).slice(0, limit);
     }
 
-    function getBestSellers(limit) {
+    function getSoldMap() {
         const db = loadDB();
         const sold = {};
-        (db.order_items || []).forEach(function (it) {
+        db.order_items.forEach(function (it) {
             const order = findById(db.orders, it.order_id);
             if (order && order.status !== 'cancelled') {
                 sold[it.product_id] = (sold[it.product_id] || 0) + it.quantity;
             }
         });
-        return getVisibleProducts()
-            .filter(function (p) { return sold[p.id]; })
-            .sort(function (a, b) { return (sold[b.id] - sold[a.id]) || (a.id - b.id); })
-            .slice(0, limit);
+        return sold;
+    }
+
+    function sortBestSeller(list) {
+        const sold = getSoldMap();
+        return list.slice().sort(function (a, b) {
+            return (sold[b.id] || 0) - (sold[a.id] || 0) || a.id - b.id;
+        });
+    }
+
+    function getBestSellers(limit) {
+        const sold = getSoldMap();
+        const sellers = getVisibleProducts().filter(function (p) { return sold[p.id]; });
+        return sortBestSeller(sellers).slice(0, limit);
     }
 
     function getBrands() {
@@ -180,6 +190,11 @@
         if (opts.brand) {
             list = list.filter(function (p) { return p.brand === opts.brand; });
         }
+
+        if (opts.onSale) {
+            list = list.filter(function (p) { return p.sale_percent > 0; })
+        }
+
         if (opts.keyword) {
             const k = normalize(opts.keyword);
             list = list.filter(function (p) { return normalize(p.name).indexOf(k) !== -1; });
@@ -208,6 +223,9 @@
                 break;
             case 'price-desc':
                 sortedList.sort(function (a, b) { return getSalePrice(b) - getSalePrice(a); });
+                break;
+            case 'bestseller': 
+                return sortBestSeller(list);
                 break;
         }
 
