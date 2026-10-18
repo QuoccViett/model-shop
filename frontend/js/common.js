@@ -294,7 +294,19 @@
 
     // LOGIN / LOGOUT
 
-    const SESSION_KEY = 'modelshop_user';
+    const SESSION_KEY = 'modelshop_user'; // cho user
+    const SESSION_KEY_AD = 'modelshop_admin'; // cho admin
+
+    function loginAdmin(username, password){
+        const name = String(username).trim().toLowerCase();
+        const admin = loadDB().admins.find(function (c){
+            return c.username.toLowerCase() === name && c.password === password;
+        });
+
+        if(!admin) return { ok: false, error: 'Sai tên đăng nhập hoặc mật khẩu' };
+        localStorage.setItem(SESSION_KEY_AD, String(admin.id));
+        return { ok: true, admin: admin };
+    }
 
     function loginCustomer(username, password) {
         const name = String(username).trim().toLowerCase();
@@ -312,6 +324,10 @@
         localStorage.removeItem(SESSION_KEY);
     }
 
+    function logoutAdmin(){
+        localStorage.removeItem(SESSION_KEY_AD);
+    }
+
     function getCurrentUser() {
         const id = localStorage.getItem(SESSION_KEY);
         if (!id) return null;
@@ -321,6 +337,17 @@
             return null;
         }
         return user;
+    }
+
+    function getCurrentAdmin(){
+        const id = localStorage.getItem(SESSION_KEY_AD);
+        if (!id) return null;
+        const admin = findById(loadDB().admins, id);
+        if (!admin) {
+            logoutAdmin();
+            return null;
+        }
+        return admin;
     }
 
     // PROFILE
@@ -399,8 +426,11 @@
         nowString: nowString,
         registerCustomer: registerCustomer,
         loginCustomer: loginCustomer,
+        loginAdmin: loginAdmin,
         logoutCustomer: logoutCustomer,
+        logoutAdmin: logoutAdmin,
         getCurrentUser: getCurrentUser,
+        getCurrentAdmin: getCurrentAdmin,
         updateProfile: updateProfile,
         changePassword: changePassword,
     };

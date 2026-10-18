@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trang Quản Trị - ModelShop Admin</title>
+    <!-- Liên kết FontAwesome để lấy icon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/admin/index.css">
+</head>
+<body data-root="">
+
+    <div class="admin-container">
+        <!-- SIDEBAR (Được render tự động từ layout.js) -->
+        <aside class="admin-sidebar" id="admin-sidebar"></aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="admin-main">
+            <!-- HEADER (Được render tự động từ layout.js) -->
+            <header class="admin-header" id="admin-header"></header>
+
+            <!-- DASHBOARD CONTENT -->
+            <div class="dashboard-content">
+                <div class="page-title">
+                    <h1>Tổng quan hệ thống</h1>
+                    <p>Trang chủ / Bảng điều khiển</p>
+                </div>
+
+                <!-- CARDS THỐNG KÊ (Tạm thời là dữ liệu ảo, sau này làm tới tách sau) -->
+                <div id="overview-stats"></div>
+
+            </div>
+        </main>
+    </div>
+
+    <script src="../js/data.js"></script>
+    <script src="../js/common.js"></script>
+    <script src="../js/admin/layout.js"></script>
+    <script src="../js/admin/overview.js"></script>
+</body>
+</html>

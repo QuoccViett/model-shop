@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng nhập Quản Trị - ModelShop Admin</title>
+    <!-- Liên kết FontAwesome để lấy icon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Liên kết file CSS riêng -->
+    <link rel="stylesheet" href="../css/admin/login.css">
+</head>
+<body>
+
+    <div class="login-wrapper">
+        <div class="login-card">
+            <!-- Header của form -->
+            <div class="login-header">
+                <h2>Model<span>Shop</span></h2>
+                <p>Hệ thống Quản Trị Viên (Admin)</p>
+            </div>
+            <div id="form-error" class="alert alert-error" hidden></div>
+
+            <!-- Form đăng nhập -->
+            <form action="" id="admin-login-form">
+                <div class="form-group">
+                    <label for="username">Tên đăng nhập hoặc Email</label>
+                    <div class="input-with-icon">
+                        <i class="fa-solid fa-user"></i>
+                        <input type="text" id="username" placeholder="Nhập tên đăng nhập..." required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Mật khẩu</label>
+                    <div class="input-with-icon">
+                        <i class="fa-solid fa-lock"></i>
+                        <input type="password" id="password" placeholder="Nhập mật khẩu..." required>
+                    </div>
+                </div>
+
+                <div class="form-options">
+                    <label class="remember-me">
+                        <input type="checkbox"> Nhớ tài khoản này
+                    </label>
+                    <a href="#" class="forgot-password">Quên mật khẩu?</a>
+                </div>
+
+                <button type="submit" class="btn-login">Đăng nhập</button>
+            </form>
+
+            <!-- Footer nhỏ dưới form -->
+            <div class="login-footer">
+                <p>&copy; 2026 ModelShop Admin Panel. Bảo mật hệ thống.</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/data.js"></script>
+    <script src="../js/common.js"></script>
+    <script src="../js/admin/login.js"></script>
+</body>
+</html>
