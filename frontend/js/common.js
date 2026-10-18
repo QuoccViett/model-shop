@@ -350,6 +350,150 @@
         return admin;
     }
 
+    // MANAGE USERS
+    function getAllUsers(){
+        const db= loadDB();
+        if(!db.customers) db.customers= [];
+        return db.customers;
+    }
+
+    function getUserById(id){
+        const customers = getAllUsers();
+        return customers.find(c => String(c.id) === String(id)) || null;
+    }
+
+    function filterUsers({keyword = '', status = 'all'} = {}){
+        let customers = getAllUsers();
+
+        // lọc theo trạng thái khoá/ mở tài khoản
+        if (status === 'active') {
+            customers = customers.filter(c => !c.is_locked);
+        } else if (status === 'locked') {
+            customers = customers.filter(c => c.is_locked);
+        }
+
+        //lọc theo từ khoá
+        if (keyword.trim() !== '') {
+            const key = keyword.toLowerCase().trim();
+            customers = customers.filter(c => 
+                (c.username && c.username.toLowerCase().includes(key)) ||
+                (c.full_name && c.full_name.toLowerCase().includes(key)) ||
+                (c.email && c.email.toLowerCase().includes(key)) ||
+                (c.phone && c.phone.includes(key))
+            );
+        }
+
+        return customers;
+    }
+
+    function addCustomer(newCustomerData) {
+        const d = {
+            username: String(newCustomerData.username || '').trim(),
+            password: String(newCustomerData.password || '').trim(),
+            confirm: String(newCustomerData.password || '').trim(), // Gán confirm bằng password luôn
+            full_name: String(newCustomerData.full_name || '').trim(),
+            email: String(newCustomerData.email || '').trim(),
+            phone: String(newCustomerData.phone || '').trim(),
+        };
+
+        const error = validateRegister(d);
+        if (error) {
+            return { success: false, message: error }; 
+        }
+
+        const db = loadDB();
+        if (!db.customers) db.customers = [];
+
+        // Kiểm tra trùng username 
+        const existsUsername = db.customers.some(c => c.username && c.username.toLowerCase() === d.username.toLowerCase());
+        if (existsUsername) {
+            return { success: false, message: 'Tên đăng nhập đã tồn tại!' };
+        }
+
+        // Kiểm tra trùng email 
+        const existsEmail = db.customers.some(c => c.email && c.email.toLowerCase() === d.email.toLowerCase());
+        if (existsEmail) {
+            return { success: false, message: 'Email đã được sử dụng!' };
+        }
+
+        // Tự sinh ID kế tiếp tăng dần
+        const nextId = db.customers.reduce(function (max, c) { return Math.max(max, c.id); }, 0) + 1;
+
+        const newCustomer = {
+            id: nextId,
+            username: d.username,
+            password: d.password || '123456',
+            full_name: d.full_name || '',
+            email: d.email || '',
+            phone: d.phone || '',
+            address_detail: null,
+            ward: null,
+            district: null,
+            city: null,
+            is_locked: false,
+            created_at: nowString()
+        };
+
+        db.customers.push(newCustomer);
+        saveDB(db); // Lưu vào cache và localStorage tự động
+
+        return { success: true, message: 'Thêm khách hàng thành công!', data: newCustomer };
+    }
+
+    function resetCustomerPassword(id, newPassword) {
+        if (!newPassword || newPassword.trim() === '') {
+            return { success: false, message: 'Mật khẩu mới không được để trống!' };
+        }
+
+        const db = loadDB();
+        if (!db.customers) db.customers = [];
+        const customer = db.customers.find(c => String(c.id) === String(id));
+
+        if (!customer) {
+            return { success: false, message: 'Không tìm thấy người dùng!' };
+        }
+
+        customer.password = newPassword.trim();
+        saveDB(db);
+
+        return { success: true, message: `Đặt lại mật khẩu cho tài khoản "${customer.username}" thành công!` };
+    }
+
+    function toggleLockCustomer(id) {
+        const db = loadDB();
+        if (!db.customers) db.customers = [];
+        const customer = db.customers.find(c => String(c.id) === String(id));
+
+        if (!customer) {
+            return { success: false, message: 'Không tìm thấy người dùng!' };
+        }
+
+        customer.is_locked = !customer.is_locked;
+        saveDB(db);
+
+        const statusText = customer.is_locked ? 'Khóa' : 'Mở khóa';
+        return { 
+            success: true, 
+            message: `Đã ${statusText.toLowerCase()} tài khoản "${customer.username}" thành công!`, 
+            is_locked: customer.is_locked 
+        };
+    }
+
+    function deleteCustomer(id) {
+        const db = loadDB();
+        if (!db.customers) db.customers = [];
+        const index = db.customers.findIndex(c => String(c.id) === String(id));
+
+        if (index === -1) {
+            return { success: false, message: 'Không tìm thấy người dùng!' };
+        }
+
+        const deletedUser = db.customers.splice(index, 1)[0];
+        saveDB(db);
+
+        return { success: true, message: `Đã xóa người dùng "${deletedUser.username}" thành công!` };
+    }
+
     // PROFILE
     function updateProfile(userId, input) {
         const db = loadDB();
@@ -433,5 +577,12 @@
         getCurrentAdmin: getCurrentAdmin,
         updateProfile: updateProfile,
         changePassword: changePassword,
+        getAllUsers: getAllUsers,
+        getUserById: getUserById,
+        filterUsers: filterUsers,
+        addCustomer: addCustomer,
+        resetCustomerPassword: resetCustomerPassword,
+        toggleLockCustomer: toggleLockCustomer,
+        deleteCustomer: deleteCustomer
     };
 })(window);
