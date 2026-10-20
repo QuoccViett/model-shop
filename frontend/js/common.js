@@ -237,6 +237,276 @@
         return sortedList;
     }
 
+    //ADMIN MANAGE CATEGORIES & PRODUCTS
+    // Lấy danh sách loại sản phẩm
+    function getAllCategories(){
+        const db = loadDB();
+        if(!db.categories) db.categories = [];
+        return db.categories;
+    }
+
+    // Lấy 1 loại sản phẩm (kể cả đã ẩn)
+    function getAllCategoryIgnoreHidden(id){
+        return findById(loadDB().categories, id);
+    }
+
+    // Lấy danh sách sản phẩm
+    function getAllProducts(){
+        const db = loadDB();
+        if(!db.products) db.products = [];
+        return db.products;
+    }
+
+    // Lấy 1 sản phẩm (kể cả đã ẩn) 
+    function getProductByIdIgnoreHidden(id){
+        return findById(loadDB().products, id);
+    }    
+
+    // Tìm kiếm và lọc loại sản phẩm
+    function filterCategories({keyword = '', status = 'all'} = {}){
+        let categories = getAllCategories();
+
+        // lọc theo trạng thái ẩn/ không bị ẩn
+        if (status === 'active') {
+            categories = categories.filter(c => !c.is_hidden);
+        } else if (status === 'hidden') {
+            categories = categories.filter(c => c.is_hidden);
+        }
+
+        //lọc theo từ khoá
+        if (keyword.trim() !== '') {
+            const key = keyword.toLowerCase().trim();
+            categories = categories.filter(c => 
+                (c.name && c.name.toLowerCase().includes(key)) ||
+                (c.description && c.description.toLowerCase().includes(key))
+            );
+        }
+
+        return categories;
+    }
+
+    // Tìm kiếm và lọc sản phẩm
+    function filterProducts({keyword = '', status = 'all', category_id = 'all'} = {}){
+        let products = getAllProducts();
+
+        // lọc theo danh mục
+        if (category_id !== 'all' && category_id !== '' && category_id !== null && category_id !== undefined) {
+            products = products.filter(p => Number(p.category_id) === Number(category_id));
+        }
+
+        // lọc theo trạng thái ẩn/ không bị ẩn
+        if (status === 'active') {
+            products = products.filter(c => !c.is_hidden);
+        } else if (status === 'hidden') {
+            products = products.filter(c => c.is_hidden);
+        }
+
+        //lọc theo từ khoá
+        if (keyword.trim() !== '') {
+            const key = keyword.toLowerCase().trim();
+            products = products.filter(c => 
+                (c.code && c.code.toLowerCase().includes(key)) ||
+                (c.name && c.name.toLowerCase().includes(key)) ||
+                (c.description && c.description.toLowerCase().includes(key)) ||
+                (c.brand && c.brand.toLowerCase().includes(key)) ||
+                (c.description && c.description.toLowerCase().includes(key))
+            );
+        }
+
+        return products;
+    }
+
+    // Thêm loại sản phẩm mới
+    function addCategory(newCategoryData) {
+        const d = {
+            name: String(newCategoryData.name || '').trim(),
+            description: String(newCategoryData.description || '').trim(),
+            profit_percent: String(newCategoryData.profit_percent || '').trim()
+        };
+
+        const db = loadDB();
+        if (!db.categories) db.categories = [];
+
+        // Tự sinh ID kế tiếp tăng dần
+        const nextId = db.categories.reduce(function (max, c) { return Math.max(max, c.id); }, 0) + 1;
+
+        const newCategory = {
+            id: nextId,
+            name: d.name,
+            description: d.description || '',
+            profit_percent: d.profit_percent || '',
+            is_hidden: false
+        };
+
+        db.categories.push(newCategory);
+        saveDB(db); // Lưu vào cache và localStorage tự động
+
+        return { success: true, message: 'Thêm danh mục mới thành công!', data: newCategory };
+    }
+
+    // Thêm sản phẩm mới
+    function addProduct(newProductData) {
+        const d = {
+            category_id: Number(newProductData.category_id || 0),
+            code: String(newProductData.code || '').trim(),
+            name: String(newProductData.name || '').trim(),
+            image: String(newProductData.image || '').trim(),
+            description: String(newProductData.description || '').trim(),
+            brand: String(newProductData.brand || '').trim(),
+            scale: String(newProductData.scale || '').trim(),
+            material: String(newProductData.material || '').trim(),
+            size: String(newProductData.size || '').trim(),
+            profit_percent: String(newProductData.profit_percent || '').trim(),
+            cost_price: String(newProductData.cost_price || '').trim(),
+            stock_qty: String(newProductData.stock_qty || '').trim(),
+            low_stock_threshold: String(newProductData.low_stock_threshold || '').trim(),
+            sale_percent: String(newProductData.sale_percent || '').trim(),
+        };
+
+        const db = loadDB();
+        if (!db.products) db.products = [];
+
+        // Tự sinh ID kế tiếp tăng dần
+        const nextId = db.products.reduce(function (max, c) { return Math.max(max, c.id); }, 0) + 1;
+
+        const newProduct = {
+            id: nextId,
+            category_id: d.category_id,
+            code: d.code,
+            name: d.name,
+            image: d.image,
+            description: d.description || '',
+            brand: d.brand,
+            scale: d.scale,
+            material: d.material,
+            size: d.size,
+            profit_percent: d.profit_percent,
+            cost_price: d.cost_price,
+            stock_qty: d.stock_qty,
+            low_stock_threshold: d.low_stock_threshold,
+            is_hidden: false,
+            sale_percent: d.sale_percent
+        };
+
+        db.products.push(newProduct);
+        saveDB(db); // Lưu vào cache và localStorage tự động
+
+        return { success: true, message: 'Thêm sản phẩm mới thành công!', data: newProduct };
+    }
+
+    // Cập nhật loại sản phẩm
+    function updateCategory(id, categoryData) {
+        const db = loadDB();
+        if (!db.categories) return { success: false, message: 'Không tìm thấy dữ liệu loại sản phẩm!' };
+
+        const index = db.categories.findIndex(c => c.id == id);
+        if (index === -1) return { success: false, message: 'Không tìm thấy loại sản phẩm cần sửa!' };
+
+        db.categories[index] = {
+            ...db.categories[index],
+            name: String(categoryData.name || '').trim(),
+            description: String(categoryData.description || '').trim(),
+            profit_percent: categoryData.profit_percent !== '' ? Number(categoryData.profit_percent) : null
+        };
+
+        saveDB(db);
+        return { success: true, message: 'Cập nhật loại sản phẩm thành công!', data: db.categories[index] };
+    }
+
+    // Toggle ẩn/hiện loại sản phẩm
+    function toggleHideCategory(id) {
+        const db = loadDB();
+        if (!db.categories) return { success: false };
+
+        const cat = db.categories.find(c => c.id == id);
+        if (cat) {
+            cat.is_hidden = !cat.is_hidden;
+            saveDB(db);
+            return { success: true, message: 'Thay đổi trạng thái thành công!' };
+        }
+        return { success: false, message: 'Không tìm thấy danh mục!' };
+    }
+
+    // Xóa loại sản phẩm
+    function deleteCategory(id) {
+        const db = loadDB();
+        if (!db.categories) return { success: false };
+
+        // Kiểm tra xem có sản phẩm nào thuộc danh mục này không
+        const hasProducts = db.products && db.products.some(p => p.category_id == id);
+        if (hasProducts) {
+            return { success: false, message: 'Không thể xóa danh mục đang chứa sản phẩm bên trong!' };
+        }
+
+        const initialLength = db.categories.length;
+        db.categories = db.categories.filter(c => c.id != id);
+
+        if (db.categories.length < initialLength) {
+            saveDB(db);
+            return { success: true, message: 'Xóa danh mục thành công!' };
+        }
+        return { success: false, message: 'Không tìm thấy danh mục để xóa!' };
+    }
+
+    // Cập nhật sản phẩm
+    function updateProduct(id, productData) {
+        const db = loadDB();
+        if (!db.products) return { success: false, message: 'Không tìm thấy dữ liệu sản phẩm!' };
+
+        const index = db.products.findIndex(p => p.id == id);
+        if (index === -1) return { success: false, message: 'Không tìm thấy sản phẩm cần sửa!' };
+
+        db.products[index] = {
+            ...db.products[index],
+            category_id: Number(productData.category_id),
+            code: String(productData.code || '').trim(),
+            name: String(productData.name || '').trim(),
+            image: String(productData.image || '').trim(),
+            description: String(productData.description || '').trim(),
+            brand: String(productData.brand || '').trim(),
+            scale: String(productData.scale || '').trim(),
+            material: String(productData.material || '').trim(),
+            size: String(productData.size || '').trim(),
+            profit_percent: productData.profit_percent !== '' ? Number(productData.profit_percent) : null,
+            cost_price: Number(productData.cost_price || 0),
+            stock_qty: Number(productData.stock_qty || 0),
+            low_stock_threshold: Number(productData.low_stock_threshold || 5),
+            sale_percent: Number(productData.sale_percent || 0)
+        };
+
+        saveDB(db);
+        return { success: true, message: 'Cập nhật sản phẩm thành công!', data: db.products[index] };
+    }
+
+    // Toggle ẩn/hiện sản phẩm
+    function toggleHideProduct(id) {
+        const db = loadDB();
+        if (!db.products) return { success: false };
+
+        const prod = db.products.find(p => p.id == id);
+        if (prod) {
+            prod.is_hidden = !prod.is_hidden;
+            saveDB(db);
+            return { success: true, message: 'Thay đổi trạng thái sản phẩm thành công!' };
+        }
+        return { success: false, message: 'Không tìm thấy sản phẩm!' };
+    }
+
+    // Xóa sản phẩm
+    function deleteProduct(id) {
+        const db = loadDB();
+        if (!db.products) return { success: false };
+
+        const initialLength = db.products.length;
+        db.products = db.products.filter(p => p.id != id);
+
+        if (db.products.length < initialLength) {
+            saveDB(db);
+            return { success: true, message: 'Xóa sản phẩm thành công!' };
+        }
+        return { success: false, message: 'Không tìm thấy sản phẩm để xóa!' };
+    }
+
     // REGISTER
     const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const PHONE_RE = /^0\d{9}$/;
@@ -583,6 +853,20 @@
         addCustomer: addCustomer,
         resetCustomerPassword: resetCustomerPassword,
         toggleLockCustomer: toggleLockCustomer,
-        deleteCustomer: deleteCustomer
+        deleteCustomer: deleteCustomer,
+        getAllCategories: getAllCategories,
+        getAllProducts: getAllProducts,
+        getAllCategoryIgnoreHidden: getAllCategoryIgnoreHidden,
+        getProductByIdIgnoreHidden: getProductByIdIgnoreHidden,
+        filterCategories: filterCategories,
+        filterProducts: filterProducts,
+        addCategory: addCategory,
+        addProduct: addProduct,
+        updateCategory: updateCategory,
+        updateProduct: updateProduct,
+        toggleHideCategory: toggleHideCategory,
+        toggleHideProduct: toggleHideProduct,
+        deleteCategory: deleteCategory,
+        deleteProduct: deleteProduct
     };
 })(window);
