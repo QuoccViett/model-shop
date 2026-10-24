@@ -116,15 +116,15 @@
                         <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
                             <div class="form-group">
                                 <label>Giá vốn</label>
-                                <input type="number" id="product-cost" placeholder="0">
+                                <input type="number" id="product-cost" placeholder="0" readonly>
                             </div>
                             <div class="form-group">
                                 <label>% Lợi nhuận</label>
-                                <input type="number" id="product-profit" placeholder="">
+                                <input type="number" id="product-profit" placeholder="" readonly>
                             </div>
                             <div class="form-group">
                                 <label>Tồn kho</label>
-                                <input type="number" id="product-stock" placeholder="0">
+                                <input type="number" id="product-stock" placeholder="0" readonly>
                             </div>
                             <div class="form-group">
                                 <label>Cảnh báo tồn</label>

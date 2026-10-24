@@ -1,0 +1,152 @@
+/* --- TRANG QUẢN LÝ NHẬP HÀNG ---
+   bổ sung trang nhập hàng. */
+
+/* Bộ lọc nhiều ô nên cho phép xuống dòng và bỏ giới hạn chiều rộng */
+.import-filters {
+    max-width: none;
+    flex-wrap: wrap;
+}
+
+.import-filters .date-field {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: #555;
+}
+
+.import-filters #imp-search {
+    min-width: 260px;
+}
+
+/* Nhãn "Nháp" */
+.status-badge.draft {
+    background-color: #fff4e0;
+    color: #c77700;
+}
+
+/* Nút hành động riêng của phiếu nhập */
+.btn-action.view {
+    background-color: #eef2f6;
+    color: #44546a;
+}
+
+.btn-action.complete {
+    background-color: #e6f4ea;
+    color: #34a853;
+}
+
+.text-right {
+    text-align: right;
+}
+
+/* Không cho nhãn tình trạng và cụm nút hành động bị xuống dòng */
+.status-badge.draft {
+    white-space: nowrap;
+}
+
+td.action-cell {
+    white-space: nowrap;
+}
+
+.muted {
+    color: #888;
+    font-size: 12px;
+}
+
+.empty-row {
+    text-align: center;
+    color: #777;
+    padding: 20px;
+}
+
+/* --- FORM THÊM / SỬA PHIẾU --- */
+.modal-content.modal-wide {
+    max-width: 860px;
+}
+
+.receipt-head {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 15px;
+}
+
+.receipt-items {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 10px;
+}
+
+.receipt-items th,
+.receipt-items td {
+    padding: 8px 8px;
+    vertical-align: top;
+}
+
+.receipt-items select,
+.receipt-items input {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 14px;
+    outline: none;
+    background-color: var(--white);
+}
+
+.receipt-items select:focus,
+.receipt-items input:focus {
+    border-color: var(--primary-color);
+}
+
+.receipt-items .col-price,
+.receipt-items .col-qty {
+    width: 130px;
+}
+
+.receipt-items .col-sum {
+    width: 130px;
+    text-align: right;
+    white-space: nowrap;
+}
+
+.receipt-items .col-del {
+    width: 44px;
+}
+
+.receipt-total {
+    text-align: right;
+    font-size: 16px;
+    margin-top: 6px;
+}
+
+.receipt-total strong {
+    color: var(--primary-color);
+}
+
+.btn-line-add {
+    background: none;
+    border: 1px dashed var(--primary-color);
+    color: var(--primary-color);
+    padding: 7px 14px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.btn-line-add:hover {
+    background-color: #fff4ec;
+}
+
+/* --- XEM CHI TIẾT PHIẾU --- */
+.receipt-info {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px 20px;
+    margin-bottom: 15px;
+    font-size: 14px;
+}
+
+.receipt-info span {
+    color: #777;
+}
