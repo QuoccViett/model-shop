@@ -30,6 +30,7 @@
             return;
         }
 
+        if (window.Cart) Cart.mergeGuestCart(); 
         location.href = getRedirect();
     });
 })();

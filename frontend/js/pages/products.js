@@ -20,12 +20,14 @@
     ];
 
     const params = new URLSearchParams(location.search);
+    const keyword = params.get('keyword') || '';
     const categoryId = params.get('category') || '';
     const brand = params.get('brand') || '';
     const priceKey = params.get('price') || '';
     const sort = params.get('sort') || '';
     const onSale = params.get('sale') === '1';
     const form = document.getElementById('filter-form');
+    document.getElementById('filter-keyword').value = keyword;
     const esc = Shop.escapeHtml;
 
     function radio(name, value, label, checked) {
@@ -54,16 +56,20 @@
 
     document.getElementById('filter-sale').checked = onSale;
 
-    form.addEventListener('change', function () {
-        const q = new URLSearchParams();
-        new FormData(form).forEach(function (value, key) { if (value) q.set(key, value); });
-        const s = q.toString();
-        location.href = 'products.html' + (s ? '?' + s : '');
-    });
-    form.addEventListener('submit', function (e) { e.preventDefault(); });
+    function submitFilters() {
+    const q = new URLSearchParams();
+    new FormData(form).forEach(function (value, key) { if (value) q.set(key, value); });
+    const s = q.toString();
+    location.href = 'products.html' + (s ? '?' + s : '');}
+    form.addEventListener('change', function (e) {
+    if (e.target.id !== 'filter-keyword') submitFilters();});
+    form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    submitFilters();});
 
     const range = PRICE_RANGES.find(function (r) { return r.key === priceKey; });
     const list = Shop.queryProducts({
+        keyword: keyword,
         categoryId: categoryId,
         brand: brand,
         onSale: onSale,
@@ -75,7 +81,8 @@
 
     const category = categories.find(function (c) { return String(c.id) === categoryId; });
     let title = 'Tất cả sản phẩm';
-    if (categoryId) title = category ? category.name : 'Không tìm thấy loại sản phẩm';
+    if (keyword) title = 'Kết quả tìm kiếm: ' + keyword;
+    else if (categoryId) title = category ? category.name : 'Không tìm thấy loại sản phẩm';
     else if (onSale) title = 'Sản phẩm đang giảm giá';
     
     document.title = title + ' - ModelShop';

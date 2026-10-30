@@ -225,7 +225,7 @@
                 sortedList.sort(function (a, b) { return getSalePrice(b) - getSalePrice(a); });
                 break;
             case 'bestseller': 
-                return sortBestSeller(list);
+                sortedList = sortBestSeller(sortedList);
                 break;
         }
 
@@ -805,14 +805,14 @@
 
     function changePassword(userId, current, next, confirm) {
         const db = loadDB();
-        const user = findById(db.customers.userId);
+        const user = findById(db.customers,userId);
         if (!user) return { ok: false, error: 'Không tìm thấy tài khoản.' };
         if (user.password !== current) return { ok: false, error: 'Mật khẩu hiện tại không đúng.' };
         if (next.length < 6) return { ok: false, error: 'Mật khẩu mới tối thiểu 6 ký tự.' };
         if (next !== confirm) return { ok: false, error: 'Mật khẩu nhập lại không khớp.' };
         if (next === current) return { ok: false, error: 'Mật khẩu mới phải khác mật khẩu hiện tại' };
         user.password = next;
-        saveDB();
+        saveDB(db);
         return { ok: true };
     }
 

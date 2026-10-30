@@ -36,7 +36,7 @@
             '</div></div>' +
             '<header class="header"><div class="container">' +
             '<a class="logo" href="' + root + 'index.html">ModelShop</a>' +
-            '<form class="search-form" action="' + root + 'pages/search.html" method="get">' +
+            '<form class="search-form" action="' + root + 'pages/products.html" method="get">' +
             '<input type="text" name="keyword" placeholder="Tìm mô hình theo tên...">' +
             '<button type="submit">Tìm</button>' +
             '</form>' +
@@ -59,7 +59,7 @@
         }
 
         box.innerHTML =
-            '<span>Xin chào, <a href="' + root + 'pages/profile.html"><strong>' + Shop.escapeHtml(user.full_name) + '</strong></a></span>' +
+            '<span>Xin chào, <a href="' + root + 'pages/profile.html"><strong>' + Shop.escapeHtml(user.full_name) + '</strong></a></span>' + '<a href="' + root + 'pages/orders.html">Đơn hàng của tôi</a>' +
             '<a href="#" id="logout-link">Đăng xuất</a>';
 
         document.getElementById('logout-link').addEventListener('click', function (e) {
@@ -87,4 +87,36 @@
     const footerBox = document.getElementById('site-footer');
     if (headerBox) { headerBox.innerHTML = headerHTML(); renderUserBox(); }
     if (footerBox) footerBox.innerHTML = footerHTML();
+    
+        function refreshCartCount() {
+        const badge = document.getElementById('cart-count');
+        if (badge && window.Cart) badge.textContent = String(Cart.getCartCount());
+    }
+
+    function notifyCart(message, ok) {
+        let notice = document.getElementById('cart-toast');
+        if (!notice) {
+            notice = document.createElement('div');
+            notice.id = 'cart-toast';
+            notice.setAttribute('role', 'status');
+            document.body.appendChild(notice);
+        }
+        notice.textContent = message;
+        notice.className = 'cart-toast show ' + (ok ? 'success' : 'error');
+        clearTimeout(notifyCart.timer);
+        notifyCart.timer = setTimeout(function () { notice.classList.remove('show'); }, 2800);
+    }
+
+    document.addEventListener('click', function (event) { //Them san pham vao gio hang
+        const button = event.target.closest('[data-add-to-cart]');
+        if (!button || !window.Cart || button.disabled) return;
+        const productId = Number(button.dataset.addToCart);
+        const qtyInput = document.getElementById('qty');
+        const qty = qtyInput && qtyInput.closest('.buy-row') && button.closest('.buy-row')
+            ? Number(qtyInput.value) : 1;
+        const result = Cart.addToCart(productId, qty);
+        refreshCartCount();
+        notifyCart(result.ok ? 'Đã thêm sản phẩm vào giỏ hàng!' : result.error, result.ok);
+    });
+refreshCartCount();
 })();
