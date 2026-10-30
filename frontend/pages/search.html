@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+
+<body data-root="../">
+    <div id="site-header"></div>
+
+    <main class="container">
+        <section class="search-panel">
+            <h1>Tiềm kiếm sản phẩm</h1>
+            <form action="" id="search-form" class="search-fields">
+                <div class="form-group">
+                    <label for="search-keyword">Từ khóa</label>
+                    <input type="text" name="keyword" id="search-keyword" class="form-control"
+                        placeholder="Nhập tên sản phẩm...">
+                </div>
+
+                <div class="form-group">
+                    <label for="search-category">Loại sản phẩm</label>
+                    <select name="category" id="search-category">
+                        <option value="">Tất cả loại</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="search-min">Giá từ (đ)</label>
+                    <input type="number" name="min" placeholder="Từ" min="0" class="form-control" id="search-min">
+                </div>
+
+                <div class="form-group">
+                    <label for="search-max">Giá đến (đ)</label>
+                    <input type="number" name="max" placeholder="Đến" max="0" class="form-control" id="search-min">
+                </div>
+
+                <button type="submit" class="btn btn-primary">Tìm kiếm</button>
+            </form>
+        </section>
+
+        <div id="search-error" class="alert alert-danger" style="display: none;"></div>
+        <div id="result-info" class="result-info"></div>
+
+        <div id="product-grid" class="product-grid"></div>
+
+        <div id="pagination" class="pagination"></div>
+    </main>
+
+    <div id="site-footer"></div>
+
+    <script src="../js/data.js"></script>
+    <script src="../js/main.js"></script>
+    <script src="../js/search.js"></script>
+</body>
+
+</html>
