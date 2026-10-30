@@ -1,0 +1,596 @@
+/*TRANG QUẢN LÝ ĐƠN HÀNG*/
+
+.orders-page {
+    width: 100%;
+    min-width: 0;
+}
+
+.orders-page .page-title {
+    margin-bottom: 25px;
+}
+
+.orders-page .page-title h1 {
+    font-size: 25px;
+    margin-bottom: 8px;
+    color: #333;
+}
+
+.orders-page .page-title p {
+    color: #777;
+    font-size: 14px;
+}
+
+/* BỘ LỌC ĐƠN HÀNG*/
+
+.orders-page .table-actions-bar {
+    display: block;
+    width: 100%;
+    margin-bottom: 20px;
+    overflow-x: auto;
+}
+
+.orders-page .search-filter-group {
+    display: grid;
+
+    grid-template-columns:
+        minmax(180px, 1.5fr)
+        minmax(145px, 1fr)
+        minmax(145px, 1fr)
+        minmax(170px, 1.2fr);
+
+    align-items: end;
+    gap: 15px;
+    width: 100%;
+    min-width: 690px;
+}
+
+.orders-page .filter-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+    margin: 0;
+}
+
+.orders-page .filter-field span {
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 18px;
+    color: #555;
+}
+
+.orders-page .filter-field input,
+.orders-page .filter-field select {
+    display: block;
+    width: 100%;
+    height: 42px;
+    min-width: 0;
+
+    padding: 0 12px;
+    margin: 0;
+
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    outline: none;
+
+    background-color: #fff;
+    color: #333;
+
+    font-size: 14px;
+    box-sizing: border-box;
+}
+
+.orders-page .filter-field input:focus,
+.orders-page .filter-field select:focus {
+    border-color: #ff6600;
+    box-shadow: 0 0 0 2px rgba(255, 102, 0, 0.1);
+}
+
+/*  BẢNG DANH SÁCH ĐƠN HÀNG */
+
+.orders-page .data-table-section {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+}
+
+.orders-page .table-responsive {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.orders-page table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+}
+
+.orders-page th,
+.orders-page td {
+    padding: 13px 12px;
+    border-bottom: 1px solid #eee;
+    text-align: left;
+    font-size: 14px;
+}
+
+.orders-page th {
+    background: #f5f6fa;
+    color: #333;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.orders-page tbody tr:hover {
+    background: #f8faff;
+}
+
+.orders-page .text-right {
+    text-align: right;
+}
+
+.orders-page .empty-row {
+    text-align: center;
+    padding: 30px;
+    color: #888;
+}
+
+/* MÀU TRẠNG THÁI ĐƠN HÀNG*/
+
+.orders-page .status-badge,
+.order-modal-overlay .status-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 6px 12px;
+    border-radius: 20px;
+
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+/* MỚI ĐẶT - XANH DƯƠNG */
+
+.orders-page .status-new,
+.order-modal-overlay .status-new {
+    color: #2563eb;
+    background-color: #dbeafe;
+}
+
+/* ĐÃ XỬ LÝ - CAM */
+
+.orders-page .status-processed,
+.order-modal-overlay .status-processed {
+    color: #ea580c;
+    background-color: #ffedd5;
+}
+
+/* ĐÃ GIAO - XANH LÁ */
+
+.orders-page .status-delivered,
+.order-modal-overlay .status-delivered {
+    color: #16a34a;
+    background-color: #dcfce7;
+}
+
+/* ĐÃ HỦY - ĐỎ */
+
+.orders-page .status-cancelled,
+.order-modal-overlay .status-cancelled {
+    color: #dc2626;
+    background-color: #fee2e2;
+}
+
+/* NÚT HÀNH ĐỘNG*/
+
+.orders-page .btn-action {
+    width: 34px;
+    height: 34px;
+
+    border: none;
+    border-radius: 5px;
+
+    cursor: pointer;
+    margin: 2px;
+
+    transition: 0.2s;
+}
+
+.orders-page .btn-action.view {
+    background-color: #e0ecff;
+    color: #2563eb;
+}
+
+.orders-page .btn-action.view:hover {
+    background-color: #2563eb;
+    color: #fff;
+}
+
+/* POPUP CHI TIẾT ĐƠN HÀNG*/
+
+/* Lớp nền tối */
+
+.order-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    padding: 20px;
+    box-sizing: border-box;
+
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+/* Khung popup giống form thêm sản phẩm */
+
+.order-modal-overlay .order-modal-content {
+    display: flex;
+    flex-direction: column;
+
+    width: 100%;
+    max-width: 650px;
+    max-height: 95vh;
+
+    background: #fff;
+    border-radius: 8px;
+
+    box-shadow: 0 10px 35px rgba(0, 0, 0, 0.2);
+
+    overflow: hidden;
+
+    animation: orderModalShow 0.2s ease;
+}
+
+/* Hiệu ứng popup */
+
+@keyframes orderModalShow {
+    from {
+        opacity: 0;
+        transform: translateY(-15px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* HEADER POPUP */
+
+.order-modal-overlay .order-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 18px 20px;
+
+    border-bottom: 1px solid #e5e7eb;
+    background-color: #fff;
+
+    flex-shrink: 0;
+}
+
+.order-modal-overlay .order-modal-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #222;
+}
+
+/* Nút X đóng popup */
+
+.order-modal-overlay .order-modal-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 30px;
+    height: 30px;
+
+    border: none;
+    border-radius: 5px;
+
+    background: transparent;
+    color: #888;
+
+    font-size: 22px;
+    cursor: pointer;
+}
+
+.order-modal-overlay .order-modal-close:hover {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+/*BODY POPUP*/
+
+.order-modal-overlay .order-modal-body {
+    padding: 20px;
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    flex: 1;
+    min-height: 0;
+}
+
+/* Thanh cuộn */
+
+.order-modal-overlay .order-modal-body::-webkit-scrollbar {
+    width: 7px;
+}
+
+.order-modal-overlay .order-modal-body::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.order-modal-overlay .order-modal-body::-webkit-scrollbar-thumb {
+    background: #aaa;
+    border-radius: 5px;
+}
+
+/* THÔNG TIN CHI TIẾT */
+
+.order-modal-overlay .detail-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.order-modal-overlay .detail-card {
+    padding: 15px;
+    margin-bottom: 15px;
+
+    background-color: #fff;
+
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+}
+
+.order-modal-overlay .detail-grid .detail-card {
+    margin-bottom: 0;
+}
+
+.order-modal-overlay .detail-card h4 {
+    margin: 0 0 15px;
+
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+
+    font-size: 15px;
+    font-weight: 600;
+    color: #ea580c;
+}
+
+.order-modal-overlay .detail-item {
+    margin-bottom: 10px;
+
+    font-size: 14px;
+    line-height: 1.6;
+    color: #444;
+
+    overflow-wrap: anywhere;
+}
+
+.order-modal-overlay .detail-item:last-child {
+    margin-bottom: 0;
+}
+
+.order-modal-overlay .detail-item strong {
+    color: #333;
+    font-weight: 600;
+}
+
+/* DANH SÁCH SẢN PHẨM TRONG POPUP*/
+
+.order-modal-overlay .table-responsive {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.order-modal-overlay .detail-products {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.order-modal-overlay .detail-products th,
+.order-modal-overlay .detail-products td {
+    padding: 10px;
+    border-bottom: 1px solid #e5e7eb;
+    font-size: 13px;
+    text-align: left;
+}
+
+.order-modal-overlay .detail-products th {
+    background-color: #f8fafc;
+    color: #333;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.order-modal-overlay .detail-products .text-right {
+    text-align: right;
+}
+
+/* Tổng tiền */
+
+.order-modal-overlay .detail-total {
+    margin-top: 15px;
+    padding-top: 12px;
+
+    border-top: 1px solid #eee;
+
+    text-align: right;
+    font-size: 18px;
+    font-weight: 700;
+    color: #ea580c;
+}
+
+/*CẬP NHẬT TRẠNG THÁI*/
+
+.order-modal-overlay .detail-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.order-modal-overlay .detail-actions label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+}
+
+.order-modal-overlay .detail-actions select {
+    flex: 1;
+    min-width: 150px;
+    height: 40px;
+
+    padding: 0 10px;
+
+    border: 1px solid #ddd;
+    border-radius: 5px;
+
+    background: #fff;
+    font-size: 14px;
+}
+
+/* CÁC NÚT TRONG POPUP */
+
+.order-modal-overlay .btn-primary {
+    padding: 10px 16px;
+
+    border: none;
+    border-radius: 5px;
+
+    background-color: #ff6600;
+    color: white;
+
+    font-size: 14px;
+    font-weight: 500;
+
+    cursor: pointer;
+}
+
+.order-modal-overlay .btn-primary:hover {
+    background-color: #e65c00;
+}
+
+.order-modal-overlay .btn-primary:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+.order-modal-overlay .btn-secondary {
+    padding: 10px 16px;
+
+    border: none;
+    border-radius: 5px;
+
+    background-color: #e5e5e5;
+    color: #333;
+
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.order-modal-overlay .btn-secondary:hover {
+    background-color: #d4d4d4;
+}
+
+/*FOOTER POPUP*/
+
+.order-modal-overlay .order-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 10px;
+
+    padding: 15px 20px;
+
+    border-top: 1px solid #e5e7eb;
+    background-color: #fafafa;
+
+    flex-shrink: 0;
+}
+
+/* =========================================
+   THÔNG BÁO
+========================================= */
+
+.order-modal-overlay .message {
+    margin-top: 12px;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.order-modal-overlay .message.success {
+    color: #16a34a;
+}
+
+.order-modal-overlay .message.error {
+    color: #dc2626;
+}
+
+/* =========================================
+   RESPONSIVE
+========================================= */
+
+@media (max-width: 900px) {
+
+    .orders-page .search-filter-group {
+        min-width: 690px;
+    }
+
+}
+
+@media (max-width: 600px) {
+
+    .orders-page .data-table-section {
+        padding: 12px;
+    }
+
+    .order-modal-overlay {
+        padding: 10px;
+    }
+
+    .order-modal-overlay .order-modal-content {
+        max-height: 95vh;
+    }
+
+    .order-modal-overlay .order-modal-header {
+        padding: 15px;
+    }
+
+    .order-modal-overlay .order-modal-body {
+        padding: 15px;
+    }
+
+    .order-modal-overlay .order-modal-footer {
+        padding: 12px 15px;
+    }
+
+    .order-modal-overlay .detail-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .order-modal-overlay .detail-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .order-modal-overlay .detail-actions select {
+        width: 100%;
+        flex: auto;
+    }
+
+    .order-modal-overlay .detail-actions button {
+        width: 100%;
+    }
+
+}
