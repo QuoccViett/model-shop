@@ -3,7 +3,8 @@
 
     const app = document.getElementById('app');
     const esc = Shop.escapeHtml;
-    const p = Shop.getProductById(new URLSearchParams(location.search).get('id'));
+    const productId = new URLSearchParams(location.search).get('id');
+    const p = Shop.getProductById(productId);
 
     if (!p) {
         document.title = 'Không tìm thấy sản phẩm';

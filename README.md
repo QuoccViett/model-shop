@@ -193,7 +193,7 @@ model-shop/ (Dự án gốc)
 │   ├── index.html                --> Trang chủ
 │   ├── pages/                    --> Các trang dành cho khách hàng
 │   │   ├── login.html, register.html, profile.html
-│   │   ├── category.html, product.html, search.html
+│   │   ├── products.html, product.html
 │   │   └── cart.html, checkout.html, order-review.html, my-orders.html
 │   ├── admin/                    --> Các trang quản trị
 │   │   ├── login.html            --> Đăng nhập Admin riêng biệt
@@ -260,11 +260,11 @@ model-shop/ (Dự án gốc)
 
 | Trang | Nội dung |
 |---|---|
-| `index.html` | Trang chủ, thanh tìm kiếm cơ bản |
+| `index.html` | Trang ch? v? thanh t?m ki?m live v?i g?i ? t?c th?i |
 | `pages/register.html`, `pages/login.html`, `pages/profile.html` | Đăng ký, đăng nhập / đăng xuất (hiện tên tài khoản), xem / sửa thông tin cá nhân |
 | `pages/category.html?id=` | Danh sách theo loại **có phân trang** |
 | `pages/product.html?id=` | Chi tiết (tỉ lệ, hãng, chất liệu, kích thước...), nút thêm giỏ |
-| `pages/search.html` | Tìm cơ bản theo tên; **tìm nâng cao: tên + loại + khoảng giá kết hợp**, kết quả **có phân trang** |
+| `pages/products.html` | T?m ki?m theo `q`, g?i ? t?c th?i, b? l?c h?ng / lo?i / gi? / khuy?n m?i v? ph?n trang |
 | `pages/cart.html` | Thêm / bớt số lượng, xóa dòng |
 | `pages/checkout.html` | Chọn địa chỉ từ tài khoản **hoặc** nhập địa chỉ mới; chọn thanh toán (mặc định tiền mặt) |
 | `pages/order-review.html` | Xem lại đơn khi kết thúc |
