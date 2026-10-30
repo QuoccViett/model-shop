@@ -193,6 +193,8 @@
 
     // ---------- LỊCH SỬ ĐƠN ----------
     function getOrderDetail(orderId) {
+        const user = Shop.getCurrentUser();
+        if (!user) return null;
         const db = Shop.loadDB();
         const order = Shop.findById(db.orders, orderId);
         if (!order || Number(order.customer_id) !== Number(user.id)) return null;
