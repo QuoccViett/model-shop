@@ -10,12 +10,13 @@
         return /^(https?:)?\/\//i.test(src) ? src : root + src;
     }
 
+    // Render thẻ sản phẩm dùng chung trong danh sách.
     function productCard(p) {
         const price = Shop.getPrice(p);
         const salePrice = Shop.getSalePrice(p);
         const hasSale = Number(p.sale_percent) > 0;
         const soldOut = p.stock_qty <= 0;
-        const url = root + 'pages/product.html?id=' + p.id;
+        const url = root + 'pages/product.html?id=' + encodeURIComponent(p.id);
 
         return '' +
             '<article class="product-card">' +
