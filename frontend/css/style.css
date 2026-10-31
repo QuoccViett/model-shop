@@ -11,7 +11,41 @@
     --c-white: #fff;
     --radius: 8px;
     --shadow: 0 2px 8px rgba(0, 0, 0, .08);
+    --status-order-created: #2563EB;
+    --status-order-created-bg: #EFF6FF;
+    --status-order-created-text: #1D4ED8;
+    --status-payment-success: #0891B2;
+    --status-payment-success-bg: #ECFEFF;
+    --status-payment-success-text: #0E7490;
+    --status-order-confirmed: #7C3AED;
+    --status-order-confirmed-bg: #F5F3FF;
+    --status-order-confirmed-text: #6D28D9;
+    --status-shipping: #D97706;
+    --status-shipping-bg: #FFFBEB;
+    --status-shipping-text: #B45309;
+    --status-delivered: #16A34A;
+    --status-delivered-bg: #F0FDF4;
+    --status-delivered-text: #15803D;
+    --status-cancelled: #DC2626;
+    --status-cancelled-bg: #FEF2F2;
+    --status-cancelled-text: #B91C1C;
 }
+
+.status-order-created, .status-payment-success, .status-order-confirmed,
+.status-shipping, .status-delivered, .status-cancelled {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 8px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+}
+.status-order-created { color: var(--status-order-created-text); background: var(--status-order-created-bg); }
+.status-payment-success { color: var(--status-payment-success-text); background: var(--status-payment-success-bg); }
+.status-order-confirmed { color: var(--status-order-confirmed-text); background: var(--status-order-confirmed-bg); }
+.status-shipping { color: var(--status-shipping-text); background: var(--status-shipping-bg); }
+.status-delivered { color: var(--status-delivered-text); background: var(--status-delivered-bg); }
+.status-cancelled { color: var(--status-cancelled-text); background: var(--status-cancelled-bg); }
 
 * {
     box-sizing: border-box;

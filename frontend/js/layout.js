@@ -31,32 +31,27 @@
         return '<a href="' + root + href + '"' + (key === active ? ' class="active"' : '') + '>' + label + '</a>';
     }
 
-    // Render phần header và ô tìm kiếm có vùng gợi ý.
+    // Render header dùng chung cho phía khách hàng
     function headerHTML() {
         const menu = MENU.map(function (m) { return menuLink(m.href, m.label, m.key); }).join('');
-        return '<div class="topbar"><div class="container"><span>Hotline: 0900 000 000</span><div class="user-box" id="user-box"></div></div></div>' +
-            '<header class="header"><div class="container"><a class="logo" href="' + root + 'index.html">ModelShop</a>' +
+        return '<header class="header"><div class="container"><a class="logo" href="' + root + 'index.html">ModelShop</a>' +
             '<form class="search-form" id="header-search-form" role="search" action="' + productsUrl('') + '" method="get" autocomplete="off">' +
             '<div class="search-control"><input id="header-search-input" type="search" name="q" placeholder="Tìm mô hình theo tên..." aria-label="Tìm sản phẩm" aria-autocomplete="list" aria-controls="search-suggestions" aria-expanded="false">' +
             '<div class="search-suggestions" id="search-suggestions" role="listbox" hidden></div></div><button type="submit">Tìm</button></form>' +
-            '<a class="cart-link" href="' + root + 'pages/cart.html">Giỏ hàng<span class="cart-count" id="cart-count">0</span></a></div></header>' +
-            '<nav class="main-nav"><div class="container">' + menu + '</div></nav>';
+            '<div class="header-actions"><a class="cart-link hdr-action" href="' + root + 'pages/cart.html"><span class="hdr-icon">🛒</span><span>Giỏ hàng</span><span class="cart-count" id="cart-count">0</span></a><div class="account-wrap" id="account-wrap"></div></div></div></header>' +
+            '<nav class="main-nav"><div class="container"><button class="hdr-menu-toggle" type="button" aria-expanded="false">☰ Menu</button><div class="hdr-menu-list">' + menu + '</div></div></nav>';
     }
 
-    // Hiển thị thông tin đăng nhập của khách hàng.
+    // Hiển thị trạng thái tài khoản và popup thông báo
     function renderUserBox() {
-        const box = document.getElementById('user-box');
+        const box = document.getElementById('account-wrap');
         const user = Shop.getCurrentUser();
         if (!user) {
-            box.innerHTML = '<a href="' + root + 'pages/login.html">Đăng nhập</a><a href="' + root + 'pages/register.html">Đăng ký</a>';
+            box.innerHTML = '<a class="hdr-action hdr-account" href="' + root + 'pages/login.html"><span class="hdr-icon">♙</span><span>Đăng nhập</span></a>';
             return;
         }
-        box.innerHTML = '<span>Xin chào, <a href="' + root + 'pages/profile.html"><strong>' + Shop.escapeHtml(user.full_name) + '</strong></a></span><a href="#" id="logout-link">Đăng xuất</a>';
-        document.getElementById('logout-link').addEventListener('click', function (e) {
-            e.preventDefault();
-            Shop.logoutCustomer();
-            location.href = root + 'index.html';
-        });
+        box.innerHTML = '<button type="button" class="hdr-action hdr-account" id="account-button" aria-expanded="false"><span class="hdr-account-icon"><span class="hdr-icon">♙</span><span class="notif-badge" id="notification-badge" hidden></span></span><span class="hdr-account-name">' + Shop.escapeHtml(user.full_name || user.username) + '</span></button>' +
+            '<div class="notif-popup" id="notification-popup" hidden></div>';
     }
 
     // Render footer cùng danh sách danh mục.
@@ -150,6 +145,17 @@
 
     const headerBox = document.getElementById('site-header');
     const footerBox = document.getElementById('site-footer');
-    if (headerBox) { headerBox.innerHTML = headerHTML(); renderUserBox(); bindHeaderSearch(); }
+    if (headerBox) {
+        headerBox.innerHTML = headerHTML();
+        renderUserBox();
+        bindHeaderSearch();
+        const menuToggle = document.querySelector('.hdr-menu-toggle');
+        if (menuToggle) menuToggle.addEventListener('click', function () {
+            const list = document.querySelector('.hdr-menu-list');
+            const open = list.classList.toggle('is-open');
+            menuToggle.setAttribute('aria-expanded', String(open));
+        });
+        if (globalThis.Notifications && typeof globalThis.Notifications.init === 'function') globalThis.Notifications.init(root);
+    }
     if (footerBox) footerBox.innerHTML = footerHTML();
 })();
