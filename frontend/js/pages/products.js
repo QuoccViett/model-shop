@@ -222,10 +222,18 @@
     document.getElementById('breadcrumb').innerHTML = '<a href="../index.html">Trang chủ</a> / ' +
         (category ? '<a href="products.html">Sản phẩm</a> / ' + esc(category.name) : 'Sản phẩm');
 
-    // Render sản phẩm hoặc thông báo khi không có kết quả
-    document.getElementById('product-grid').innerHTML = page.items.length
-        ? page.items.map(UI.productCard).join('')
+    // Render card skeleton trước khi hiển thị danh sách sản phẩm
+    const productGrid = document.getElementById('product-grid');
+    productGrid.innerHTML = page.items.length
+        ? UI.productSkeletons(page.items.length)
         : '<div class="empty-box">Không có sản phẩm nào phù hợp.</div>';
+    if (page.items.length) {
+        setTimeout(function () {
+            productGrid.innerHTML = page.items.map(function (product) {
+                return UI.productCard(product, { hideQuantity: true });
+            }).join('');
+        }, 400);
+    }
 
     // Tạo URL phân trang và giữ lại toàn bộ bộ lọc
     function pageUrl(number) {

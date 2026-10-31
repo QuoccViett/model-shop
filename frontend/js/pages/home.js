@@ -85,9 +85,14 @@
 
     function productSection(title, list, moreHref) {
         if (!list.length) return '';
+        const gridId = 'home-products-' + title.replace(/\s+/g, '-').toLocaleLowerCase();
+        setTimeout(function () {
+            const grid = document.getElementById(gridId);
+            if (grid) grid.innerHTML = list.map(UI.productCard).join('');
+        }, 400);
         return '<section class="home-section">' +
             '<div class="section-head"><h2>' + title + '</h2><a href="' + moreHref + '">Xem tất cả &rsaquo;</a></div>' +
-            '<div class="product-grid cols-4">' + list.map(UI.productCard).join('') + '</div>' +
+            '<div class="product-grid cols-4" id="' + gridId + '">' + UI.productSkeletons(list.length) + '</div>' +
             '</section>';
     }
 

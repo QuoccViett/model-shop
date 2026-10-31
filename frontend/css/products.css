@@ -1,6 +1,6 @@
-/* Product listing, filters, and pagination styles */
+/* Kiểu danh sách sản phẩm, bộ lọc và phân trang */
 
-/* PRODUCTS PAGE */
+/* Trang danh sách sản phẩm */
 
 .breadcrumb {
     margin-bottom: 20px;
@@ -171,7 +171,7 @@
     outline-offset: 1px;
 }
 
-/* PAGINATION */
+/* Phân trang */
 
 .pagination {
     display: flex;

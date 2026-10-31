@@ -10,8 +10,9 @@
         return /^(https?:)?\/\//i.test(src) ? src : root + src;
     }
 
-    // Render thẻ sản phẩm dùng chung trong danh sách.
-    function productCard(p) {
+    // Render thẻ sản phẩm dùng chung trong danh sách
+    function productCard(p, options) {
+        options = options || {};
         const price = Shop.getPrice(p);
         const salePrice = Shop.getSalePrice(p);
         const hasSale = Number(p.sale_percent) > 0;
@@ -31,12 +32,32 @@
                         '<span class="pc-now">' + Shop.formatPrice(salePrice) + '</span>' +
                             (hasSale ? '<del class="pc-old">' + Shop.formatPrice(price) + '</del>' : '') +
                     '</div>' +
-                    '<div class="pc-quantity"><label for="product-qty-' + p.id + '">Số lượng</label><input id="product-qty-' + p.id + '" type="number" min="1" max="' + p.stock_qty + '" step="1" value="1" data-product-qty="' + p.id + '"' + (soldOut ? ' disabled' : '') + '></div>' +
+                    (options.hideQuantity ? '' : '<div class="pc-quantity"><label for="product-qty-' + p.id + '">Số lượng</label><input id="product-qty-' + p.id + '" type="number" min="1" max="' + p.stock_qty + '" step="1" value="1" data-product-qty="' + p.id + '"' + (soldOut ? ' disabled' : '') + '></div>') +
                     '<button type="button" class="btn pc-buy" data-add-to-cart="' + p.id + '"' + (soldOut ? ' disabled' : '') + '>' +
                         (soldOut ? 'Hết hàng' : 'Thêm vào giỏ') +
                     '</button>' +
                 '</div>' +
             '</article>';
+    }
+
+    // Tạo component card skeleton cho trạng thái đang tải
+    function productCardSkeleton() {
+        return '' +
+            '<article class="product-card-skeleton" aria-hidden="true">' +
+                '<div class="product-card-skeleton-img"></div>' +
+                '<div class="product-card-skeleton-body">' +
+                    '<span class="product-card-skeleton-line product-card-skeleton-brand"></span>' +
+                    '<span class="product-card-skeleton-line product-card-skeleton-name"></span>' +
+                    '<span class="product-card-skeleton-line product-card-skeleton-name short"></span>' +
+                    '<span class="product-card-skeleton-line product-card-skeleton-price"></span>' +
+                    '<span class="product-card-skeleton-button"></span>' +
+                '</div>' +
+            '</article>';
+    }
+
+    // Tạo nhiều card skeleton theo số lượng cần hiển thị
+    function productSkeletons(count) {
+        return Array.from({ length: count }, productCardSkeleton).join('');
     }
 
     function pagination(page, totalPages, hrefOf){
@@ -61,5 +82,11 @@
         return '<nav class="pagination">' + items.join('') + '</nav>';
     }
     
-      global.UI = { productCard: productCard, pagination: pagination, imageSrc: imageSrc };
+      global.UI = {
+          productCard: productCard,
+          productCardSkeleton: productCardSkeleton,
+          productSkeletons: productSkeletons,
+          pagination: pagination,
+          imageSrc: imageSrc
+      };
 })(window);

@@ -13,7 +13,7 @@
     const ACTIVE_OF = { '': 'home', 'index.html': 'home', 'products.html': 'products', 'product.html': 'products', 'about.html': 'about', 'contact.html': 'contact', 'news.html': 'news', 'news-detail.html': 'news' };
     const active = ACTIVE_OF[file] || '';
 
-    // Tạo đường dẫn trang danh sách sản phẩm.
+    // Tạo đường dẫn trang danh sách sản phẩm
     function productsUrl(query) {
         const params = new URLSearchParams();
         if (query) params.set('q', query);
@@ -21,12 +21,12 @@
         return root + 'pages/products.html' + (suffix ? '?' + suffix : '');
     }
 
-    // Tạo đường dẫn trang chi tiết sản phẩm.
+    // Tạo đường dẫn trang chi tiết sản phẩm
     function productUrl(product) {
         return root + 'pages/product.html?id=' + encodeURIComponent(product.id);
     }
 
-    // Tạo một liên kết trong menu chính.
+    // Tạo một liên kết trong menu chính
     function menuLink(href, label, key) {
         return '<a href="' + root + href + '"' + (key === active ? ' class="active"' : '') + '>' + label + '</a>';
     }
@@ -54,7 +54,7 @@
             '<div class="notif-popup" id="notification-popup" hidden></div>';
     }
 
-    // Render footer cùng danh sách danh mục.
+    // Render footer cùng danh sách danh mục
     function footerHTML() {
         const cats = Shop.getCategories().map(function (c) {
             return '<li><a href="' + root + 'pages/products.html?category=' + encodeURIComponent(c.id) + '">' + Shop.escapeHtml(c.name) + '</a></li>';
@@ -63,7 +63,7 @@
             '<div><h4>Danh mục</h4><ul>' + cats + '</ul></div><div><h4>Liên hệ</h4><ul><li><strong>Địa chỉ:</strong> 273 An Dương Vương, Phường Chợ Quán</li><li><strong>Email:</strong> admin@example.com</li><li><strong>Hotline:</strong> 0900 00 00 01 -0900 00 00 02</li></ul></div>';
     }
 
-    // Render sản phẩm hoặc từ khóa xu hướng trong dropdown.
+    // Render sản phẩm hoặc từ khóa xu hướng trong dropdown
     function renderSuggestions(panel, query, activeIndex) {
         const esc = Shop.escapeHtml;
         if (query.length < 2) {
@@ -92,7 +92,7 @@
         panel.hidden = false;
     }
 
-    // Kết nối debounce, phím điều hướng và hành vi đóng dropdown.
+    // Kết nối debounce, phím điều hướng và hành vi đóng dropdown
     function bindHeaderSearch() {
         const form = document.getElementById('header-search-form');
         const input = document.getElementById('header-search-input');
@@ -177,7 +177,8 @@
         notifyCart.timer = setTimeout(function () { notice.classList.remove('show'); }, 2800);
     }
 
-    document.addEventListener('click', function (event) { //Them san pham vao gio hang
+    // Bắt sự kiện thêm sản phẩm vào giỏ hàng
+    document.addEventListener('click', function (event) {
         const button = event.target.closest('[data-add-to-cart]');
         if (!button || !window.Cart || button.disabled) return;
         const productId = Number(button.dataset.addToCart);
