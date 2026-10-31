@@ -265,7 +265,7 @@
                 sortedList.sort(function (a, b) { return getSalePrice(b) - getSalePrice(a); });
                 break;
             case 'bestseller': 
-                return sortBestSeller(list);
+                sortedList = sortBestSeller(sortedList);
                 break;
         }
 

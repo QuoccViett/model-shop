@@ -158,4 +158,36 @@
         if (globalThis.Notifications && typeof globalThis.Notifications.init === 'function') globalThis.Notifications.init(root);
     }
     if (footerBox) footerBox.innerHTML = footerHTML();
+    
+        function refreshCartCount() {
+        const badge = document.getElementById('cart-count');
+        if (badge && window.Cart) badge.textContent = String(Cart.getCartCount());
+    }
+
+    function notifyCart(message, ok) {
+        let notice = document.getElementById('cart-toast');
+        if (!notice) {
+            notice = document.createElement('div');
+            notice.id = 'cart-toast';
+            notice.setAttribute('role', 'status');
+            document.body.appendChild(notice);
+        }
+        notice.textContent = message;
+        notice.className = 'cart-toast show ' + (ok ? 'success' : 'error');
+        clearTimeout(notifyCart.timer);
+        notifyCart.timer = setTimeout(function () { notice.classList.remove('show'); }, 2800);
+    }
+
+    document.addEventListener('click', function (event) { //Them san pham vao gio hang
+        const button = event.target.closest('[data-add-to-cart]');
+        if (!button || !window.Cart || button.disabled) return;
+        const productId = Number(button.dataset.addToCart);
+        const qtyInput = document.getElementById('qty');
+        const qty = qtyInput && qtyInput.closest('.buy-row') && button.closest('.buy-row')
+            ? Number(qtyInput.value) : 1;
+        const result = Cart.addToCart(productId, qty);
+        refreshCartCount();
+        notifyCart(result.ok ? 'Đã thêm sản phẩm vào giỏ hàng!' : result.error, result.ok);
+    });
+refreshCartCount();
 })();

@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Products-ModelShop</title>
     <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/member5.css">
     <link rel="stylesheet" href="../css/header.css">
     <link rel="stylesheet" href="../css/products.css">
 </head>
@@ -23,6 +24,12 @@
 
         <form action="" id="filter-form" class="shop-layout">
             <aside class="filter-box">
+                <div class="filter-group">
+                    <h3>Tìm theo tên sản phẩm</h3>
+                    <input class="filter-keyword" type="search" id="filter-keyword" name="keyword"
+                        placeholder="Ví dụ: Gundam, Figure...">
+                    <button class="btn filter-search-button" type="submit">Tìm sản phẩm</button>
+                </div>
                 <div class="filter-group">
                     <h3>Loại sản phẩm</h3>
                     <div id="filter-categories"></div>
@@ -69,6 +76,7 @@
 
     <script src="../js/data.js"></script>
     <script src="../js/common.js"></script>
+    <script src="../js/cart.js"></script>
     <script src="../js/order-status.js"></script>
     <script src="../js/ui.js"></script>
     <script src="../js/notifications.js"></script>
