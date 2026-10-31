@@ -2,6 +2,19 @@
 
 /* PRODUCT DETAIL */
 
+.breadcrumb {
+    margin-bottom: 20px;
+    padding: 15px 20px;
+    border-radius: var(--radius);
+    background: var(--c-white);
+    color: var(--c-muted);
+    font-size: 14px;
+}
+
+.breadcrumb a:hover {
+    color: var(--c-primary);
+}
+
 .detail {
     display: grid;
     grid-template-columns: 1fr 1fr;

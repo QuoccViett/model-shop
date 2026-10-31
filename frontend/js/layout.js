@@ -38,8 +38,8 @@
             '<form class="search-form" id="header-search-form" role="search" action="' + productsUrl('') + '" method="get" autocomplete="off">' +
             '<div class="search-control"><input id="header-search-input" type="search" name="q" placeholder="Tìm mô hình theo tên..." aria-label="Tìm sản phẩm" aria-autocomplete="list" aria-controls="search-suggestions" aria-expanded="false">' +
             '<div class="search-suggestions" id="search-suggestions" role="listbox" hidden></div></div><button type="submit">Tìm</button></form>' +
-            '<div class="header-actions"><a class="cart-link hdr-action" href="' + root + 'pages/cart.html"><span class="hdr-icon">🛒</span><span>Giỏ hàng</span><span class="cart-count" id="cart-count">0</span></a><div class="account-wrap" id="account-wrap"></div></div></div></header>' +
-            '<nav class="main-nav"><div class="container"><button class="hdr-menu-toggle" type="button" aria-expanded="false">☰ Menu</button><div class="hdr-menu-list">' + menu + '</div></div></nav>';
+            '<div class="header-actions"><a class="cart-link hdr-action" href="' + root + 'pages/cart.html"><span>Giỏ hàng</span><span class="cart-count" id="cart-count">0</span></a><div class="account-wrap" id="account-wrap"></div></div></div></header>' +
+            '<nav class="main-nav"><div class="container"><button class="hdr-menu-toggle" type="button" aria-expanded="false">Menu</button><div class="hdr-menu-list">' + menu + '</div></div></nav>';
     }
 
     // Hiển thị trạng thái tài khoản và popup thông báo
@@ -47,10 +47,10 @@
         const box = document.getElementById('account-wrap');
         const user = Shop.getCurrentUser();
         if (!user) {
-            box.innerHTML = '<a class="hdr-action hdr-account" href="' + root + 'pages/login.html"><span class="hdr-icon">♙</span><span>Đăng nhập</span></a>';
+            box.innerHTML = '<a class="hdr-action hdr-account" href="' + root + 'pages/login.html"><span>Đăng nhập</span></a>';
             return;
         }
-        box.innerHTML = '<button type="button" class="hdr-action hdr-account" id="account-button" aria-expanded="false"><span class="hdr-account-icon"><span class="hdr-icon">♙</span><span class="notif-badge" id="notification-badge" hidden></span></span><span class="hdr-account-name">' + Shop.escapeHtml(user.full_name || user.username) + '</span></button>' +
+        box.innerHTML = '<button type="button" class="hdr-action hdr-account" id="account-button" aria-expanded="false"><span class="hdr-account-name">' + Shop.escapeHtml(user.full_name || user.username) + '</span><span class="notif-badge" id="notification-badge" hidden></span></button>' +
             '<div class="notif-popup" id="notification-popup" hidden></div>';
     }
 
@@ -60,8 +60,7 @@
             return '<li><a href="' + root + 'pages/products.html?category=' + encodeURIComponent(c.id) + '">' + Shop.escapeHtml(c.name) + '</a></li>';
         }).join('');
         return '<footer class="footer"><div class="container"><div><h4>ModelShop</h4><p>Cửa hàng mô hình Gundam, Figure, xe mô hình, mô hình quân sự và phụ kiện.</p></div>' +
-            '<div><h4>Danh mục</h4><ul>' + cats + '</ul></div><div><h4>Liên hệ</h4><ul><li>Hotline: 0900 000 000</li><li>Email: shop@example.com</li></ul></div>' +
-            '<div class="copyright">© 2026 ModelShop. Đồ án môn học.</div></div></footer>';
+            '<div><h4>Danh mục</h4><ul>' + cats + '</ul></div><div><h4>Liên hệ</h4><ul><li><strong>Địa chỉ:</strong> 273 An Dương Vương, Phường Chợ Quán</li><li><strong>Email:</strong> admin@example.com</li><li><strong>Hotline:</strong> 0900 00 00 01 -0900 00 00 02</li></ul></div>';
     }
 
     // Render sản phẩm hoặc từ khóa xu hướng trong dropdown.

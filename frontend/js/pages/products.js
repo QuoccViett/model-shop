@@ -220,7 +220,7 @@
 
     // Render breadcrumb theo danh mục đang chọn
     document.getElementById('breadcrumb').innerHTML = '<a href="../index.html">Trang chủ</a> / ' +
-        (category ? '<a href="products.html">Sản phẩm</a> / ' + esc(category.name) : '<a href="products.html">Sản phẩm</a>');
+        (category ? '<a href="products.html">Sản phẩm</a> / ' + esc(category.name) : 'Sản phẩm');
 
     // Render sản phẩm hoặc thông báo khi không có kết quả
     document.getElementById('product-grid').innerHTML = page.items.length
