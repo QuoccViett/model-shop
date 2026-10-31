@@ -1,0 +1,139 @@
+/* News listing page */
+
+.news-page {
+    padding: 24px 15px;
+}
+
+.news-breadcrumb {
+    margin-bottom: 20px;
+    padding: 15px 20px;
+    border-radius: var(--radius);
+    background: var(--c-white);
+}
+
+.news-breadcrumb a:hover {
+    color: var(--c-primary);
+}
+
+.news-page__title {
+    margin-bottom: 8px;
+    font-size: 24px;
+}
+
+.news-list {
+    background: var(--c-white);
+}
+
+.news-item {
+    display: flex;
+    gap: 20px;
+    padding: 20px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.news-item__date {
+    display: flex;
+    flex: 0 0 70px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 70px;
+    height: 70px;
+    background: var(--c-primary);
+    color: var(--c-white);
+    text-align: center;
+}
+
+.news-item__day {
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1.1;
+}
+
+.news-item__month {
+    font-size: 13px;
+}
+
+.news-item__body {
+    min-width: 0;
+}
+
+.news-item__title {
+    margin-bottom: 5px;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.news-item__title a {
+    color: var(--c-text);
+}
+
+.news-item__title a:hover {
+    color: var(--c-primary);
+}
+
+.news-item__meta {
+    margin-bottom: 6px;
+    color: #888;
+    font-size: 13px;
+}
+
+.news-item__excerpt {
+    display: -webkit-box;
+    overflow: hidden;
+    color: var(--c-text);
+    font-size: 14px;
+    line-height: 1.6;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+}
+
+.news-pagination {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 24px;
+}
+
+.news-pagination a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    color: var(--c-text);
+}
+
+.news-pagination a:hover {
+    border-color: var(--c-primary);
+    color: var(--c-primary);
+}
+
+.news-pagination a.is-active {
+    border-color: var(--c-primary);
+    background: var(--c-primary);
+    color: var(--c-white);
+}
+
+@media (max-width: 768px) {
+    .news-item {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .news-item__date {
+        flex: 0 0 auto;
+        flex-direction: row;
+        gap: 8px;
+        width: auto;
+        height: auto;
+        min-height: 42px;
+        padding: 7px 12px;
+    }
+
+    .news-item__day {
+        font-size: 20px;
+    }
+}

@@ -1,0 +1,208 @@
+.contact-page {
+    padding: 24px 15px;
+}
+
+.contact-breadcrumb {
+    margin-bottom: 20px;
+    padding: 15px 20px;
+    border-radius: var(--radius);
+    background: var(--c-white);
+}
+
+.contact-breadcrumb a:hover {
+    color: var(--c-primary);
+}
+
+.contact-card {
+    padding: 20px;
+    border-radius: var(--radius);
+    background: var(--c-white);
+    box-shadow: 0 1px 5px rgba(0, 0, 0, .04);
+}
+
+.contact-card h1 {
+    margin: 0 0 20px;
+    color: var(--c-primary);
+    font-size: 28px;
+    font-weight: 700;
+}
+
+.contact-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 25px;
+    align-items: stretch;
+}
+
+.contact-left,
+.contact-right {
+    min-width: 0;
+}
+
+.contact-left > p {
+    margin: 0 0 12px;
+    color: var(--c-text);
+    font-size: 16px;
+    overflow-wrap: anywhere;
+}
+
+.contact-left a {
+    color: inherit;
+}
+
+.contact-left a:hover {
+    color: var(--c-primary);
+}
+
+.contact-form {
+    margin-top: 20px;
+}
+
+.contact-field {
+    margin-bottom: 15px;
+}
+
+.contact-sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.contact-field input,
+.contact-field textarea {
+    display: block;
+    width: 100%;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: var(--c-white);
+    color: var(--c-text);
+    font: inherit;
+    font-size: 16px;
+}
+
+.contact-field input {
+    height: 46px;
+    padding: 0 16px;
+}
+
+.contact-field textarea {
+    min-height: 90px;
+    padding: 12px 16px;
+    resize: vertical;
+}
+
+.contact-field input::placeholder,
+.contact-field textarea::placeholder {
+    color: #888;
+    opacity: 1;
+}
+
+.contact-field input:focus,
+.contact-field textarea:focus {
+    border-color: var(--c-primary);
+    outline: none;
+}
+
+.contact-field input.is-invalid,
+.contact-field textarea.is-invalid {
+    border-color: #d33;
+}
+
+.contact-error {
+    display: block;
+    min-height: 0;
+    color: #d33;
+    font-size: 13px;
+}
+
+.contact-required {
+    margin: 5px 0 15px;
+    color: #555;
+    font-size: 16px;
+}
+
+.contact-form button,
+.contact-success button {
+    width: fit-content;
+    padding: 12px 16px;
+    border: 0;
+    border-radius: 4px;
+    background: var(--c-primary);
+    color: var(--c-white);
+    cursor: pointer;
+    font: inherit;
+    font-weight: 700;
+}
+
+.contact-form button:hover,
+.contact-success button:hover {
+    background: var(--c-primary-dark);
+}
+
+.contact-form button:disabled {
+    cursor: wait;
+    opacity: .7;
+}
+
+.contact-success p {
+    margin: 0 0 15px;
+    font-size: 16px;
+}
+
+.contact-map {
+    position: relative;
+    height: 100%;
+    min-height: 420px;
+    overflow: hidden;
+    border-radius: 4px;
+    background: #eee;
+}
+
+.contact-map::before {
+    position: absolute;
+    z-index: 0;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    color: #666;
+    content: "Bản đồ cần kết nối internet";
+    font-size: 16px;
+}
+
+.contact-map iframe {
+    position: absolute;
+    z-index: 1;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+}
+
+@media (max-width: 768px) {
+    .contact-card {
+        padding: 18px;
+    }
+
+    .contact-card h1 {
+        font-size: 24px;
+    }
+
+    .contact-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .contact-map {
+        height: 350px;
+        min-height: 350px;
+    }
+
+    .contact-form button {
+        width: 100%;
+    }
+}
