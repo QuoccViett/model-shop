@@ -40,6 +40,7 @@
             cache = seedToObjects();
             saveDB(cache);
         }
+        if (!cache.notifications) cache.notifications = [];
         return cache;
     }
 
@@ -559,6 +560,7 @@
             created_at: nowString()
         });
         saveDB(db);
+        localStorage.setItem(SESSION_KEY, String(nextId));
         return { ok: true };
     }
 
@@ -805,14 +807,141 @@
 
     function changePassword(userId, current, next, confirm) {
         const db = loadDB();
-        const user = findById(db.customers.userId);
+        const user = findById(db.customers, userId);
         if (!user) return { ok: false, error: 'Không tìm thấy tài khoản.' };
+        current = String(current || '');
+        next = String(next || '');
+        confirm = String(confirm || '');
         if (user.password !== current) return { ok: false, error: 'Mật khẩu hiện tại không đúng.' };
         if (next.length < 6) return { ok: false, error: 'Mật khẩu mới tối thiểu 6 ký tự.' };
         if (next !== confirm) return { ok: false, error: 'Mật khẩu nhập lại không khớp.' };
         if (next === current) return { ok: false, error: 'Mật khẩu mới phải khác mật khẩu hiện tại' };
         user.password = next;
-        saveDB();
+        saveDB(db);
+        return { ok: true };
+    }
+
+    // Chuẩn hóa trạng thái cũ để giao diện user luôn dùng một bộ mã
+    function normalizeStatus(status) {
+        if (global.ORDER_STATUS) return global.ORDER_STATUS.normalize(status);
+        return ({ new: 'order_created', processed: 'order_confirmed', delivered: 'delivered', cancelled: 'cancelled' }[status] || status);
+    }
+
+    function getOrderCode(id) {
+        return 'MS' + String(id).padStart(4, '0');
+    }
+
+    function notificationMessage(type, orderId) {
+        const labels = {
+            order_created: 'đã được đặt thành công',
+            payment_success: 'đã thanh toán thành công',
+            order_confirmed: 'đã được xác nhận',
+            shipping: 'đang được giao đến bạn',
+            delivered: 'vừa được giao thành công',
+            cancelled: 'đã được hủy'
+        };
+        return 'Đơn hàng #' + getOrderCode(orderId) + ' ' + (labels[type] || 'đã được cập nhật') + '. Cảm ơn bạn đã đặt hàng tại ModelShop.';
+    }
+
+    function createNotification(customerId, type, orderId) {
+        const db = loadDB();
+        if (!db.notifications) db.notifications = [];
+        const item = {
+            id: db.notifications.reduce(function (max, n) { return Math.max(max, Number(n.id) || 0); }, 0) + 1,
+            customer_id: Number(customerId),
+            type: normalizeStatus(type),
+            order_id: Number(orderId),
+            message: notificationMessage(normalizeStatus(type), orderId),
+            is_read: false,
+            created_at: nowString()
+        };
+        db.notifications.push(item);
+        saveDB(db);
+        global.dispatchEvent(new CustomEvent('modelshop:notifications'));
+        return item;
+    }
+
+    function getMyNotifications(filter) {
+        const user = getCurrentUser();
+        if (!user) return [];
+        const db = loadDB();
+        let list = (db.notifications || []).filter(function (n) { return Number(n.customer_id) === Number(user.id); });
+        if (filter === 'orders') list = list.filter(function (n) { return n.order_id; });
+        return list.sort(function (a, b) { return String(b.created_at).localeCompare(String(a.created_at)); });
+    }
+
+    function getUnreadCount() {
+        return getMyNotifications().filter(function (n) { return !n.is_read; }).length;
+    }
+
+    function markRead(id) {
+        const user = getCurrentUser();
+        const db = loadDB();
+        const item = (db.notifications || []).find(function (n) {
+            return Number(n.id) === Number(id) && user && Number(n.customer_id) === Number(user.id);
+        });
+        if (!item) return false;
+        item.is_read = true;
+        saveDB(db);
+        global.dispatchEvent(new CustomEvent('modelshop:notifications'));
+        return true;
+    }
+
+    function markAllRead() {
+        const user = getCurrentUser();
+        if (!user) return;
+        const db = loadDB();
+        (db.notifications || []).forEach(function (n) {
+            if (Number(n.customer_id) === Number(user.id)) n.is_read = true;
+        });
+        saveDB(db);
+        global.dispatchEvent(new CustomEvent('modelshop:notifications'));
+    }
+
+    function getMyOrders(statusGroup) {
+        const user = getCurrentUser();
+        if (!user) return [];
+        const db = loadDB();
+        return (db.orders || []).filter(function (o) {
+            if (Number(o.customer_id) !== Number(user.id)) return false;
+            if (!statusGroup || statusGroup === 'all') return true;
+            const status = normalizeStatus(o.status);
+            return statusGroup === 'processing' ? ['order_created', 'payment_success', 'order_confirmed'].indexOf(status) !== -1 :
+                statusGroup === 'shipping' ? status === 'shipping' :
+                statusGroup === 'completed' ? status === 'delivered' : statusGroup === 'cancelled' && status === 'cancelled';
+        }).sort(function (a, b) { return String(b.order_date).localeCompare(String(a.order_date)); });
+    }
+
+    function getOrderById(id) {
+        const user = getCurrentUser();
+        if (!user) return null;
+        const order = findById(loadDB().orders, id);
+        return order && Number(order.customer_id) === Number(user.id) ? order : null;
+    }
+
+    function cancelOrder(id) {
+        const order = getOrderById(id);
+        if (!order || !global.ORDER_STATUS || !global.ORDER_STATUS.canCancel(order.status)) {
+            return { ok: false, error: 'Đơn hàng này không thể hủy.' };
+        }
+        const db = loadDB();
+        order.status = 'cancelled';
+        order.updated_at = nowString();
+        saveDB(db);
+        createNotification(order.customer_id, 'cancelled', order.id);
+        return { ok: true };
+    }
+
+    function updateOrderStatus(id, nextStatus) {
+        const order = getOrderById(id);
+        const next = normalizeStatus(nextStatus);
+        if (!order || !global.ORDER_STATUS || global.ORDER_STATUS.flow.indexOf(next) === -1) return { ok: false, error: 'Đơn hàng không hợp lệ.' };
+        const expected = global.ORDER_STATUS.next(order.status, order.payment_method);
+        if (expected !== next) return { ok: false, error: 'Trạng thái tiếp theo không hợp lệ.' };
+        order.status = next;
+        order.updated_at = nowString();
+        saveDB(loadDB());
+        createNotification(order.customer_id, next, order.id);
         return { ok: true };
     }
 
@@ -847,6 +976,17 @@
         getCurrentAdmin: getCurrentAdmin,
         updateProfile: updateProfile,
         changePassword: changePassword,
+        normalizeStatus: normalizeStatus,
+        createNotification: createNotification,
+        getMyNotifications: getMyNotifications,
+        getUnreadCount: getUnreadCount,
+        markRead: markRead,
+        markAllRead: markAllRead,
+        getMyOrders: getMyOrders,
+        getOrderById: getOrderById,
+        cancelOrder: cancelOrder,
+        updateOrderStatus: updateOrderStatus,
+        getOrderCode: getOrderCode,
         getAllUsers: getAllUsers,
         getUserById: getUserById,
         filterUsers: filterUsers,
