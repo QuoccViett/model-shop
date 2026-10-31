@@ -88,7 +88,9 @@
         const gridId = 'home-products-' + title.replace(/\s+/g, '-').toLocaleLowerCase();
         setTimeout(function () {
             const grid = document.getElementById(gridId);
-            if (grid) grid.innerHTML = list.map(UI.productCard).join('');
+            if (grid) grid.innerHTML = list.map(function (product) {
+                return UI.productCard(product, { hideQuantity: true });
+            }).join('');
         }, 400);
         return '<section class="home-section">' +
             '<div class="section-head"><h2>' + title + '</h2><a href="' + moreHref + '">Xem tất cả &rsaquo;</a></div>' +
