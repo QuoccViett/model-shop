@@ -227,7 +227,12 @@
       [3, 3, 'order_created', 4, 'Đơn hàng #MS0004 đã được đặt thành công.', false, '2026-09-12 16:45'],
       [4, 2, 'delivered', 2, 'Đơn hàng #MS0002 vừa được giao thành công. Cảm ơn bạn đã đặt hàng tại ModelShop.', true, '2026-08-22 14:00'],
       [5, 2, 'cancelled', 5, 'Đơn hàng #MS0005 đã được hủy.', false, '2026-09-18 12:00'],
-      [6, 3, 'shipping', 6, 'Đơn hàng #MS0006 đang trên đường giao đến bạn.', false, '2026-09-23 09:00']
+      [6, 3, 'shipping', 6, 'Đơn hàng #MS0006 đang trên đường giao đến bạn.', false, '2026-09-23 09:00'],
+      [7, 1, 'account_created', null, 'Tài khoản ModelShop của bạn đã được tạo thành công.', false, '2026-07-20 09:00'],
+      [8, 1, 'profile_updated', null, 'Thông tin tài khoản của bạn đã được cập nhật thành công.', false, '2026-09-10 10:00'],
+      [9, 1, 'password_changed', null, 'Mật khẩu tài khoản của bạn đã được đổi thành công.', false, '2026-09-11 10:00'],
+      [10, 2, 'account_created', null, 'Tài khoản ModelShop của bạn đã được tạo thành công.', true, '2026-07-25 15:30'],
+      [11, 3, 'account_created', null, 'Tài khoản ModelShop của bạn đã được tạo thành công.', true, '2026-08-02 20:10']
     ]
   };
 

@@ -3,7 +3,29 @@
 
     const DB_KEY = 'model_shop_db_v1';
     const PAGE_SIZE = 8;
+    const NOTIFICATION_TTL_MS = 12 * 60 * 60 * 1000;
     let cache = null;
+
+    function parseDateValue(value) {
+        const text = String(value || '');
+        const parsed = new Date(text.indexOf('T') >= 0 ? text : text.replace(' ', 'T'));
+        return Number.isNaN(parsed.getTime()) ? null : parsed;
+    }
+
+    function cleanupNotifications(db) {
+        if (!db || !Array.isArray(db.notifications)) return false;
+        const cutoff = Date.now() - NOTIFICATION_TTL_MS;
+        const before = db.notifications.length;
+        db.notifications = db.notifications.filter(function (notification) {
+            const createdAt = parseDateValue(notification.created_at);
+            return !createdAt || createdAt.getTime() > cutoff;
+        });
+        if (db.notifications.length !== before) {
+            saveDB(db);
+            return true;
+        }
+        return false;
+    }
 
     function seedToObjects() {
         const db = {};
@@ -27,7 +49,10 @@
     }
 
     function loadDB() {
-        if (cache) return cache;
+        if (cache) {
+            cleanupNotifications(cache);
+            return cache;
+        }
         const raw = localStorage.getItem(DB_KEY);
         if (raw) {
             try {
@@ -41,6 +66,20 @@
             saveDB(cache);
         }
         if (!cache.notifications) cache.notifications = [];
+        if (typeof DB_SEED !== 'undefined' && DB_SEED.notifications) {
+            const notificationColumns = Object.keys(DB_SCHEMA.notifications.columns);
+            let changed = false;
+            DB_SEED.notifications.forEach(function (row) {
+                const seedNotification = {};
+                notificationColumns.forEach(function (column, index) { seedNotification[column] = row[index]; });
+                if (!cache.notifications.some(function (item) { return Number(item.id) === Number(seedNotification.id); })) {
+                    cache.notifications.push(seedNotification);
+                    changed = true;
+                }
+            });
+            if (changed) saveDB(cache);
+        }
+        cleanupNotifications(cache);
         return cache;
     }
 
@@ -561,6 +600,7 @@
         });
         saveDB(db);
         localStorage.setItem(SESSION_KEY, String(nextId));
+        createNotification(nextId, 'account_created');
         return { ok: true };
     }
 
@@ -802,6 +842,7 @@
         user.district = d.district || null;
         user.city = d.city || null;
         saveDB(db);
+        createNotification(user.id, 'profile_updated');
         return { ok: true };
     }
 
@@ -818,6 +859,7 @@
         if (next === current) return { ok: false, error: 'Mật khẩu mới phải khác mật khẩu hiện tại' };
         user.password = next;
         saveDB(db);
+        createNotification(user.id, 'password_changed');
         return { ok: true };
     }
 
@@ -832,6 +874,12 @@
     }
 
     function notificationMessage(type, orderId) {
+        const accountMessages = {
+            account_created: 'Tài khoản ModelShop của bạn đã được tạo thành công.',
+            profile_updated: 'Thông tin tài khoản của bạn đã được cập nhật thành công.',
+            password_changed: 'Mật khẩu tài khoản của bạn đã được đổi thành công.'
+        };
+        if (accountMessages[type]) return accountMessages[type];
         const labels = {
             order_created: 'đã được đặt thành công',
             payment_success: 'đã thanh toán thành công',
@@ -849,8 +897,8 @@
         const item = {
             id: db.notifications.reduce(function (max, n) { return Math.max(max, Number(n.id) || 0); }, 0) + 1,
             customer_id: Number(customerId),
-            type: normalizeStatus(type),
-            order_id: Number(orderId),
+            type: global.ORDER_STATUS && global.ORDER_STATUS.notifications && global.ORDER_STATUS.notifications[type] ? type : normalizeStatus(type),
+            order_id: orderId ? Number(orderId) : null,
             message: notificationMessage(normalizeStatus(type), orderId),
             is_read: false,
             created_at: nowString()
@@ -865,6 +913,7 @@
         const user = getCurrentUser();
         if (!user) return [];
         const db = loadDB();
+        cleanupNotifications(db);
         let list = (db.notifications || []).filter(function (n) { return Number(n.customer_id) === Number(user.id); });
         if (filter === 'orders') list = list.filter(function (n) { return n.order_id; });
         return list.sort(function (a, b) { return String(b.created_at).localeCompare(String(a.created_at)); });
@@ -980,6 +1029,7 @@
         createNotification: createNotification,
         getMyNotifications: getMyNotifications,
         getUnreadCount: getUnreadCount,
+        cleanupNotifications: cleanupNotifications,
         markRead: markRead,
         markAllRead: markAllRead,
         getMyOrders: getMyOrders,

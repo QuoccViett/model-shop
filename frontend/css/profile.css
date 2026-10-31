@@ -29,6 +29,10 @@
     margin: 18px 0 10px;
 }
 
+.form-card .btn { width: 70%; }
+
+.form-card form .btn { display: block; width: 70%; margin: 0 auto; }
+
 .form-row {
     display: grid;
     grid-template-columns: 1fr 1fr;

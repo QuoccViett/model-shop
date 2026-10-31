@@ -15,6 +15,11 @@
     global.ORDER_STATUS = {
         all: STATUS,
         flow: FLOW,
+        notifications: {
+            account_created: { label: 'Tài khoản', color: 'var(--c-primary)', icon: '♙' },
+            profile_updated: { label: 'Thông tin tài khoản', color: 'var(--c-primary)', icon: '✎' },
+            password_changed: { label: 'Bảo mật', color: 'var(--c-primary)', icon: '⚿' }
+        },
         normalize: function (status) { return STATUS[status] ? status : (OLD[status] || 'order_created'); },
         get: function (status) { return STATUS[this.normalize(status)]; },
         canCancel: function (status) { return ['order_created', 'payment_success', 'order_confirmed'].indexOf(this.normalize(status)) !== -1; },
