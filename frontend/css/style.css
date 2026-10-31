@@ -1,4 +1,4 @@
-/* Shared reset, tokens, typography, site layout, and reusable UI components */
+/* Token màu, thiết lập chung và component dùng lại toàn trang */
 
 :root {
     --c-primary: #e8590c;
@@ -47,6 +47,7 @@
 .status-delivered { color: var(--status-delivered-text); background: var(--status-delivered-bg); }
 .status-cancelled { color: var(--status-cancelled-text); background: var(--status-cancelled-bg); }
 
+/* Thiết lập nền tảng và kiểu chữ chung */
 * {
     box-sizing: border-box;
     margin: 0;
@@ -80,6 +81,7 @@ ul {
     margin: 0 auto;
 }
 
+/* Nút dùng chung trong toàn bộ giao diện */
 .btn {
     display: inline-block;
     padding: 9px 18px;
@@ -313,7 +315,7 @@ main {
     }
 }
 
-/* FORM (login, register, account) */
+/* Form đăng nhập, đăng ký và tài khoản */
 
 .form-card {
     max-width: 480px;
@@ -417,7 +419,7 @@ main {
     color: var(--c-primary);
 }
 
-/* THẺ SẢN PHẨM */
+/* Thẻ hiển thị sản phẩm */
 
 .product-grid {
     display: grid;

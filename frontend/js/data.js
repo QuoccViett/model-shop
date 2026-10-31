@@ -20,7 +20,7 @@
   var DB_ENUMS = {
     receipt_status: ['draft', 'completed'],
     order_status: ['order_created', 'payment_success', 'order_confirmed', 'shipping', 'delivered', 'cancelled'],
-    payment_method: ['cod', 'transfer', 'online'],
+    payment_method: ['cod', 'online'],
     movement_type: ['import', 'export', 'cancel_return']
   };
 
@@ -71,7 +71,7 @@
     orders: {
       columns: {
         id: 'int pk', customer_id: 'int fk customers.id', order_date: 'datetime',
-        status: 'enum order_status default new', receiver_name: 'string', receiver_phone: 'string',
+        status: 'enum order_status default order_created', receiver_name: 'string', receiver_phone: 'string',
         ship_address_detail: 'string', ship_ward: 'string', ship_district: 'string', ship_city: 'string',
         payment_method: 'enum payment_method default cod', total_amount: 'int', updated_at: 'datetime?'
       }
@@ -203,11 +203,11 @@
     //  ship_address_detail, ship_ward, ship_district, ship_city, payment_method, total_amount, updated_at]
     orders: [
       [1, 1, '2026-08-15 10:30', 'delivered', 'Nguyễn Văn An', '0901234567', '12 Nguyễn Huệ', 'Bến Nghé', 'Quận 1', 'TP. Hồ Chí Minh', 'cod', 875000, null],
-      [2, 2, '2026-08-20 14:05', 'delivered', 'Trần Thị Bích', '0912345678', '45 An Dương Vương', 'Phường 3', 'Quận 5', 'TP. Hồ Chí Minh', 'transfer', 845000, null],
+      [2, 2, '2026-08-20 14:05', 'delivered', 'Trần Thị Bích', '0912345678', '45 An Dương Vương', 'Phường 3', 'Quận 5', 'TP. Hồ Chí Minh', 'online', 845000, null],
       [3, 1, '2026-09-05 09:15', 'order_confirmed', 'Nguyễn Văn An', '0901234567', '12 Nguyễn Huệ', 'Bến Nghé', 'Quận 1', 'TP. Hồ Chí Minh', 'cod', 582000, null],
       [4, 3, '2026-09-12 16:40', 'order_created', 'Trần Văn Dũng', '0934567890', '25 Trần Hưng Đạo', 'Phường 7', 'Quận 5', 'TP. Hồ Chí Minh', 'online', 1485000, null],
       [5, 2, '2026-09-18 11:20', 'cancelled', 'Trần Thị Bích', '0912345678', '45 An Dương Vương', 'Phường 3', 'Quận 5', 'TP. Hồ Chí Minh', 'cod', 1260000, null],
-      [6, 3, '2026-09-22 19:00', 'shipping', 'Lê Hoàng Cường', '0923456789', '88 Lê Văn Việt', 'Hiệp Phú', 'TP. Thủ Đức', 'TP. Hồ Chí Minh', 'transfer', 6680000, null]
+      [6, 3, '2026-09-22 19:00', 'shipping', 'Lê Hoàng Cường', '0923456789', '88 Lê Văn Việt', 'Hiệp Phú', 'TP. Thủ Đức', 'TP. Hồ Chí Minh', 'online', 6680000, null]
     ],
 
     // [id, order_id, product_id, quantity, unit_price]

@@ -23,10 +23,12 @@
                     '<div class="shop-muted">Đơn giá: ' + money(line.unit_price) + '</div>' +
                     '<div class="shop-muted">Tồn kho: ' + line.stock + '</div>' +
                     (line.quantity > line.stock ? '<div class="shop-error">Số lượng vượt tồn kho.</div>' : '') + '</div>' +
-                    '<div class="shop-cart-actions"><div><label for="cart-qty-' + p.id + '" class="shop-muted">Số lượng</label> ' +
-                    '<input id="cart-qty-' + p.id + '" type="number" min="1" max="' + line.stock + '" step="1" value="' + line.quantity + '" data-cart-qty="' + p.id + '"></div>' +
-                    '<strong>' + money(line.subtotal) + '</strong>' +
-                    '<button class="shop-link-danger" type="button" data-remove="' + p.id + '">Xóa</button></div></div>';
+                    '<div class="shop-cart-actions"><div class="shop-quantity-group"><span class="shop-muted">Số lượng</span>' +
+                    '<div class="shop-quantity-control"><button type="button" aria-label="Giảm số lượng" data-qty-minus="' + p.id + '">&minus;</button>' +
+                    '<input id="cart-qty-' + p.id + '" type="number" min="1" max="' + line.stock + '" step="1" value="' + line.quantity + '" data-cart-qty="' + p.id + '">' +
+                    '<button type="button" aria-label="Tăng số lượng" data-qty-plus="' + p.id + '">+</button></div></div>' +
+                    '<strong class="shop-cart-subtotal">' + money(line.subtotal) + '</strong>' +
+                    '<button class="shop-remove-button" type="button" data-remove="' + p.id + '"> Xóa </button></div></div>';
             }).join('') + '</section>' +
             '<aside class="shop-panel"><h2>Tóm tắt giỏ hàng</h2>' +
             '<div class="shop-summary-line"><span>Số lượng</span><strong>' + Cart.getCartCount() + '</strong></div>' +
@@ -37,6 +39,18 @@
             '<div class="shop-error" id="cart-error" hidden></div>';
     }
     app.addEventListener('click', function (e) {
+        const step = e.target.closest('[data-qty-minus], [data-qty-plus]');
+        if (step) {
+            const productId = step.dataset.qtyMinus || step.dataset.qtyPlus;
+            const input = document.getElementById('cart-qty-' + productId);
+            const next = Number(input.value) + (step.hasAttribute('data-qty-plus') ? 1 : -1);
+            const result = Cart.updateQuantity(productId, next);
+            if (!result.ok) alert(result.error);
+            draw();
+            const badge = document.getElementById('cart-count');
+            if (badge) badge.textContent = Cart.getCartCount();
+            return;
+        }
         const remove = e.target.closest('[data-remove]');
         if (!remove) return;
         Cart.removeFromCart(remove.dataset.remove);

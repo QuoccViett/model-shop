@@ -38,8 +38,8 @@
             '<form class="search-form" id="header-search-form" role="search" action="' + productsUrl('') + '" method="get" autocomplete="off">' +
             '<div class="search-control"><input id="header-search-input" type="search" name="q" placeholder="Tìm mô hình theo tên..." aria-label="Tìm sản phẩm" aria-autocomplete="list" aria-controls="search-suggestions" aria-expanded="false">' +
             '<div class="search-suggestions" id="search-suggestions" role="listbox" hidden></div></div><button type="submit">Tìm</button></form>' +
-            '<div class="header-actions"><a class="cart-link hdr-action" href="' + root + 'pages/cart.html"><span>Giỏ hàng</span><span class="cart-count" id="cart-count">0</span></a><div class="account-wrap" id="account-wrap"></div></div></div></header>' +
-            '<nav class="main-nav"><div class="container"><button class="hdr-menu-toggle" type="button" aria-expanded="false">Menu</button><div class="hdr-menu-list">' + menu + '</div></div></nav>';
+            '<div class="header-actions"><a class="cart-link hdr-action" href="' + root + 'pages/cart.html"><span class="hdr-icon">🛒</span><span>Giỏ hàng</span><span class="cart-count" id="cart-count">0</span></a><div class="account-wrap" id="account-wrap"></div></div></div></header>' +
+            '<nav class="main-nav"><div class="container"><button class="hdr-menu-toggle" type="button" aria-expanded="false">☰ Menu</button><div class="hdr-menu-list">' + menu + '</div></div></nav>';
     }
 
     // Hiển thị trạng thái tài khoản và popup thông báo
@@ -47,10 +47,10 @@
         const box = document.getElementById('account-wrap');
         const user = Shop.getCurrentUser();
         if (!user) {
-            box.innerHTML = '<a class="hdr-action hdr-account" href="' + root + 'pages/login.html"><span>Đăng nhập</span></a>';
+            box.innerHTML = '<a class="hdr-action hdr-account" href="' + root + 'pages/login.html"><span class="hdr-icon">♙</span><span>Đăng nhập</span></a>';
             return;
         }
-        box.innerHTML = '<button type="button" class="hdr-action hdr-account" id="account-button" aria-expanded="false"><span class="hdr-account-name">' + Shop.escapeHtml(user.full_name || user.username) + '</span><span class="notif-badge" id="notification-badge" hidden></span></button>' +
+        box.innerHTML = '<button type="button" class="hdr-action hdr-account" id="account-button" aria-expanded="false"><span class="hdr-account-icon"><span class="hdr-icon">♙</span><span class="notif-badge" id="notification-badge" hidden></span></span><span class="hdr-account-name">' + Shop.escapeHtml(user.full_name || user.username) + '</span></button>' +
             '<div class="notif-popup" id="notification-popup" hidden></div>';
     }
 
@@ -181,9 +181,10 @@
         const button = event.target.closest('[data-add-to-cart]');
         if (!button || !window.Cart || button.disabled) return;
         const productId = Number(button.dataset.addToCart);
-        const qtyInput = document.getElementById('qty');
-        const qty = qtyInput && qtyInput.closest('.buy-row') && button.closest('.buy-row')
-            ? Number(qtyInput.value) : 1;
+        const qtyInput = button.closest('.product-card')
+            ? button.closest('.product-card').querySelector('[data-product-qty]')
+            : document.getElementById('qty');
+        const qty = qtyInput ? Number(qtyInput.value) : 1;
         const result = Cart.addToCart(productId, qty);
         refreshCartCount();
         notifyCart(result.ok ? 'Đã thêm sản phẩm vào giỏ hàng!' : result.error, result.ok);

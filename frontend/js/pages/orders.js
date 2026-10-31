@@ -18,7 +18,7 @@
                 '<div class="shop-muted">' + details.items.length + ' loại sản phẩm · ' +
                 esc(Cart.PAYMENTS[order.payment_method] || order.payment_method) + '</div>' +
                 '<div class="shop-order-footer"><span>Tổng tiền: <strong>' + Shop.formatPrice(order.total_amount) + '</strong></span>' +
-                '<a class="btn" href="order.html?id=' + order.id + '">Xem chi tiết</a></div></article>';
+                '<a class="btn" href="profile.html#orders/' + order.id + '">Xem chi tiết</a></div></article>';
         }).join('') : '<div class="shop-empty"><h2>Bạn chưa có đơn hàng nào</h2><p>Hãy khám phá sản phẩm của ModelShop.</p>' +
             '<a class="btn" href="products.html">Xem sản phẩm</a></div>');
 })();

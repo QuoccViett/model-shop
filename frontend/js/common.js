@@ -27,6 +27,19 @@
         return false;
     }
 
+    function normalizePaymentMethods(db) {
+        if (!db || !Array.isArray(db.orders)) return false;
+        let changed = false;
+        db.orders.forEach(function (order) {
+            if (order.payment_method === 'transfer') {
+                order.payment_method = 'online';
+                changed = true;
+            }
+        });
+        if (changed) saveDB(db);
+        return changed;
+    }
+
     function seedToObjects() {
         const db = {};
         if (typeof DB_SCHEMA === 'undefined' || typeof DB_SEED === 'undefined') {
@@ -51,6 +64,7 @@
     function loadDB() {
         if (cache) {
             cleanupNotifications(cache);
+            normalizePaymentMethods(cache);
             return cache;
         }
         const raw = localStorage.getItem(DB_KEY);
@@ -66,6 +80,7 @@
             saveDB(cache);
         }
         if (!cache.notifications) cache.notifications = [];
+        normalizePaymentMethods(cache);
         if (typeof DB_SEED !== 'undefined' && DB_SEED.notifications) {
             const notificationColumns = Object.keys(DB_SCHEMA.notifications.columns);
             let changed = false;
@@ -947,6 +962,7 @@
         global.dispatchEvent(new CustomEvent('modelshop:notifications'));
     }
 
+    // Lấy danh sách đơn của người dùng theo nhóm trạng thái
     function getMyOrders(statusGroup) {
         const user = getCurrentUser();
         if (!user) return [];
@@ -961,6 +977,7 @@
         }).sort(function (a, b) { return String(b.order_date).localeCompare(String(a.order_date)); });
     }
 
+    // Lấy một đơn hàng thuộc tài khoản hiện tại
     function getOrderById(id) {
         const user = getCurrentUser();
         if (!user) return null;
@@ -968,6 +985,7 @@
         return order && Number(order.customer_id) === Number(user.id) ? order : null;
     }
 
+    // Đánh dấu đơn hàng là đã hủy và tạo thông báo cho người dùng
     function cancelOrder(id) {
         const order = getOrderById(id);
         if (!order || !global.ORDER_STATUS || !global.ORDER_STATUS.canCancel(order.status)) {
@@ -981,6 +999,7 @@
         return { ok: true };
     }
 
+    // Cập nhật trạng thái theo đúng thứ tự của quy trình đơn hàng
     function updateOrderStatus(id, nextStatus) {
         const order = getOrderById(id);
         const next = normalizeStatus(nextStatus);
@@ -994,7 +1013,7 @@
         return { ok: true };
     }
 
-    // Expose API ra môi trường toàn cục
+    // Công khai API dùng chung cho giao diện
     global.Shop = {
         PAGE_SIZE: PAGE_SIZE,
         loadDB: loadDB,

@@ -31,6 +31,7 @@
                         '<span class="pc-now">' + Shop.formatPrice(salePrice) + '</span>' +
                             (hasSale ? '<del class="pc-old">' + Shop.formatPrice(price) + '</del>' : '') +
                     '</div>' +
+                    '<div class="pc-quantity"><label for="product-qty-' + p.id + '">Số lượng</label><input id="product-qty-' + p.id + '" type="number" min="1" max="' + p.stock_qty + '" step="1" value="1" data-product-qty="' + p.id + '"' + (soldOut ? ' disabled' : '') + '></div>' +
                     '<button type="button" class="btn pc-buy" data-add-to-cart="' + p.id + '"' + (soldOut ? ' disabled' : '') + '>' +
                         (soldOut ? 'Hết hàng' : 'Thêm vào giỏ') +
                     '</button>' +
