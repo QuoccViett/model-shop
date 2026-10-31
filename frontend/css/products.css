@@ -1,0 +1,186 @@
+/* Product listing, filters, and pagination styles */
+
+/* PRODUCTS PAGE */
+
+.breadcrumb {
+    margin-bottom: 14px;
+    color: var(--c-muted);
+    font-size: 14px;
+}
+
+.breadcrumb a:hover {
+    color: var(--c-primary);
+}
+
+.brand-filter {
+    margin: 0 0 20px;
+    padding: 14px 16px;
+    background: var(--c-white);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+}
+
+.brand-filter-title { margin-bottom: 10px; font-size: 15px; }
+.brand-filter-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.brand-filter-button {
+    padding: 7px 14px;
+    color: var(--c-text);
+    background: var(--c-white);
+    border: 1px solid var(--c-border);
+    border-radius: 999px;
+    cursor: pointer;
+    font: inherit;
+    font-size: 14px;
+    transition: color .15s ease, background .15s ease, border-color .15s ease;
+}
+.brand-filter-button:hover, .brand-filter-button:focus-visible { border-color: var(--c-primary); color: var(--c-primary); }
+.brand-filter-button.is-active { color: var(--c-white); background: var(--c-primary); border-color: var(--c-primary); }
+.brand-filter-button:focus-visible { outline: 3px solid rgba(232, 89, 12, .25); outline-offset: 2px; }
+
+.shop-layout {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    gap: 24px;
+    align-items: start;
+}
+
+.shop-layout > section {
+    min-width: 0;
+}
+
+.filter-box {
+    padding: 16px;
+    background: var(--c-white);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+}
+
+.filter-group + .filter-group {
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 1px solid var(--c-border);
+}
+
+.filter-group h3 {
+    margin-bottom: 8px;
+    font-size: 15px;
+}
+
+.filter-group label {
+    display: block;
+    padding: 3px 0;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.filter-group select {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid var(--c-border);
+    border-radius: var(--radius);
+    font-size: 14px;
+}
+
+.custom-price-range {
+    display: grid;
+    gap: 8px;
+    margin-top: 10px;
+    font-size: 13px;
+}
+
+.custom-price-field { display: grid; grid-template-columns: 34px minmax(0, 1fr) 12px; align-items: center; gap: 6px; }
+.custom-price-field label { padding: 0; }
+.custom-price-range input {
+    width: 100%;
+    min-width: 0;
+    padding: 7px;
+    border: 1px solid var(--c-border);
+    border-radius: 6px;
+}
+
+.custom-price-apply { padding: 7px 10px; font-size: 13px; }
+.price-filter-error { color: #b42318; }
+
+.filter-clear {
+    display: block;
+    margin-top: 16px;
+    text-align: center;
+    color: var(--c-primary);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.list-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.list-head h1 {
+    font-size: 22px;
+}
+
+.list-head .count {
+    color: var(--c-muted);
+    font-size: 14px;
+}
+
+.sort-select {
+    padding: 8px 10px;
+    border: 1px solid var(--c-border);
+    border-radius: var(--radius);
+    background: var(--c-white);
+    font-size: 14px;
+}
+
+.empty-box {
+    padding: 40px 16px;
+    text-align: center;
+    background: var(--c-white);
+    border-radius: var(--radius);
+    color: var(--c-muted);
+}
+
+/* PAGINATION */
+
+.pagination {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 24px;
+}
+
+.pagination a, .pagination span {
+    min-width: 38px;
+    padding: 8px 12px;
+    border: 1px solid var(--c-border);
+    border-radius: var(--radius);
+    background: var(--c-white);
+    text-align: center;
+    font-size: 14px;
+}
+
+.pagination:hover {
+    border-color: var(--c-primary);
+    color: var(--c-primary);
+}
+
+.pagination .current {
+    background: var(--c-primary);
+    border-color: var(--c-primary);
+    color: var(--c-white);
+    font-weight: 700;
+}
+
+.pagination .disable {
+    color: #b0b7c3;
+}
+
+@media (max-width: 768px) {
+    .shop-layout { 
+        grid-template-columns: 1fr;
+    }
+}

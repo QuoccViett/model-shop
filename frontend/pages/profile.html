@@ -7,6 +7,8 @@
     <title>Profile-ModelShop</title>
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="../css/member5.css">
+    <link rel="stylesheet" href="../css/header.css">
+    <link rel="stylesheet" href="../css/profile.css">
 </head>
 
 <body data-root="../">
@@ -14,9 +16,15 @@
 
     <main class="container">
         <h1 class="page-title">Tài khoản của tôi</h1>
-        <p class="account-orders-link"><a href="orders.html">Xem lịch sử đơn hàng của tôi &rsaquo;</a></p>
-
-        <div class="profile-grid">
+        <div class="prof-layout">
+            <aside class="prof-sidebar">
+                <button type="button" class="prof-nav is-active" data-prof-tab="account">Thông tin tài khoản</button>
+                <button type="button" class="prof-nav" data-prof-tab="orders">Đơn hàng của tôi</button>
+                <button type="button" class="prof-nav" id="profile-logout">Đăng xuất</button>
+            </aside>
+            <div class="prof-content">
+            <section class="prof-panel is-active" data-prof-panel="account">
+            <div class="profile-grid">
             <div class="form-card">
                 <h2>Thông tin của tôi</h2>
                 <div id="info-msg" class="alert" hidden></div>
@@ -29,15 +37,15 @@
                     </div>
                     <div class="form-group">
                         <label for="full_name">Họ và tên</label>
-                        <input type="text" name="full_name" id="full_name" readonly>
+                        <input type="text" name="full_name" id="full_name">
                     </div>
                     <div class="form-group">
                         <label for="email">Email</label>
-                        <input type="email" name="email" id="email" readonly>
+                        <input type="email" name="email" id="email">
                     </div>
                     <div class="form-group">
                         <label for="phone">Số điện thoại</label>
-                        <input type="tel" name="phone" id="phone" readonly>
+                        <input type="tel" name="phone" id="phone">
                     </div>
                     <h3>Địa chỉ giao hàng mặc định</h3>
                     <div class="form-group">
@@ -60,7 +68,6 @@
                     <button type="submit" class="btn">Lưu thay đổi</button>
                 </form>
             </div>
-
             <div class="form-card">
                 <h2>Đổi mật khẩu</h2>
                 <div id="pw-msg" class="alert" hidden></div>
@@ -81,6 +88,16 @@
                     <button type="submit" class="btn">Đổi mật khẩu</button>
                 </form>
             </div>
+            </div>
+            </section>
+            <section class="prof-panel" data-prof-panel="orders" id="orders-section">
+                <div class="form-card prof-orders-card">
+                    <div class="prof-orders-head"><h2>Đơn hàng của tôi</h2><div class="prof-order-tabs"><button type="button" class="is-active" data-order-group="all">Tất cả</button><button type="button" data-order-group="processing">Đang xử lý</button><button type="button" data-order-group="shipping">Đang giao</button><button type="button" data-order-group="completed">Hoàn tất</button><button type="button" data-order-group="cancelled">Đã hủy</button></div></div>
+                    <div id="orders-list"></div>
+                    <div id="order-detail"></div>
+                </div>
+            </section>
+            </div>
         </div>
     </main>
 
@@ -88,6 +105,8 @@
 
     <script src="../js/data.js"></script>
     <script src="../js/common.js"></script>
+    <script src="../js/order-status.js"></script>
+    <script src="../js/notifications.js"></script>
     <script src="../js/layout.js"></script>
     <script src="../js/pages/profile.js"></script>
 </body>

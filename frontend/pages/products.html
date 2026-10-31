@@ -7,6 +7,8 @@
     <title>Products-ModelShop</title>
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="../css/member5.css">
+    <link rel="stylesheet" href="../css/header.css">
+    <link rel="stylesheet" href="../css/products.css">
 </head>
 
 <body data-root="../">
@@ -14,6 +16,11 @@
 
     <main class="container">
         <div class="breadcrumb" id="breadcrumb"></div>
+
+        <section class="brand-filter" aria-label="Lọc theo hãng">
+            <h2 class="brand-filter-title">Thương Hiệu</h2>
+            <div class="brand-filter-list" id="brand-filter-list"></div>
+        </section>
 
         <form action="" id="filter-form" class="shop-layout">
             <aside class="filter-box">
@@ -28,12 +35,22 @@
                     <div id="filter-categories"></div>
                 </div>
                 <div class="filter-group">
-                    <h3>Hãng</h3>
-                    <div id="filter-brand"></div>
-                </div>
-                <div class="filter-group">
                     <h3>Khoảng giá</h3>
                     <div id="filter-prices"></div>
+                    <div class="custom-price-range">
+                        <div class="custom-price-field">
+                            <label for="filter-min-price">Từ</label>
+                            <input type="number" id="filter-min-price" name="min" min="0" step="1000" placeholder="Giá thấp nhất">
+                            <span>đ</span>
+                        </div>
+                        <div class="custom-price-field">
+                            <label for="filter-max-price">Đến</label>
+                            <input type="number" id="filter-max-price" name="max" min="0" step="1000" placeholder="Giá cao nhất">
+                            <span>đ</span>
+                        </div>
+                        <button type="button" class="btn custom-price-apply" id="apply-price-filter">Áp dụng giá</button>
+                        <small id="price-filter-error" class="price-filter-error" role="alert" hidden></small>
+                    </div>
                 </div>
                 <div class="filter-group">
                     <label><input type="checkbox" name="sale" value="1" id="filter-sale"> Chỉ sản phẩm đang giảm giá</label>
@@ -60,7 +77,9 @@
     <script src="../js/data.js"></script>
     <script src="../js/common.js"></script>
     <script src="../js/cart.js"></script>
+    <script src="../js/order-status.js"></script>
     <script src="../js/ui.js"></script>
+    <script src="../js/notifications.js"></script>
     <script src="../js/layout.js"></script>
     <script src="../js/pages/products.js"></script>
 </body>

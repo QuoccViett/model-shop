@@ -3,7 +3,29 @@
 
     const DB_KEY = 'model_shop_db_v1';
     const PAGE_SIZE = 8;
+    const NOTIFICATION_TTL_MS = 12 * 60 * 60 * 1000;
     let cache = null;
+
+    function parseDateValue(value) {
+        const text = String(value || '');
+        const parsed = new Date(text.indexOf('T') >= 0 ? text : text.replace(' ', 'T'));
+        return Number.isNaN(parsed.getTime()) ? null : parsed;
+    }
+
+    function cleanupNotifications(db) {
+        if (!db || !Array.isArray(db.notifications)) return false;
+        const cutoff = Date.now() - NOTIFICATION_TTL_MS;
+        const before = db.notifications.length;
+        db.notifications = db.notifications.filter(function (notification) {
+            const createdAt = parseDateValue(notification.created_at);
+            return !createdAt || createdAt.getTime() > cutoff;
+        });
+        if (db.notifications.length !== before) {
+            saveDB(db);
+            return true;
+        }
+        return false;
+    }
 
     function seedToObjects() {
         const db = {};
@@ -27,7 +49,10 @@
     }
 
     function loadDB() {
-        if (cache) return cache;
+        if (cache) {
+            cleanupNotifications(cache);
+            return cache;
+        }
         const raw = localStorage.getItem(DB_KEY);
         if (raw) {
             try {
@@ -40,6 +65,21 @@
             cache = seedToObjects();
             saveDB(cache);
         }
+        if (!cache.notifications) cache.notifications = [];
+        if (typeof DB_SEED !== 'undefined' && DB_SEED.notifications) {
+            const notificationColumns = Object.keys(DB_SCHEMA.notifications.columns);
+            let changed = false;
+            DB_SEED.notifications.forEach(function (row) {
+                const seedNotification = {};
+                notificationColumns.forEach(function (column, index) { seedNotification[column] = row[index]; });
+                if (!cache.notifications.some(function (item) { return Number(item.id) === Number(seedNotification.id); })) {
+                    cache.notifications.push(seedNotification);
+                    changed = true;
+                }
+            });
+            if (changed) saveDB(cache);
+        }
+        cleanupNotifications(cache);
         return cache;
     }
 
@@ -559,6 +599,8 @@
             created_at: nowString()
         });
         saveDB(db);
+        localStorage.setItem(SESSION_KEY, String(nextId));
+        createNotification(nextId, 'account_created');
         return { ok: true };
     }
 
@@ -800,19 +842,155 @@
         user.district = d.district || null;
         user.city = d.city || null;
         saveDB(db);
+        createNotification(user.id, 'profile_updated');
         return { ok: true };
     }
 
     function changePassword(userId, current, next, confirm) {
         const db = loadDB();
-        const user = findById(db.customers,userId);
+        const user = findById(db.customers, userId);
         if (!user) return { ok: false, error: 'Không tìm thấy tài khoản.' };
+        current = String(current || '');
+        next = String(next || '');
+        confirm = String(confirm || '');
         if (user.password !== current) return { ok: false, error: 'Mật khẩu hiện tại không đúng.' };
         if (next.length < 6) return { ok: false, error: 'Mật khẩu mới tối thiểu 6 ký tự.' };
         if (next !== confirm) return { ok: false, error: 'Mật khẩu nhập lại không khớp.' };
         if (next === current) return { ok: false, error: 'Mật khẩu mới phải khác mật khẩu hiện tại' };
         user.password = next;
         saveDB(db);
+        createNotification(user.id, 'password_changed');
+        return { ok: true };
+    }
+
+    // Chuẩn hóa trạng thái cũ để giao diện user luôn dùng một bộ mã
+    function normalizeStatus(status) {
+        if (global.ORDER_STATUS) return global.ORDER_STATUS.normalize(status);
+        return ({ new: 'order_created', processed: 'order_confirmed', delivered: 'delivered', cancelled: 'cancelled' }[status] || status);
+    }
+
+    function getOrderCode(id) {
+        return 'MS' + String(id).padStart(4, '0');
+    }
+
+    function notificationMessage(type, orderId) {
+        const accountMessages = {
+            account_created: 'Tài khoản ModelShop của bạn đã được tạo thành công.',
+            profile_updated: 'Thông tin tài khoản của bạn đã được cập nhật thành công.',
+            password_changed: 'Mật khẩu tài khoản của bạn đã được đổi thành công.'
+        };
+        if (accountMessages[type]) return accountMessages[type];
+        const labels = {
+            order_created: 'đã được đặt thành công',
+            payment_success: 'đã thanh toán thành công',
+            order_confirmed: 'đã được xác nhận',
+            shipping: 'đang được giao đến bạn',
+            delivered: 'vừa được giao thành công',
+            cancelled: 'đã được hủy'
+        };
+        return 'Đơn hàng #' + getOrderCode(orderId) + ' ' + (labels[type] || 'đã được cập nhật') + '. Cảm ơn bạn đã đặt hàng tại ModelShop.';
+    }
+
+    function createNotification(customerId, type, orderId) {
+        const db = loadDB();
+        if (!db.notifications) db.notifications = [];
+        const item = {
+            id: db.notifications.reduce(function (max, n) { return Math.max(max, Number(n.id) || 0); }, 0) + 1,
+            customer_id: Number(customerId),
+            type: global.ORDER_STATUS && global.ORDER_STATUS.notifications && global.ORDER_STATUS.notifications[type] ? type : normalizeStatus(type),
+            order_id: orderId ? Number(orderId) : null,
+            message: notificationMessage(normalizeStatus(type), orderId),
+            is_read: false,
+            created_at: nowString()
+        };
+        db.notifications.push(item);
+        saveDB(db);
+        global.dispatchEvent(new CustomEvent('modelshop:notifications'));
+        return item;
+    }
+
+    function getMyNotifications(filter) {
+        const user = getCurrentUser();
+        if (!user) return [];
+        const db = loadDB();
+        cleanupNotifications(db);
+        let list = (db.notifications || []).filter(function (n) { return Number(n.customer_id) === Number(user.id); });
+        if (filter === 'orders') list = list.filter(function (n) { return n.order_id; });
+        return list.sort(function (a, b) { return String(b.created_at).localeCompare(String(a.created_at)); });
+    }
+
+    function getUnreadCount() {
+        return getMyNotifications().filter(function (n) { return !n.is_read; }).length;
+    }
+
+    function markRead(id) {
+        const user = getCurrentUser();
+        const db = loadDB();
+        const item = (db.notifications || []).find(function (n) {
+            return Number(n.id) === Number(id) && user && Number(n.customer_id) === Number(user.id);
+        });
+        if (!item) return false;
+        item.is_read = true;
+        saveDB(db);
+        global.dispatchEvent(new CustomEvent('modelshop:notifications'));
+        return true;
+    }
+
+    function markAllRead() {
+        const user = getCurrentUser();
+        if (!user) return;
+        const db = loadDB();
+        (db.notifications || []).forEach(function (n) {
+            if (Number(n.customer_id) === Number(user.id)) n.is_read = true;
+        });
+        saveDB(db);
+        global.dispatchEvent(new CustomEvent('modelshop:notifications'));
+    }
+
+    function getMyOrders(statusGroup) {
+        const user = getCurrentUser();
+        if (!user) return [];
+        const db = loadDB();
+        return (db.orders || []).filter(function (o) {
+            if (Number(o.customer_id) !== Number(user.id)) return false;
+            if (!statusGroup || statusGroup === 'all') return true;
+            const status = normalizeStatus(o.status);
+            return statusGroup === 'processing' ? ['order_created', 'payment_success', 'order_confirmed'].indexOf(status) !== -1 :
+                statusGroup === 'shipping' ? status === 'shipping' :
+                statusGroup === 'completed' ? status === 'delivered' : statusGroup === 'cancelled' && status === 'cancelled';
+        }).sort(function (a, b) { return String(b.order_date).localeCompare(String(a.order_date)); });
+    }
+
+    function getOrderById(id) {
+        const user = getCurrentUser();
+        if (!user) return null;
+        const order = findById(loadDB().orders, id);
+        return order && Number(order.customer_id) === Number(user.id) ? order : null;
+    }
+
+    function cancelOrder(id) {
+        const order = getOrderById(id);
+        if (!order || !global.ORDER_STATUS || !global.ORDER_STATUS.canCancel(order.status)) {
+            return { ok: false, error: 'Đơn hàng này không thể hủy.' };
+        }
+        const db = loadDB();
+        order.status = 'cancelled';
+        order.updated_at = nowString();
+        saveDB(db);
+        createNotification(order.customer_id, 'cancelled', order.id);
+        return { ok: true };
+    }
+
+    function updateOrderStatus(id, nextStatus) {
+        const order = getOrderById(id);
+        const next = normalizeStatus(nextStatus);
+        if (!order || !global.ORDER_STATUS || global.ORDER_STATUS.flow.indexOf(next) === -1) return { ok: false, error: 'Đơn hàng không hợp lệ.' };
+        const expected = global.ORDER_STATUS.next(order.status, order.payment_method);
+        if (expected !== next) return { ok: false, error: 'Trạng thái tiếp theo không hợp lệ.' };
+        order.status = next;
+        order.updated_at = nowString();
+        saveDB(loadDB());
+        createNotification(order.customer_id, next, order.id);
         return { ok: true };
     }
 
@@ -847,6 +1025,18 @@
         getCurrentAdmin: getCurrentAdmin,
         updateProfile: updateProfile,
         changePassword: changePassword,
+        normalizeStatus: normalizeStatus,
+        createNotification: createNotification,
+        getMyNotifications: getMyNotifications,
+        getUnreadCount: getUnreadCount,
+        cleanupNotifications: cleanupNotifications,
+        markRead: markRead,
+        markAllRead: markAllRead,
+        getMyOrders: getMyOrders,
+        getOrderById: getOrderById,
+        cancelOrder: cancelOrder,
+        updateOrderStatus: updateOrderStatus,
+        getOrderCode: getOrderCode,
         getAllUsers: getAllUsers,
         getUserById: getUserById,
         filterUsers: filterUsers,

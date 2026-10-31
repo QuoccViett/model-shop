@@ -19,7 +19,7 @@
 
   var DB_ENUMS = {
     receipt_status: ['draft', 'completed'],
-    order_status: ['new', 'processed', 'delivered', 'cancelled'],
+    order_status: ['order_created', 'payment_success', 'order_confirmed', 'shipping', 'delivered', 'cancelled'],
     payment_method: ['cod', 'transfer', 'online'],
     movement_type: ['import', 'export', 'cancel_return']
   };
@@ -74,6 +74,13 @@
         status: 'enum order_status default new', receiver_name: 'string', receiver_phone: 'string',
         ship_address_detail: 'string', ship_ward: 'string', ship_district: 'string', ship_city: 'string',
         payment_method: 'enum payment_method default cod', total_amount: 'int', updated_at: 'datetime?'
+      }
+    },
+    notifications: {
+      columns: {
+        id: 'int pk', customer_id: 'int fk customers.id', type: 'string',
+        order_id: 'int fk orders.id', message: 'text', is_read: 'boolean default false',
+        created_at: 'datetime'
       }
     },
     order_items: {
@@ -197,10 +204,10 @@
     orders: [
       [1, 1, '2026-08-15 10:30', 'delivered', 'Nguyễn Văn An', '0901234567', '12 Nguyễn Huệ', 'Bến Nghé', 'Quận 1', 'TP. Hồ Chí Minh', 'cod', 875000, null],
       [2, 2, '2026-08-20 14:05', 'delivered', 'Trần Thị Bích', '0912345678', '45 An Dương Vương', 'Phường 3', 'Quận 5', 'TP. Hồ Chí Minh', 'transfer', 845000, null],
-      [3, 1, '2026-09-05 09:15', 'processed', 'Nguyễn Văn An', '0901234567', '12 Nguyễn Huệ', 'Bến Nghé', 'Quận 1', 'TP. Hồ Chí Minh', 'cod', 582000, null],
-      [4, 3, '2026-09-12 16:40', 'new', 'Trần Văn Dũng', '0934567890', '25 Trần Hưng Đạo', 'Phường 7', 'Quận 5', 'TP. Hồ Chí Minh', 'online', 1485000, null],
+      [3, 1, '2026-09-05 09:15', 'order_confirmed', 'Nguyễn Văn An', '0901234567', '12 Nguyễn Huệ', 'Bến Nghé', 'Quận 1', 'TP. Hồ Chí Minh', 'cod', 582000, null],
+      [4, 3, '2026-09-12 16:40', 'order_created', 'Trần Văn Dũng', '0934567890', '25 Trần Hưng Đạo', 'Phường 7', 'Quận 5', 'TP. Hồ Chí Minh', 'online', 1485000, null],
       [5, 2, '2026-09-18 11:20', 'cancelled', 'Trần Thị Bích', '0912345678', '45 An Dương Vương', 'Phường 3', 'Quận 5', 'TP. Hồ Chí Minh', 'cod', 1260000, null],
-      [6, 3, '2026-09-22 19:00', 'delivered', 'Lê Hoàng Cường', '0923456789', '88 Lê Văn Việt', 'Hiệp Phú', 'TP. Thủ Đức', 'TP. Hồ Chí Minh', 'transfer', 6680000, null]
+      [6, 3, '2026-09-22 19:00', 'shipping', 'Lê Hoàng Cường', '0923456789', '88 Lê Văn Việt', 'Hiệp Phú', 'TP. Thủ Đức', 'TP. Hồ Chí Minh', 'transfer', 6680000, null]
     ],
 
     // [id, order_id, product_id, quantity, unit_price]
@@ -211,6 +218,21 @@
       [6, 4, 3, 1, 1485000],
       [7, 5, 8, 1, 1260000],
       [8, 6, 6, 2, 1875000], [9, 6, 9, 1, 1430000], [10, 6, 15, 1, 1500000]
+    ],
+
+    // [id, customer_id, type, order_id, message, is_read, created_at]
+    notifications: [
+      [1, 1, 'delivered', 1, 'Đơn hàng #MS0001 vừa được giao thành công. Cảm ơn bạn đã đặt hàng tại ModelShop.', true, '2026-08-17 10:00'],
+      [2, 1, 'order_confirmed', 3, 'Đơn hàng #MS0003 đã được xác nhận và đang được chuẩn bị.', false, '2026-09-05 10:00'],
+      [3, 3, 'order_created', 4, 'Đơn hàng #MS0004 đã được đặt thành công.', false, '2026-09-12 16:45'],
+      [4, 2, 'delivered', 2, 'Đơn hàng #MS0002 vừa được giao thành công. Cảm ơn bạn đã đặt hàng tại ModelShop.', true, '2026-08-22 14:00'],
+      [5, 2, 'cancelled', 5, 'Đơn hàng #MS0005 đã được hủy.', false, '2026-09-18 12:00'],
+      [6, 3, 'shipping', 6, 'Đơn hàng #MS0006 đang trên đường giao đến bạn.', false, '2026-09-23 09:00'],
+      [7, 1, 'account_created', null, 'Tài khoản ModelShop của bạn đã được tạo thành công.', false, '2026-07-20 09:00'],
+      [8, 1, 'profile_updated', null, 'Thông tin tài khoản của bạn đã được cập nhật thành công.', false, '2026-09-10 10:00'],
+      [9, 1, 'password_changed', null, 'Mật khẩu tài khoản của bạn đã được đổi thành công.', false, '2026-09-11 10:00'],
+      [10, 2, 'account_created', null, 'Tài khoản ModelShop của bạn đã được tạo thành công.', true, '2026-07-25 15:30'],
+      [11, 3, 'account_created', null, 'Tài khoản ModelShop của bạn đã được tạo thành công.', true, '2026-08-02 20:10']
     ]
   };
 

@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Quản lý tồn kho - ModelShop Admin</title>
+
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    >
+
+    <link rel="stylesheet" href="../css/admin/index.css">
+    <link rel="stylesheet" href="../css/admin/inventory.css?v=2">
+</head>
+
+<body data-root="">
+
+    <div class="admin-container">
+
+        <aside class="admin-sidebar" id="admin-sidebar"></aside>
+
+        <main class="admin-main">
+
+            <header class="admin-header" id="admin-header"></header>
+
+            <div class="dashboard-content inventory-page">
+
+                <!-- TIÊU ĐỀ -->
+                <div class="page-title">
+                    <h1>Quản lý tồn kho</h1>
+                    <p>Trang chủ / Quản lý tồn kho</p>
+                </div>
+
+                <!-- THỐNG KÊ -->
+                <div class="inventory-stats">
+
+                    <div class="inventory-stat-card">
+                        <div class="stat-icon blue">
+                            <i class="fa-solid fa-boxes-stacked"></i>
+                        </div>
+
+                        <div>
+                            <span>Tổng sản phẩm</span>
+                            <strong id="stat-total">0</strong>
+                        </div>
+                    </div>
+
+                    <div class="inventory-stat-card">
+                        <div class="stat-icon green">
+                            <i class="fa-solid fa-box-open"></i>
+                        </div>
+
+                        <div>
+                            <span>Còn hàng</span>
+                            <strong id="stat-in-stock">0</strong>
+                        </div>
+                    </div>
+
+                    <div class="inventory-stat-card">
+                        <div class="stat-icon orange">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                        </div>
+
+                        <div>
+                            <span>Sắp hết hàng</span>
+                            <strong id="stat-low-stock">0</strong>
+                        </div>
+                    </div>
+
+                    <div class="inventory-stat-card">
+                        <div class="stat-icon red">
+                            <i class="fa-solid fa-circle-xmark"></i>
+                        </div>
+
+                        <div>
+                            <span>Hết hàng</span>
+                            <strong id="stat-out-stock">0</strong>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- BỘ LỌC -->
+                <section class="inventory-panel">
+
+                    <div class="inventory-panel-title">
+                        <h2>Bộ lọc tra cứu tồn kho</h2>
+                    </div>
+
+                    <div class="inventory-filters">
+
+                        <label class="filter-field">
+                            <span>Tìm kiếm sản phẩm</span>
+
+                            <input
+                                type="text"
+                                id="inventory-search"
+                                placeholder="Nhập mã hoặc tên sản phẩm..."
+                            >
+                        </label>
+
+                        <label class="filter-field">
+                            <span>Loại sản phẩm</span>
+
+                            <select id="inventory-category">
+                                <option value="all">
+                                    Tất cả loại sản phẩm
+                                </option>
+                            </select>
+                        </label>
+
+                        <label class="filter-field">
+                            <span>Ngày bắt đầu</span>
+
+                            <input
+                                type="date"
+                                id="inventory-from"
+                            >
+                        </label>
+
+                        <label class="filter-field">
+                            <span>Ngày kết thúc</span>
+
+                            <input
+                                type="date"
+                                id="inventory-to"
+                            >
+                        </label>
+
+                    </div>
+
+                    <div class="inventory-filter-actions">
+
+                        <button
+                            type="button"
+                            id="inventory-reset"
+                            class="btn-reset"
+                        >
+                            <i class="fa-solid fa-rotate-left"></i>
+                            Đặt lại bộ lọc
+                        </button>
+
+                    </div>
+
+                    <p
+                        class="inventory-filter-note"
+                        id="inventory-period-note"
+                    ></p>
+
+                </section>
+
+                <!-- CẢNH BÁO CÓ THỂ THU GỌN -->
+                <section class="inventory-panel inventory-warning-panel">
+
+                    <button
+                        type="button"
+                        class="inventory-warning-toggle"
+                        id="inventory-warning-toggle"
+                        aria-expanded="false"
+                        aria-controls="inventory-warning-content"
+                    >
+
+                        <span class="inventory-warning-heading">
+
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+
+                            <span>Cảnh báo tồn kho</span>
+
+                            <span
+                                class="inventory-warning-count"
+                                id="inventory-warning-count"
+                            >0</span>
+
+                        </span>
+
+                        <i
+                            class="fa-solid fa-chevron-down inventory-warning-arrow"
+                        ></i>
+
+                    </button>
+
+                    <div
+                        class="inventory-warning-content"
+                        id="inventory-warning-content"
+                        hidden
+                    >
+
+                        <div
+                            id="inventory-warning-list"
+                            class="inventory-warning-list"
+                        ></div>
+
+                    </div>
+
+                </section>
+
+                <!-- BẢNG NHẬP - XUẤT - TỒN -->
+                <section class="inventory-panel">
+
+                    <div class="inventory-panel-title">
+                        <h2>Báo cáo Nhập – Xuất – Tồn</h2>
+                    </div>
+
+                    <div class="inventory-table-wrap">
+
+                        <table class="inventory-table">
+
+                            <thead>
+                                <tr>
+                                    <th>Mã SP</th>
+                                    <th>Tên sản phẩm</th>
+                                    <th>Loại sản phẩm</th>
+                                    <th class="number">Tồn đầu kỳ</th>
+                                    <th class="number">Tổng nhập</th>
+                                    <th class="number">Tổng xuất</th>
+                                    <th class="number">Tồn cuối kỳ</th>
+                                    <th>Trạng thái hiện tại</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="inventory-table-body"></tbody>
+
+                            <tfoot id="inventory-table-footer"></tfoot>
+
+                        </table>
+
+                    </div>
+
+                    <p
+                        id="inventory-data-note"
+                        class="inventory-data-note"
+                    ></p>
+
+                </section>
+
+            </div>
+
+        </main>
+
+    </div>
+
+    <script src="../js/data.js"></script>
+    <script src="../js/common.js"></script>
+    <script src="../js/admin/layout.js"></script>
+    <script src="../js/admin/inventory.js?v=2"></script>
+
+</body>
+</html>
