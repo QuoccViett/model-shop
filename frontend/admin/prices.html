@@ -15,11 +15,87 @@
 
 <body data-root="">
     <div class="admin-container">
+        <!-- SIDEBAR (Được render tự động từ layout.js) -->
         <aside class="admin-sidebar" id="admin-sidebar"></aside>
+
         <main class="admin-main">
+            <!-- HEADER (Được render tự động từ layout.js) -->
             <header class="admin-header" id="admin-header"></header>
+
+            <div class="dashboard-content">
+                <div class="page-title">
+                    <h1>Quản lý giá bán</h1>
+                    <p>Trang chủ / Quản lý giá bán</p>
+                </div>
+
+                <div class="price-hint">
+                    <strong>Cách tính:</strong> giá bán = giá vốn x (1 + % lợi nhuận ÷ 100), làm tròn đến nghìn đồng.<br>
+                    <strong>Ưu tiên:</strong> % lợi nhuận riêng của sản phẩm được dùng trước. Sản phẩm để trống ô % riêng sẽ dùng % của loại.<br>
+                    Giá vốn do phiếu nhập hàng quyết định, sản phẩm chưa nhập hàng thì chưa có giá bán.
+                </div>
+
+                <!-- 1. % LỢI NHUẬN THEO LOẠI -->
+                <div class="data-table-section price-section">
+                    <h3>1. % lợi nhuận theo loại sản phẩm</h3>
+                    <p class="section-note">Áp dụng cho mọi sản phẩm trong loại chưa có % riêng.</p>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Loại sản phẩm</th>
+                                    <th>Số sản phẩm</th>
+                                    <th>Số sản phẩm có % riêng</th>
+                                    <th>% lợi nhuận của loại</th>
+                                    <th>Trạng thái</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <!-- Các dòng do prices.js đổ vào -->
+                            <tbody id="category-price-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 2. GIÁ VỐN, % LỢI NHUẬN, GIÁ BÁN THEO SẢN PHẨM -->
+                <div class="data-table-section price-section">
+                    <h3>2. Giá vốn, % lợi nhuận và giá bán theo sản phẩm</h3>
+                    <p class="section-note">Gõ % riêng rồi bấm Lưu (hoặc Enter). Giá bán xem trước ngay khi gõ.</p>
+                    <div class="table-actions-bar">
+                        <div class="search-filter-group import-filters-inline">
+                            <input type="text" id="price-search" placeholder="Tìm theo mã hoặc tên sản phẩm...">
+                            <select id="price-category">
+                                <option value="all">Tất cả loại</option>
+                                <!-- Các loại sản phẩm do prices.js thêm vào -->
+                            </select>
+                        </div>
+                        <span class="muted" id="price-count"></span>
+                    </div>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Mã</th>
+                                    <th>Tên sản phẩm</th>
+                                    <th>Loại</th>
+                                    <th class="text-right">Giá vốn</th>
+                                    <th>% lợi nhuận riêng</th>
+                                    <th>% đang áp dụng</th>
+                                    <th class="text-right">Giá bán</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <!-- Các dòng do prices.js đổ vào -->
+                            <tbody id="product-price-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Thông báo nổi -->
+            <div class="price-toast" id="price-toast"></div>
         </main>
     </div>
+
     <script src="../js/data.js"></script>
     <script src="../js/common.js"></script>
     <script src="../js/admin/shop-prices.js"></script>
