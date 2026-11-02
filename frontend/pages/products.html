@@ -14,6 +14,7 @@
 <body data-root="../">
     <div id="site-header"></div>
 
+    <!-- Container lớn của trang danh sách sản phẩm -->
     <main class="container">
         <div class="breadcrumb" id="breadcrumb"></div>
 
@@ -24,12 +25,12 @@
 
         <form action="" id="filter-form" class="shop-layout">
             <aside class="filter-box">
-                <div class="filter-group">
+                <!-- <div class="filter-group">
                     <h3>Tìm theo tên sản phẩm</h3>
                     <input class="filter-keyword" type="search" id="filter-keyword" name="keyword"
                         placeholder="Ví dụ: Gundam, Figure...">
                     <button class="btn filter-search-button" type="submit">Tìm sản phẩm</button>
-                </div>
+                </div> -->
                 <div class="filter-group">
                     <h3>Loại sản phẩm</h3>
                     <div id="filter-categories"></div>
@@ -66,6 +67,7 @@
                     </div>
                     <select name="sort" id="sort-select" class="sort-select"></select>
                 </div>
+                <!-- Container chứa danh sách sản phẩm -->
                 <div class="product-grid" id="product-grid"></div>
                 <div id="pagination"></div>
             </section>

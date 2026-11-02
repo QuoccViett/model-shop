@@ -2,12 +2,12 @@
     'use strict';
 
     const STATUS = {
-        order_created: { label: 'Đặt hàng thành công', color: 'var(--status-order-created)', icon: '▣', group: 'processing' },
-        payment_success: { label: 'Thanh toán thành công', color: 'var(--status-payment-success)', icon: '▤', group: 'processing' },
-        order_confirmed: { label: 'Đã xác nhận', color: 'var(--status-order-confirmed)', icon: '✓', group: 'processing' },
-        shipping: { label: 'Đang giao', color: 'var(--status-shipping)', icon: '▱', group: 'shipping' },
-        delivered: { label: 'Giao hàng thành công', color: 'var(--status-delivered)', icon: '□', group: 'completed' },
-        cancelled: { label: 'Đã hủy', color: 'var(--status-cancelled)', icon: '×', group: 'cancelled' }
+        order_created: { label: 'Đặt hàng thành công', color: 'var(--status-order-created)', icon: 'Đặt hàng', group: 'processing' },
+        payment_success: { label: 'Thanh toán thành công', color: 'var(--status-payment-success)', icon: 'Thanh toán', group: 'processing' },
+        order_confirmed: { label: 'Đã xác nhận', color: 'var(--status-order-confirmed)', icon: 'Đã xác nhận', group: 'processing' },
+        shipping: { label: 'Đang giao', color: 'var(--status-shipping)', icon: 'Đang giao', group: 'shipping' },
+        delivered: { label: 'Giao hàng thành công', color: 'var(--status-delivered)', icon: 'Đã giao', group: 'completed' },
+        cancelled: { label: 'Đã hủy', color: 'var(--status-cancelled)', icon: 'Đã hủy', group: 'cancelled' }
     };
     const FLOW = ['order_created', 'payment_success', 'order_confirmed', 'shipping', 'delivered'];
     const OLD = { new: 'order_created', processed: 'order_confirmed', delivered: 'delivered', cancelled: 'cancelled' };
@@ -16,7 +16,7 @@
         all: STATUS,
         flow: FLOW,
         notifications: {
-            account_created: { label: 'Tài khoản', color: 'var(--c-primary)', icon: '♙' },
+            account_created: { label: 'Tài khoản', color: 'var(--c-primary)', icon: 'Tài khoản' },
             profile_updated: { label: 'Thông tin tài khoản', color: 'var(--c-primary)', icon: '✎' },
             password_changed: { label: 'Bảo mật', color: 'var(--c-primary)', icon: '⚿' }
         },

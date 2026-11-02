@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giới thiệu - ModelShop</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/header.css">
+    <link rel="stylesheet" href="../css/about.css">
+</head>
+
+<body data-root="../">
+    <div id="site-header"></div>
+
+    <!-- TODO: tạo thư mục images/about/, tải ảnh về và nén mỗi ảnh dưới 200KB:
+         hero.jpg (1200x900), story.jpg (1200x900), cat-gundam.jpg, cat-figure.jpg,
+         cat-car.jpg, cat-military.jpg (mỗi ảnh 800x600). -->
+    <main class="container about-page">
+        <div class="about-breadcrumb">
+            <a href="../index.html" title="Trang chủ">Trang chủ</a> / Giới thiệu
+        </div>
+
+        <section class="about-section about-hero" aria-labelledby="aboutHeroTitle">
+            <div class="about-hero__content">
+                <p class="about-eyebrow">VỀ CHÚNG TÔI</p>
+                <h1 id="aboutHeroTitle">ModelShop – Thỏa trí đam mê, nâng tầm bộ sưu tập</h1>
+                <p class="about-hero__lead">ModelShop là nơi hội tụ những sản phẩm mô hình dành cho người mới bắt đầu và người chơi lâu năm. Chúng tôi chọn lọc sản phẩm rõ nguồn gốc, đa dạng phân khúc và luôn sẵn sàng đồng hành cùng niềm đam mê của bạn.</p>
+                <div class="about-button-row">
+                    <a class="about-button about-button--primary" href="products.html">Xem sản phẩm</a>
+                    <a class="about-button about-button--secondary" href="contact.html">Liên hệ</a>
+                </div>
+            </div>
+            <figure class="about-hero__figure">
+                <!-- TODO: tải ảnh về images/about/hero.jpg -->
+                <img src="../images/about/hero.jpg" width="1200" height="900" alt="Không gian trưng bày mô hình tại ModelShop" loading="lazy">
+            </figure>
+        </section>
+
+        <section class="about-section about-highlights" aria-label="Điểm nổi bật">
+            <div class="about-highlight">
+                <strong>01</strong>
+                <span>Hàng chính hãng</span>
+                <!-- TODO: thay bằng số liệu thật -->
+            </div>
+            <div class="about-highlight">
+                <strong>02</strong>
+                <span>Nhiều dòng sản phẩm</span>
+                <!-- TODO: thay bằng số liệu thật -->
+            </div>
+            <div class="about-highlight">
+                <strong>03</strong>
+                <span>Tư vấn tận tình</span>
+                <!-- TODO: thay bằng số liệu thật -->
+            </div>
+            <div class="about-highlight">
+                <strong>04</strong>
+                <span>Giao hàng toàn quốc</span>
+                <!-- TODO: thay bằng số liệu thật -->
+            </div>
+        </section>
+
+        <section class="about-section about-story" aria-labelledby="aboutStoryTitle">
+            <figure class="about-story__figure">
+                <!-- TODO: tải ảnh về images/about/story.jpg -->
+                <img src="../images/about/story.jpg" width="1200" height="900" alt="Khu vực trưng bày sản phẩm của ModelShop" loading="lazy">
+            </figure>
+            <div class="about-story__content">
+                <p class="about-eyebrow">CÂU CHUYỆN CỦA SHOP</p>
+                <h2 id="aboutStoryTitle">Bắt đầu từ niềm yêu thích mô hình</h2>
+                <p>ModelShop được xây dựng tại 273 An Dương Vương, Phường Chợ Quán với mong muốn tạo ra một nơi người chơi có thể tìm thấy sản phẩm phù hợp và nhận được tư vấn dễ hiểu, thực tế.</p>
+                <p>Từ Gundam, Figure, xe mô hình đến mô hình quân sự và phụ kiện, cửa hàng luôn cố gắng mang đến lựa chọn đa dạng cho nhiều sở thích và ngân sách khác nhau.</p>
+                <blockquote>“Mỗi mô hình hoàn thiện là một câu chuyện được kể bằng sự kiên nhẫn và đam mê.”</blockquote>
+            </div>
+        </section>
+
+        <section class="about-section about-categories" aria-labelledby="aboutCategoriesTitle">
+            <div class="about-section-heading">
+                <h2 id="aboutCategoriesTitle">Danh mục sản phẩm</h2>
+                <p>Khám phá những dòng sản phẩm được người chơi mô hình yêu thích.</p>
+            </div>
+            <div class="about-card-grid">
+                <a class="about-card" href="products.html?category=1">
+                    <!-- TODO: tải ảnh về images/about/cat-gundam.jpg -->
+                    <img src="../images/about/cat-gundam.jpg" width="800" height="600" alt="Danh mục mô hình Gundam" loading="lazy">
+                    <div class="about-card__body">
+                        <h3>Gundam</h3>
+                        <p>Mô hình lắp ráp nhiều cấp độ dành cho người mới và người chơi chuyên sâu.</p>
+                        <span class="about-card__link">Xem thêm</span>
+                    </div>
+                </a>
+                <a class="about-card" href="products.html?category=2">
+                    <!-- TODO: tải ảnh về images/about/cat-figure.jpg -->
+                    <img src="../images/about/cat-figure.jpg" width="800" height="600" alt="Danh mục Figure Anime" loading="lazy">
+                    <div class="about-card__body">
+                        <h3>Figure Anime</h3>
+                        <p>Những nhân vật anime nổi bật với tạo hình sống động và nhiều phong cách.</p>
+                        <span class="about-card__link">Xem thêm</span>
+                    </div>
+                </a>
+                <a class="about-card" href="products.html?category=3">
+                    <!-- TODO: tải ảnh về images/about/cat-car.jpg -->
+                    <img src="../images/about/cat-car.jpg" width="800" height="600" alt="Danh mục mô hình xe" loading="lazy">
+                    <div class="about-card__body">
+                        <h3>Mô hình xe</h3>
+                        <p>Các mẫu xe mô hình phù hợp để sưu tầm, trưng bày và làm quà tặng.</p>
+                        <span class="about-card__link">Xem thêm</span>
+                    </div>
+                </a>
+                <a class="about-card" href="products.html?category=4">
+                    <!-- TODO: tải ảnh về images/about/cat-military.jpg -->
+                    <img src="../images/about/cat-military.jpg" width="800" height="600" alt="Danh mục mô hình quân sự và phụ kiện" loading="lazy">
+                    <div class="about-card__body">
+                        <h3>Mô hình quân sự và phụ kiện</h3>
+                        <p>Bổ sung không gian trưng bày với mô hình quân sự và phụ kiện cần thiết.</p>
+                        <span class="about-card__link">Xem thêm</span>
+                    </div>
+                </a>
+            </div>
+        </section>
+
+        <section class="about-section about-reasons" aria-labelledby="aboutReasonsTitle">
+            <div class="about-section-heading">
+                <h2 id="aboutReasonsTitle">Vì sao chọn chúng tôi</h2>
+                <p>Những điều ModelShop tập trung để mỗi lần mua sắm trở nên yên tâm hơn.</p>
+            </div>
+            <div class="about-reason-grid">
+                <article class="about-reason"><strong>01</strong><h3>Hàng chính hãng rõ nguồn gốc</h3><p>Thông tin sản phẩm rõ ràng, giúp bạn an tâm khi lựa chọn.</p></article>
+                <article class="about-reason"><strong>02</strong><h3>Đa dạng mẫu mã và phân khúc giá</h3><p>Nhiều lựa chọn để bắt đầu chơi hoặc mở rộng bộ sưu tập.</p></article>
+                <article class="about-reason"><strong>03</strong><h3>Tư vấn đúng nhu cầu người chơi</h3><p>Gợi ý theo kinh nghiệm, sở thích và ngân sách của bạn.</p></article>
+                <article class="about-reason"><strong>04</strong><h3>Đóng gói cẩn thận</h3><p>Sản phẩm được chuẩn bị kỹ trước khi gửi đến khách hàng.</p></article>
+                <article class="about-reason"><strong>05</strong><h3>Giao hàng nhanh</h3><p>Hỗ trợ xử lý đơn hàng thuận tiện và chủ động.</p></article>
+                <article class="about-reason"><strong>06</strong><h3>Hỗ trợ sau bán hàng</h3><p>Luôn tiếp nhận câu hỏi để hành trình chơi mô hình trọn vẹn hơn.</p></article>
+            </div>
+        </section>
+
+        <section class="about-section about-process" aria-labelledby="aboutProcessTitle">
+            <div class="about-section-heading">
+                <h2 id="aboutProcessTitle">Quy trình mua hàng</h2>
+                <p>Bốn bước đơn giản để bạn sở hữu sản phẩm yêu thích.</p>
+            </div>
+            <ol class="about-process-list">
+                <li><span>1</span><h3>Chọn sản phẩm</h3><p>Tìm mẫu phù hợp với nhu cầu của bạn.</p></li>
+                <li><span>2</span><h3>Liên hệ hoặc đặt hàng</h3><p>Gửi yêu cầu qua kênh liên hệ của ModelShop.</p></li>
+                <li><span>3</span><h3>Xác nhận và đóng gói</h3><p>Shop kiểm tra thông tin và chuẩn bị đơn hàng.</p></li>
+                <li><span>4</span><h3>Nhận hàng</h3><p>Nhận sản phẩm và bắt đầu trải nghiệm.</p></li>
+            </ol>
+        </section>
+
+        <section class="about-section about-cta" aria-labelledby="aboutCtaTitle">
+            <h2 id="aboutCtaTitle">Bạn cần tư vấn chọn mô hình?</h2>
+            <p>Đội ngũ ModelShop sẵn sàng lắng nghe và hỗ trợ bạn chọn sản phẩm phù hợp.</p>
+            <a class="about-button about-button--light" href="contact.html">Liên hệ ngay</a>
+        </section>
+
+        <section class="about-store-info" aria-label="Thông tin cửa hàng">
+            <div><span>ĐỊA CHỈ</span><strong>273 An Dương Vương, Phường Chợ Quán</strong></div>
+            <div><span>EMAIL</span><strong><a href="mailto:admin@example.com">admin@example.com</a></strong></div>
+            <div><span>HOTLINE</span><strong><a href="tel:0900000001">0900 00 00 01</a> - <a href="tel:09000000012">0900 00 00 02</a></strong></div>
+        </section>
+    </main>
+
+    <div id="site-footer"></div>
+
+    <script src="../js/data.js"></script>
+    <script src="../js/common.js"></script>
+    <script src="../js/order-status.js"></script>
+    <script src="../js/ui.js"></script>
+    <script src="../js/notifications.js"></script>
+    <script src="../js/layout.js"></script>
+</body>
+
+</html>

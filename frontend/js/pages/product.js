@@ -93,6 +93,13 @@
     if (related.length) {
         app.insertAdjacentHTML('beforeend',
             '<section class="related"><h2>Sản phẩm cùng loại</h2>' +
-            '<div class="product-grid">' + related.map(UI.productCard).join('') + '</div></section>');
+            '<div class="product-grid" id="related-product-grid">' + UI.productSkeletons(related.length) + '</div></section>');
+        // Render card sản phẩm liên quan sau khi skeleton hoàn tất
+        setTimeout(function () {
+            const relatedGrid = document.getElementById('related-product-grid');
+            if (relatedGrid) relatedGrid.innerHTML = related.map(function (product) {
+                return UI.productCard(product, { hideQuantity: true });
+            }).join('');
+        }, 400);
     }
 })();

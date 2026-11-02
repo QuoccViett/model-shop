@@ -134,14 +134,14 @@ erDiagram
         int id PK
         int customer_id FK
         timestamp order_date
-        string status "new | processed | delivered | cancelled"
+        string status "order_created | payment_success | order_confirmed | shipping | delivered | cancelled"
         string receiver_name
         string receiver_phone
         string ship_address_detail
         string ship_ward
         string ship_district
         string ship_city
-        string payment_method "cod | transfer | online"
+        string payment_method "cod | online"
         bigint total_amount
     }
     ORDER_ITEMS {

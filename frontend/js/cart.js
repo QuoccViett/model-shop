@@ -3,28 +3,34 @@
 
     const PAYMENTS = {
         cod: 'Thanh toán khi nhận hàng (COD)',
-        transfer: 'Chuyển khoản',
         online: 'Thanh toán trực tuyến'
     };
-    // TODO: kiểm tra trạng thái "mới đặt" mà Thành viên 3 đang dùng (new? pending?)
-    const STATUS_NEW = 'new';
+    const PAYMENT_CHANNELS = {
+        visa: 'Thẻ VISA',
+        vnpay: 'VNPAY'
+    };
+    const STATUS_NEW = 'order_created';
 
-    // ---------- GIỎ HÀNG (mỗi khách một giỏ, lưu localStorage) ----------
+    // ---------- Quản lý giỏ hàng theo từng tài khoản ----------
+    // Tạo khóa lưu giỏ hàng cho khách hoặc người dùng hiện tại
     function cartKey() {
         const u = Shop.getCurrentUser();
         return 'modelshop_cart_' + (u ? u.id : 'guest');
     }
 
+    // Đọc giỏ hàng từ localStorage và trả về mảng an toàn
     function readCart() {
         try { return JSON.parse(localStorage.getItem(cartKey())) || []; }
         catch (e) { return []; }
     }
 
+    // Lưu lại giỏ hàng sau mỗi thay đổi
     function writeCart(cart) {
         localStorage.setItem(cartKey(), JSON.stringify(cart));
     }
 
-    function mergeGuestCart() { //Add gio hang cua acc Guest sang tai khoan dang nhap
+    // Gộp giỏ hàng tạm của khách vào giỏ hàng sau khi đăng nhập
+    function mergeGuestCart() {
     const user = Shop.getCurrentUser();
     if (!user) return;
     let guest = [];
@@ -48,6 +54,7 @@
     localStorage.removeItem('modelshop_cart_guest');
 }
 
+    // Thêm sản phẩm vào giỏ và kiểm tra tồn kho
     function addToCart(productId, qty) {
         qty = Math.max(1, Number(qty) || 1);
         const p = Shop.getProductById(productId);
@@ -65,6 +72,7 @@
         return { ok: true };
     }
 
+    // Cập nhật số lượng một sản phẩm trong giỏ
     function updateQuantity(productId, qty) {
         qty = Number(qty);
         const cart = readCart();
@@ -81,20 +89,23 @@
         return { ok: true };
     }
 
+    // Xóa một sản phẩm khỏi giỏ hàng
     function removeFromCart(productId) {
         writeCart(readCart().filter(function (i) { return i.product_id !== Number(productId); }));
         return { ok: true };
     }
 
+    // Xóa toàn bộ giỏ hàng hiện tại
     function clearCart() {
         localStorage.removeItem(cartKey());
     }
 
+    // Tính tổng số sản phẩm đang có trong giỏ
     function getCartCount() {
         return readCart().reduce(function (s, i) { return s + i.quantity; }, 0);
     }
 
-    // Giỏ kèm thông tin sản phẩm + giá hiện tại (tự bỏ sản phẩm đã bị ẩn/xóa)
+    // Lấy giỏ hàng kèm sản phẩm, giá hiện tại và tồn kho
     function getCartDetailed() {
         const lines = [];
         readCart().forEach(function (i) {
@@ -112,12 +123,13 @@
         return lines;
     }
 
+    // Tính tổng tiền sản phẩm trong giỏ
     function getCartTotal() {
         return getCartDetailed().reduce(function (s, l) { return s + l.subtotal; }, 0);
     }
 
-    // ---------- ĐẶT HÀNG ----------
-    // address: { receiver, phone, address_detail, ward, district, city }
+    // ---------- Tạo đơn hàng ----------
+    // Kiểm tra dữ liệu địa chỉ trước khi tạo đơn
     function validateAddress(a) {
         if (!a.receiver) return 'Vui lòng nhập tên người nhận.';
         if (!/^0\d{9}$/.test(a.phone)) return 'Số điện thoại gồm 10 số và bắt đầu bằng 0.';
@@ -127,11 +139,13 @@
         return '';
     }
 
-    function placeOrder(address, payment) {
+    // Tạo đơn từ giỏ hàng và lưu thông tin thanh toán
+    function placeOrder(address, payment, options) {
         const user = Shop.getCurrentUser();
         if (!user) return { ok: false, error: 'Vui lòng đăng nhập để đặt hàng.' };
 
         payment = PAYMENTS[payment] ? payment : 'cod';
+        options = options || {};
         const a = {
             receiver: String(address.receiver || '').trim(),
             phone: String(address.phone || '').trim(),
@@ -159,11 +173,14 @@
         const orderId = maxOf(db.orders) + 1;
         let itemId = maxOf(db.order_items);
 
+        const subtotal = lines.reduce(function (s, l) { return s + l.subtotal; }, 0);
+        const shippingFee = Math.max(0, Number(options.shipping_fee) || 0);
+        const discount = Math.min(subtotal, Math.max(0, Number(options.discount) || 0));
         const order = {
             id: orderId,
             customer_id: user.id,
             order_date: Shop.nowString(),
-            status: STATUS_NEW,
+            status: payment === 'online' ? 'payment_success' : STATUS_NEW,
             // TODO: đối chiếu tên cột với DB_SCHEMA.orders (database/) và Thành viên 3
             receiver_name: a.receiver,
             receiver_phone: a.phone,
@@ -172,7 +189,13 @@
             ship_district: a.district,
             ship_city: a.city,
             payment_method: payment,
-            total_amount: lines.reduce(function (s, l) { return s + l.subtotal; }, 0)
+            payment_channel: payment === 'online' && PAYMENT_CHANNELS[options.payment_channel] ? options.payment_channel : null,
+            subtotal: subtotal,
+            shipping_fee: shippingFee,
+            discount_amount: discount,
+            promo_code: String(options.promo_code || ''),
+            order_note: String(options.order_note || ''),
+            total_amount: subtotal + shippingFee - discount
         };
         db.orders.push(order);
 
@@ -187,11 +210,15 @@
         });
 
         Shop.saveDB(db);
+        if (typeof Shop.createNotification === 'function') {
+            Shop.createNotification(user.id, order.status, orderId);
+        }
         clearCart();
         return { ok: true, order_id: orderId };
     }
 
-    // ---------- LỊCH SỬ ĐƠN ----------
+    // ---------- Lịch sử và đặt lại đơn ----------
+    // Lấy chi tiết đơn cùng danh sách sản phẩm đã mua
     function getOrderDetail(orderId) {
         const user = Shop.getCurrentUser();
         if (!user) return null;
@@ -199,7 +226,7 @@
         const order = Shop.findById(db.orders, orderId);
         if (!order || Number(order.customer_id) !== Number(user.id)) return null;
         const items = (db.order_items || [])
-            .filter(function (it) { return it.order_id === order.id; })
+            .filter(function (it) { return Number(it.order_id) === Number(order.id); })
             .map(function (it) {
                 return {
                     product: Shop.findById(db.products, it.product_id),
@@ -212,25 +239,66 @@
         return { order: order, items: items, total: total };
     }
 
+    // Đưa sản phẩm của đơn đã hủy hoặc đã giao lại vào giỏ
+    function reorderOrder(orderId) {
+        const detail = getOrderDetail(orderId);
+        if (!detail) return { ok: false, error: 'Không tìm thấy đơn hàng.' };
+        if (Shop.normalizeStatus(detail.order.status) !== 'cancelled') {
+            return { ok: false, error: 'Chỉ có thể đặt lại đơn hàng đã hủy.' };
+        }
+
+        const currentCart = readCart();
+        const requested = {};
+        for (let i = 0; i < detail.items.length; i++) {
+            const item = detail.items[i];
+            const product = item.product;
+            if (!product) return { ok: false, error: 'Một sản phẩm trong đơn không còn kinh doanh.' };
+            const productId = Number(product.id);
+            requested[productId] = (requested[productId] || 0) + Number(item.quantity);
+            const current = currentCart.find(function (cartItem) { return Number(cartItem.product_id) === productId; });
+            const stock = Number(product.stock_qty || 0);
+            if ((current ? Number(current.quantity) : 0) + requested[productId] > stock) {
+                return { ok: false, error: '"' + product.name + '" không đủ số lượng tồn kho.' };
+            }
+        }
+
+        Object.keys(requested).forEach(function (productId) {
+            const current = currentCart.find(function (cartItem) { return Number(cartItem.product_id) === Number(productId); });
+            if (current) current.quantity = Number(current.quantity) + requested[productId];
+            else currentCart.push({ product_id: Number(productId), quantity: requested[productId] });
+        });
+        writeCart(currentCart);
+        return { ok: true };
+    }
+
+    // Lấy toàn bộ đơn hàng của tài khoản hiện tại
     function getMyOrders() {
         const user = Shop.getCurrentUser();
         if (!user) return [];
         return (Shop.loadDB().orders || [])
-            .filter(function (o) { return o.customer_id === user.id; })
-            .sort(function (a, b) { return String(b.order_date).localeCompare(String(a.order_date)) || b.id - a.id; })
-            .map(function (o) { return getOrderDetail(o.id); });
+            .filter(function (o) { return Number(o.customer_id) === Number(user.id); })
+            .map(function (o) { return getOrderDetail(o.id); })
+            .filter(Boolean)
+            .sort(function (a, b) {
+                return String(b.order.order_date).localeCompare(String(a.order.order_date)) || b.order.id - a.order.id;
+            });
     }
 
     const STATUS_TEXT = {
-        new: 'Mới đặt',
-        processed: 'Đã xử lý',
-        delivered: 'Đã giao',
-        cancelled: 'Đã hủy'
+        order_created: 'Đặt hàng thành công',
+        payment_success: 'Thanh toán thành công',
+        order_confirmed: 'Đã xác nhận',
+        shipping: 'Đang giao',
+        delivered: 'Giao hàng thành công',
+        cancelled: 'Đã hủy',
+        new: 'Đặt hàng thành công',
+        processed: 'Đã xác nhận'
     };
 
     global.Cart = {
         mergeGuestCart: mergeGuestCart,
         PAYMENTS: PAYMENTS,
+        PAYMENT_CHANNELS: PAYMENT_CHANNELS,
         STATUS_TEXT: STATUS_TEXT,
         addToCart: addToCart,
         updateQuantity: updateQuantity,
@@ -241,6 +309,7 @@
         getCartTotal: getCartTotal,
         placeOrder: placeOrder,
         getOrderDetail: getOrderDetail,
+        reorderOrder: reorderOrder,
         getMyOrders: getMyOrders
     };
 })(window);

@@ -1,11 +1,14 @@
-/* Product listing, filters, and pagination styles */
+/* Kiểu danh sách sản phẩm, bộ lọc và phân trang */
 
-/* PRODUCTS PAGE */
+/* Trang danh sách sản phẩm */
 
 .breadcrumb {
-    margin-bottom: 14px;
-    color: var(--c-muted);
-    font-size: 14px;
+    margin-bottom: 20px;
+    padding: 15px 20px;
+    border-radius: var(--radius);
+    background: var(--c-white);
+    color: var(--c-text);
+    font-size: 16px;
 }
 
 .breadcrumb a:hover {
@@ -143,7 +146,32 @@
     color: var(--c-muted);
 }
 
-/* PAGINATION */
+.pc-quantity {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 8px;
+    color: var(--c-muted);
+    font-size: 13px;
+}
+
+.pc-quantity input {
+    width: 68px;
+    padding: 7px 8px;
+    border: 1px solid var(--c-border);
+    border-radius: 6px;
+    background: var(--c-white);
+    text-align: center;
+    font: inherit;
+}
+
+.pc-quantity input:focus {
+    outline: 2px solid var(--c-primary);
+    outline-offset: 1px;
+}
+
+/* Phân trang */
 
 .pagination {
     display: flex;
