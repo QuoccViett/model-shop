@@ -1,5 +1,4 @@
 /*TRANG QUẢN LÝ ĐƠN HÀNG*/
-
 .orders-page {
     width: 100%;
     min-width: 0;
@@ -593,4 +592,31 @@
         width: 100%;
     }
 
+}
+/* Trạng thái đơn hàng theo quy trình 5 bước */
+.orders-page .status-order_created, .order-modal-overlay .status-order_created { color:#2563eb; background:#dbeafe; }
+.orders-page .status-order_confirmed, .order-modal-overlay .status-order_confirmed { color:#7c3aed; background:#ede9fe; }
+.orders-page .status-shipping, .order-modal-overlay .status-shipping { color:#c2410c; background:#ffedd5; }
+
+
+/* TRẠNG THÁI THANH TOÁN TRONG CHI TIẾT ĐƠN HÀNG */
+.order-modal-overlay .payment-status-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.order-modal-overlay .payment-status-paid {
+    color: #15803d;
+    background-color: #dcfce7;
+}
+
+.order-modal-overlay .payment-status-unpaid {
+    color: #b45309;
+    background-color: #fef3c7;
 }

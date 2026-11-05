@@ -13,7 +13,7 @@
     >
 
     <link rel="stylesheet" href="../css/admin/index.css">
-    <link rel="stylesheet" href="../css/admin/inventory.css?v=2">
+    <link rel="stylesheet" href="../css/admin/inventory.css?v=3">
 </head>
 
 <body data-root="">
@@ -82,6 +82,51 @@
                     </div>
 
                 </div>
+
+                <!-- CẢNH BÁO CÓ THỂ THU GỌN -->
+                <section class="inventory-panel inventory-warning-panel">
+
+                    <button
+                        type="button"
+                        class="inventory-warning-toggle"
+                        id="inventory-warning-toggle"
+                        aria-expanded="false"
+                        aria-controls="inventory-warning-content"
+                    >
+
+                        <span class="inventory-warning-heading">
+
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+
+                            <span>Cảnh báo tồn kho</span>
+
+                            <span
+                                class="inventory-warning-count"
+                                id="inventory-warning-count"
+                            >0</span>
+
+                        </span>
+
+                        <i
+                            class="fa-solid fa-chevron-down inventory-warning-arrow"
+                        ></i>
+
+                    </button>
+
+                    <div
+                        class="inventory-warning-content"
+                        id="inventory-warning-content"
+                        hidden
+                    >
+
+                        <div
+                            id="inventory-warning-list"
+                            class="inventory-warning-list"
+                        ></div>
+
+                    </div>
+
+                </section>
 
                 <!-- BỘ LỌC -->
                 <section class="inventory-panel">
@@ -152,51 +197,6 @@
 
                 </section>
 
-                <!-- CẢNH BÁO CÓ THỂ THU GỌN -->
-                <section class="inventory-panel inventory-warning-panel">
-
-                    <button
-                        type="button"
-                        class="inventory-warning-toggle"
-                        id="inventory-warning-toggle"
-                        aria-expanded="false"
-                        aria-controls="inventory-warning-content"
-                    >
-
-                        <span class="inventory-warning-heading">
-
-                            <i class="fa-solid fa-triangle-exclamation"></i>
-
-                            <span>Cảnh báo tồn kho</span>
-
-                            <span
-                                class="inventory-warning-count"
-                                id="inventory-warning-count"
-                            >0</span>
-
-                        </span>
-
-                        <i
-                            class="fa-solid fa-chevron-down inventory-warning-arrow"
-                        ></i>
-
-                    </button>
-
-                    <div
-                        class="inventory-warning-content"
-                        id="inventory-warning-content"
-                        hidden
-                    >
-
-                        <div
-                            id="inventory-warning-list"
-                            class="inventory-warning-list"
-                        ></div>
-
-                    </div>
-
-                </section>
-
                 <!-- BẢNG NHẬP - XUẤT - TỒN -->
                 <section class="inventory-panel">
 
@@ -245,7 +245,7 @@
     <script src="../js/data.js"></script>
     <script src="../js/common.js"></script>
     <script src="../js/admin/layout.js"></script>
-    <script src="../js/admin/inventory.js?v=2"></script>
+    <script src="../js/admin/inventory.js?v=3"></script>
 
 </body>
 </html>

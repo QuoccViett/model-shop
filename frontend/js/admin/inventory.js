@@ -1,89 +1,38 @@
 /* MODEL SHOP - QUẢN LÝ TỒN KHO */
-
 (function () {
     'use strict';
 
-    // KIỂM TRA HỆ THỐNG
-    if (
-        !window.Shop ||
-        typeof Shop.loadDB !== 'function'
-    ) {
-        console.error(
-            'Không tìm thấy Shop.loadDB(). ' +
-            'Kiểm tra data.js và common.js.'
-        );
-
+    if (!window.Shop || typeof Shop.loadDB !== 'function') {
+        console.error('Không tìm thấy Shop.loadDB(). Kiểm tra data.js và common.js.');
         return;
     }
 
     const page = document.querySelector('.inventory-page');
+    if (!page) return;
 
-    if (!page) {
-        console.error('Không tìm thấy .inventory-page');
-        return;
-    }
+    const $ = function (id) { return document.getElementById(id); };
 
-    // LẤY PHẦN TỬ HTML
-    const searchInput =
-        document.getElementById('inventory-search');
+    const searchInput = $('inventory-search');
+    const categorySelect = $('inventory-category');
+    const fromInput = $('inventory-from');
+    const toInput = $('inventory-to');
+    const resetButton = $('inventory-reset');
+    const tableBody = $('inventory-table-body');
+    const tableFooter = $('inventory-table-footer');
+    const warningList = $('inventory-warning-list');
+    const warningToggle = $('inventory-warning-toggle');
+    const warningContent = $('inventory-warning-content');
+    const warningCount = $('inventory-warning-count');
+    const periodNote = $('inventory-period-note');
+    const dataNote = $('inventory-data-note');
+    const statTotal = $('stat-total');
+    const statInStock = $('stat-in-stock');
+    const statLowStock = $('stat-low-stock');
+    const statOutStock = $('stat-out-stock');
 
-    const categorySelect =
-        document.getElementById('inventory-category');
-
-    const fromInput =
-        document.getElementById('inventory-from');
-
-    const toInput =
-        document.getElementById('inventory-to');
-
-    const resetButton =
-        document.getElementById('inventory-reset');
-
-    const tableBody =
-        document.getElementById('inventory-table-body');
-
-    const tableFooter =
-        document.getElementById('inventory-table-footer');
-
-    const warningList =
-        document.getElementById('inventory-warning-list');
-
-    const warningToggle =
-        document.getElementById('inventory-warning-toggle');
-
-    const warningContent =
-        document.getElementById('inventory-warning-content');
-
-    const warningCount =
-        document.getElementById('inventory-warning-count');
-
-    const periodNote =
-        document.getElementById('inventory-period-note');
-
-    const dataNote =
-        document.getElementById('inventory-data-note');
-
-    const statTotal =
-        document.getElementById('stat-total');
-
-    const statInStock =
-        document.getElementById('stat-in-stock');
-
-    const statLowStock =
-        document.getElementById('stat-low-stock');
-
-    const statOutStock =
-        document.getElementById('stat-out-stock');
-
-
-    // CẤU HÌNH
     const DEFAULT_LOW_STOCK = 5;
+    const numberFormatter = new Intl.NumberFormat('vi-VN');
 
-    const numberFormatter =
-        new Intl.NumberFormat('vi-VN');
-
-
-    // HÀM HỖ TRỢ
     function escapeHTML(value) {
         return String(value ?? '')
             .replace(/&/g, '&amp;')
@@ -103,61 +52,43 @@
             .trim();
     }
 
+    function number(value) {
+        const result = Number(value);
+        return Number.isFinite(result) ? result : 0;
+    }
+
     function formatNumber(value) {
-        return numberFormatter.format(
-            Number(value) || 0
-        );
+        return numberFormatter.format(number(value));
     }
 
     function getToday() {
-        const date = new Date();
-
-        const year = date.getFullYear();
-
-        const month = String(
-            date.getMonth() + 1
-        ).padStart(2, '0');
-
-        const day = String(
-            date.getDate()
-        ).padStart(2, '0');
-
+        const d = new Date();
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
         return `${year}-${month}-${day}`;
     }
 
+    function toDateKey(value) {
+        const key = String(value ?? '').trim().slice(0, 10);
+        return /^\d{4}-\d{2}-\d{2}$/.test(key) ? key : '';
+    }
+
     function formatDate(value) {
-        if (!value) return '—';
-
-        const parts = String(value)
-            .slice(0, 10)
-            .split('-');
-
-        if (parts.length !== 3) {
-            return String(value);
-        }
-
-        return (
-            parts[2] + '/' +
-            parts[1] + '/' +
-            parts[0]
-        );
+        const key = toDateKey(value);
+        if (!key) return '—';
+        const [year, month, day] = key.split('-');
+        return `${day}/${month}/${year}`;
     }
 
     function getDB() {
-        const db = Shop.loadDB() || {};
-
+        const source = Shop.loadDB() || {};
         return {
-            products: Array.isArray(db.products)
-                ? db.products
-                : [],
-
-            categories: Array.isArray(db.categories)
-                ? db.categories
-                : [],
-
-            stock_movements: Array.isArray(db.stock_movements)
-                ? db.stock_movements
-                : []
+            products: Array.isArray(source.products) ? source.products : [],
+            categories: Array.isArray(source.categories) ? source.categories : [],
+            stock_movements: Array.isArray(source.stock_movements) ? source.stock_movements : [],
+            import_receipts: Array.isArray(source.import_receipts) ? source.import_receipts : [],
+            import_receipt_items: Array.isArray(source.import_receipt_items) ? source.import_receipt_items : []
         };
     }
 
@@ -166,826 +97,396 @@
     }
 
     function getProductName(product) {
-        return (
-            product.name ||
-            product.product_name ||
-            'Chưa có tên'
-        );
+        return product.name || product.product_name || 'Chưa có tên';
     }
 
     function getProductCode(product) {
-        return (
-            product.sku ||
-            product.code ||
-            `SP${product.id}`
-        );
+        return product.code || product.sku || `SP${product.id}`;
     }
 
     function getCurrentStock(product) {
-        const value = Number(
-            product.stock_qty ??
-            product.stock_quantity ??
-            product.quantity ??
-            0
-        );
-
-        return Number.isFinite(value)
-            ? value
-            : 0;
+        return number(product.stock_qty ?? product.stock_quantity ?? product.quantity ?? 0);
     }
 
     function getLowStockThreshold(product) {
-        const value = Number(
-            product.low_stock_threshold ??
-            product.min_stock ??
-            DEFAULT_LOW_STOCK
-        );
-
-        return (
-            Number.isFinite(value) &&
-            value >= 0
-        )
-            ? value
-            : DEFAULT_LOW_STOCK;
+        const value = Number(product.low_stock_threshold ?? product.min_stock ?? DEFAULT_LOW_STOCK);
+        return Number.isFinite(value) && value >= 0 ? value : DEFAULT_LOW_STOCK;
     }
 
     function getCategoryId(product) {
-        return String(
-            product.category_id ??
-            product.categoryId ??
-            ''
-        );
+        return String(product.category_id ?? product.categoryId ?? '');
     }
 
     function getCategoryName(product, db) {
         const categoryId = getCategoryId(product);
-
-        const category = db.categories.find(
-            function (item) {
-                return String(item.id) === categoryId;
-            }
-        );
-
-        if (category) {
-            return (
-                category.name ||
-                category.category_name ||
-                'Khác'
-            );
-        }
-
-        return (
-            product.category_name ||
-            'Chưa phân loại'
-        );
+        const category = db.categories.find(item => String(item.id) === categoryId);
+        return category
+            ? (category.name || category.category_name || 'Khác')
+            : (product.category_name || 'Chưa phân loại');
     }
 
-    // RẠNG THÁI TỒN KHO
     function getStockStatus(product) {
         const quantity = getCurrentStock(product);
-
-        const threshold =
-            getLowStockThreshold(product);
-
-        if (quantity <= 0) {
-            return {
-                code: 'out-stock',
-                text: 'Hết hàng'
-            };
-        }
-
-        if (quantity <= threshold) {
-            return {
-                code: 'low-stock',
-                text: 'Sắp hết hàng'
-            };
-        }
-
-        return {
-            code: 'in-stock',
-            text: 'Còn hàng'
-        };
+        if (quantity <= 0) return { code: 'out-stock', text: 'Hết hàng' };
+        if (quantity <= getLowStockThreshold(product)) return { code: 'low-stock', text: 'Sắp hết hàng' };
+        return { code: 'in-stock', text: 'Còn hàng' };
     }
 
     function stockBadge(product) {
         const status = getStockStatus(product);
-
-        return `
-            <span class="stock-badge ${status.code}">
-                ${status.text}
-            </span>
-        `;
+        return `<span class="stock-badge ${status.code}">${status.text}</span>`;
     }
 
-    // XỬ LÝ LỊCH SỬ NHẬP XUẤT
-    function getMovementDelta(movement) {
-        const quantity = Number(
-            movement.quantity ?? 0
+    function getAllMovements(db) {
+        const movements = [];
+        const completedReceipts = db.import_receipts.filter(
+            receipt => receipt.status === 'completed'
         );
 
-        if (!Number.isFinite(quantity)) {
-            return 0;
-        }
-
-        const type = normalize(
-            movement.movement_type || ''
+        const completedReceiptIds = new Set(
+            completedReceipts.map(receipt => String(receipt.id))
         );
 
-        const exportTypes = [
-            'export',
-            'out',
-            'sale',
-            'xuat'
-        ];
+        completedReceipts.forEach(receipt => {
+            const receiptDate = toDateKey(receipt.import_date);
+            if (!receiptDate) return;
 
-        const importTypes = [
-            'import',
-            'in',
-            'purchase',
-            'nhap',
-            'cancel_return',
-            'return'
-        ];
+            db.import_receipt_items
+                .filter(item => String(item.receipt_id) === String(receipt.id))
+                .forEach(item => {
+                    const quantity = Math.abs(number(item.quantity));
+                    if (!quantity) return;
 
-        if (exportTypes.includes(type)) {
-            return -Math.abs(quantity);
-        }
+                    movements.push({
+                        productId: String(item.product_id),
+                        date: receiptDate,
+                        delta: quantity,
+                        type: 'import',
+                        source: 'import_receipt',
+                        refId: String(receipt.id)
+                    });
+                });
+        });
 
-        if (importTypes.includes(type)) {
-            return Math.abs(quantity);
-        }
+        db.stock_movements.forEach(movement => {
+            const refType = normalize(movement.ref_type || '');
+            const refId = String(movement.ref_id ?? '');
 
-        // Với giao dịch điều chỉnh:
-        // số dương là tăng, số âm là giảm.
-        return quantity;
-    }
-
-    function getMovementDate(movement) {
-        return String(
-            movement.movement_date ||
-            movement.created_at ||
-            movement.date ||
-            ''
-        ).slice(0, 10);
-    }
-
-    function getProductMovements(product, db) {
-        const productId = getProductId(product);
-
-        return db.stock_movements
-            .filter(function (movement) {
-                return (
-                    String(movement.product_id) ===
-                    productId
-                );
-            })
-            .map(function (movement) {
-                return {
-                    date: getMovementDate(movement),
-                    delta: getMovementDelta(movement)
-                };
-            })
-            .filter(function (movement) {
-                return /^\d{4}-\d{2}-\d{2}$/.test(
-                    movement.date
-                );
-            })
-            .sort(function (a, b) {
-                return a.date.localeCompare(b.date);
-            });
-    }
-
-    // TÍNH NHẬP - XUẤT - TỒN
-    function calculateInventory(
-        product,
-        db,
-        fromDate,
-        toDate
-    ) {
-        const currentStock =
-            getCurrentStock(product);
-
-        const movements =
-            getProductMovements(product, db);
-
-        const today = getToday();
-
-        const effectiveEnd = toDate || today;
-
-        // Tổng biến động từ đầu lịch sử
-        // đến thời điểm hiện tại.
-
-        const totalMovement = movements.reduce(
-            function (sum, movement) {
-                if (movement.date <= today) {
-                    return sum + movement.delta;
-                }
-
-                return sum;
-            },
-            0
-        );
-
-        // Suy ra tồn trước giao dịch đầu tiên.
-        // Cần lịch sử đầy đủ để có kết quả chính xác.
-
-        const initialStock =
-            currentStock - totalMovement;
-
-        let openingStock = initialStock;
-
-        // Nếu chọn ngày bắt đầu:
-        // tồn đầu kỳ là tồn trước ngày đó.
-
-        if (fromDate) {
-            for (const movement of movements) {
-                if (movement.date < fromDate) {
-                    openingStock += movement.delta;
-                }
-            }
-        }
-
-        let totalImport = 0;
-        let totalExport = 0;
-
-        // Tính tổng nhập xuất trong kỳ.
-
-        for (const movement of movements) {
-            if (movement.date > effectiveEnd) {
-                continue;
-            }
-
+            // Phiếu nhập đã được lấy từ import_receipts/items ở trên.
             if (
-                fromDate &&
-                movement.date < fromDate
+                refType === 'import_receipt' ||
+                refType === 'import-receipt' ||
+                (completedReceiptIds.has(refId) && refType.includes('receipt'))
             ) {
-                continue;
+                return;
             }
 
-            if (movement.delta > 0) {
-                totalImport += movement.delta;
+            const date = toDateKey(movement.movement_date);
+            if (!date) return;
+
+            const quantity = number(movement.quantity);
+            const type = normalize(movement.movement_type || '');
+            let delta = quantity;
+
+            if (['export', 'out', 'sale', 'xuat'].includes(type)) {
+                delta = -Math.abs(quantity);
+            } else if (['import', 'in', 'purchase', 'nhap', 'cancel_return', 'return'].includes(type)) {
+                delta = Math.abs(quantity);
             }
 
-            if (movement.delta < 0) {
-                totalExport += Math.abs(
-                    movement.delta
-                );
-            }
+            if (!delta) return;
+
+            movements.push({
+                productId: String(movement.product_id),
+                date: date,
+                delta: delta,
+                type: type || 'adjustment',
+                source: 'stock_movement',
+                refId: refId
+            });
+        });
+
+        return movements.sort((a, b) => {
+            const byDate = a.date.localeCompare(b.date);
+            return byDate || a.productId.localeCompare(b.productId);
+        });
+    }
+
+    function getProductMovements(product, allMovements) {
+        const id = getProductId(product);
+        return allMovements.filter(movement => movement.productId === id);
+    }
+
+    function calculateInventory(product, allMovements, fromDate, toDate) {
+        const today = getToday();
+        const endDate = toDate || today;
+        const movements = getProductMovements(product, allMovements)
+            .filter(movement => movement.date <= today);
+
+        const currentStock = getCurrentStock(product);
+        const totalMovementToDate = movements.reduce(
+            (sum, movement) => sum + movement.delta, 0
+        );
+
+        const initialStock = currentStock - totalMovementToDate;
+
+        let opening = initialStock;
+        if (fromDate) {
+            movements.forEach(movement => {
+                if (movement.date < fromDate) opening += movement.delta;
+            });
         }
 
-        const endingStock =
-            openingStock +
-            totalImport -
-            totalExport;
+        let imported = 0;
+        let exported = 0;
+
+        movements.forEach(movement => {
+            if (movement.date > endDate) return;
+            if (fromDate && movement.date < fromDate) return;
+
+            if (movement.delta > 0) imported += movement.delta;
+            if (movement.delta < 0) exported += Math.abs(movement.delta);
+        });
 
         return {
-            opening: openingStock,
-            imported: totalImport,
-            exported: totalExport,
-            ending: endingStock,
+            opening: opening,
+            imported: imported,
+            exported: exported,
+            ending: opening + imported - exported,
             current: currentStock
         };
     }
 
-    //  HIỂN THỊ DANH MỤC
-    function renderCategories() {
-        const db = getDB();
-
+    function renderCategories(db) {
         const categories = new Map();
 
-        for (const category of db.categories) {
+        db.categories.forEach(category => {
             categories.set(
                 String(category.id),
-
-                category.name ||
-                category.category_name ||
-                'Khác'
+                category.name || category.category_name || 'Khác'
             );
-        }
+        });
 
-        for (const product of db.products) {
+        db.products.forEach(product => {
             const id = getCategoryId(product);
-
             if (id && !categories.has(id)) {
-                categories.set(
-                    id,
-                    getCategoryName(product, db)
-                );
+                categories.set(id, getCategoryName(product, db));
             }
-        }
+        });
 
-        const options = Array.from(
-            categories.entries()
-        )
-            .sort(function (a, b) {
-                return a[1].localeCompare(
-                    b[1],
-                    'vi'
-                );
-            })
-            .map(function ([id, name]) {
-                return `
-                    <option value="${escapeHTML(id)}">
-                        ${escapeHTML(name)}
-                    </option>
-                `;
-            })
+        const previousValue = categorySelect.value || 'all';
+        const options = Array.from(categories.entries())
+            .sort((a, b) => a[1].localeCompare(b[1], 'vi'))
+            .map(([id, name]) => (
+                `<option value="${escapeHTML(id)}">${escapeHTML(name)}</option>`
+            ))
             .join('');
 
-        categorySelect.innerHTML = `
-            <option value="all">
-                Tất cả loại sản phẩm
-            </option>
+        categorySelect.innerHTML =
+            `<option value="all">Tất cả loại sản phẩm</option>${options}`;
 
-            ${options}
-        `;
+        categorySelect.value = categories.has(previousValue) ? previousValue : 'all';
     }
-
-    // ======================================
-    // 9. LỌC SẢN PHẨM
-    // ======================================
 
     function getFilteredProducts(db) {
-        const keyword = normalize(
-            searchInput.value
-        );
+        const keyword = normalize(searchInput.value);
+        const categoryId = categorySelect.value || 'all';
 
-        const categoryId =
-            categorySelect.value;
-
-        return db.products.filter(
-            function (product) {
-
-                // Lọc danh mục
-                if (
-                    categoryId !== 'all' &&
-                    getCategoryId(product) !== categoryId
-                ) {
-                    return false;
-                }
-
-                // Tìm kiếm mã và tên
-                if (keyword) {
-                    const searchText = normalize(
-                        getProductCode(product) + ' ' +
-                        getProductName(product)
-                    );
-
-                    if (!searchText.includes(keyword)) {
-                        return false;
-                    }
-                }
-
-                return true;
+        return db.products.filter(product => {
+            if (categoryId !== 'all' && getCategoryId(product) !== categoryId) {
+                return false;
             }
-        );
+
+            if (keyword) {
+                const text = normalize(`${getProductCode(product)} ${getProductName(product)}`);
+                if (!text.includes(keyword)) return false;
+            }
+
+            return true;
+        });
     }
 
-    // THỐNG KÊ TỒN KHO
     function renderStatistics(products) {
         let inStock = 0;
         let lowStock = 0;
         let outStock = 0;
 
-        for (const product of products) {
+        products.forEach(product => {
             const status = getStockStatus(product);
+            if (status.code === 'in-stock') inStock++;
+            else if (status.code === 'low-stock') lowStock++;
+            else outStock++;
+        });
 
-            if (status.code === 'in-stock') {
-                inStock++;
-            } else if (
-                status.code === 'low-stock'
-            ) {
-                lowStock++;
-            } else {
-                outStock++;
-            }
-        }
-
-        statTotal.textContent =
-            formatNumber(products.length);
-
-        statInStock.textContent =
-            formatNumber(inStock);
-
-        statLowStock.textContent =
-            formatNumber(lowStock);
-
-        statOutStock.textContent =
-            formatNumber(outStock);
+        statTotal.textContent = formatNumber(products.length);
+        statInStock.textContent = formatNumber(inStock);
+        statLowStock.textContent = formatNumber(lowStock);
+        statOutStock.textContent = formatNumber(outStock);
     }
 
-    // HIỂN THỊ CẢNH BÁO TỒN KHO
     function renderWarnings(products) {
-        const warningProducts = products
-            .filter(function (product) {
-                const status = getStockStatus(product);
+        const warnings = products
+            .filter(product => getStockStatus(product).code !== 'in-stock')
+            .sort((a, b) => getCurrentStock(a) - getCurrentStock(b));
 
-                return status.code !== 'in-stock';
-            })
-            .sort(function (a, b) {
-                return (
-                    getCurrentStock(a) -
-                    getCurrentStock(b)
-                );
-            });
+        warningCount.textContent = formatNumber(warnings.length);
+        warningCount.classList.toggle('is-empty', warnings.length === 0);
 
-        // Cập nhật số lượng cảnh báo.
-        warningCount.textContent =
-            formatNumber(warningProducts.length);
-
-        warningCount.classList.toggle(
-            'is-empty',
-            warningProducts.length === 0
-        );
-
-        // Không có sản phẩm cần cảnh báo.
-        if (warningProducts.length === 0) {
+        if (!warnings.length) {
             warningList.innerHTML = `
                 <div class="inventory-no-warning">
-
                     <i class="fa-solid fa-circle-check"></i>
-
-                    Không có sản phẩm sắp hết
-                    hoặc hết hàng.
-
-                </div>
-            `;
-
+                    Không có sản phẩm sắp hết hoặc hết hàng.
+                </div>`;
             return;
         }
 
-        // Hiển thị danh sách cảnh báo.
-        warningList.innerHTML = warningProducts
-            .map(function (product) {
+        warningList.innerHTML = warnings.map(product => {
+            const status = getStockStatus(product);
+            const isOut = status.code === 'out-stock';
 
-                const status =
-                    getStockStatus(product);
-
-                const quantity =
-                    getCurrentStock(product);
-
-                const threshold =
-                    getLowStockThreshold(product);
-
-                const isOut =
-                    status.code === 'out-stock';
-
-                return `
-                    <div class="inventory-warning-item ${
-                        isOut ? 'out' : ''
-                    }">
-
-                        <div>
-
-                            <strong>
-                                ${escapeHTML(
-                                    getProductName(product)
-                                )}
-                            </strong>
-
-                            <p>
-                                Mã SP:
-                                ${escapeHTML(
-                                    getProductCode(product)
-                                )}
-
-                                |
-
-                                Ngưỡng cảnh báo:
-                                ${formatNumber(threshold)}
-                            </p>
-
-                        </div>
-
-                        <div class="inventory-warning-quantity">
-
-                            ${status.text}
-
-                            <br>
-
-                            Còn ${formatNumber(quantity)}
-
-                        </div>
-
+            return `
+                <div class="inventory-warning-item ${isOut ? 'out' : ''}">
+                    <div>
+                        <strong>${escapeHTML(getProductName(product))}</strong>
+                        <p>
+                            Mã SP: ${escapeHTML(getProductCode(product))}
+                            | Ngưỡng cảnh báo: ${formatNumber(getLowStockThreshold(product))}
+                        </p>
                     </div>
-                `;
-            })
-            .join('');
+                    <div class="inventory-warning-quantity">
+                        ${status.text}<br>Còn ${formatNumber(getCurrentStock(product))}
+                    </div>
+                </div>`;
+        }).join('');
     }
 
-    // THU GỌN / MỞ RỘNG CẢNH BÁO
     function setWarningExpanded(expanded) {
-        warningToggle.setAttribute(
-            'aria-expanded',
-            String(expanded)
-        );
-
+        warningToggle.setAttribute('aria-expanded', String(expanded));
         warningContent.hidden = !expanded;
     }
 
-    // Mặc định thu gọn.
-    setWarningExpanded(false);
-
-    warningToggle.addEventListener(
-        'click',
-        function () {
-
-            const isExpanded =
-                warningToggle.getAttribute(
-                    'aria-expanded'
-                ) === 'true';
-
-            setWarningExpanded(!isExpanded);
-        }
-    );
-
-    // HIỂN THỊ BẢNG NHẬP XUẤT TỒN
-    function renderInventoryTable(
-        products,
-        db,
-        fromDate,
-        toDate
-    ) {
-        if (products.length === 0) {
+    function renderInventoryTable(products, db, allMovements, fromDate, toDate) {
+        if (!products.length) {
             tableBody.innerHTML = `
-                <tr>
-                    <td colspan="8" class="empty-row">
-                        Không tìm thấy sản phẩm phù hợp.
-                    </td>
-                </tr>
-            `;
-
+                <tr><td colspan="8" class="empty-row">Không tìm thấy sản phẩm phù hợp.</td></tr>`;
             tableFooter.innerHTML = '';
-
             return;
         }
 
-        let sumOpening = 0;
-        let sumImport = 0;
-        let sumExport = 0;
-        let sumEnding = 0;
+        const totals = { opening: 0, imported: 0, exported: 0, ending: 0 };
 
-        tableBody.innerHTML = products
-            .map(function (product) {
+        tableBody.innerHTML = products.map(product => {
+            const result = calculateInventory(product, allMovements, fromDate, toDate);
 
-                const result = calculateInventory(
-                    product,
-                    db,
-                    fromDate,
-                    toDate
-                );
+            totals.opening += result.opening;
+            totals.imported += result.imported;
+            totals.exported += result.exported;
+            totals.ending += result.ending;
 
-                sumOpening += result.opening;
-                sumImport += result.imported;
-                sumExport += result.exported;
-                sumEnding += result.ending;
+            return `
+                <tr>
+                    <td>${escapeHTML(getProductCode(product))}</td>
+                    <td class="product-name">${escapeHTML(getProductName(product))}</td>
+                    <td>${escapeHTML(getCategoryName(product, db))}</td>
+                    <td class="number">${formatNumber(result.opening)}</td>
+                    <td class="number stock-in">${formatNumber(result.imported)}</td>
+                    <td class="number stock-out">${formatNumber(result.exported)}</td>
+                    <td class="number stock-ending">${formatNumber(result.ending)}</td>
+                    <td>${stockBadge(product)}</td>
+                </tr>`;
+        }).join('');
 
-                return `
-                    <tr>
-
-                        <td>
-                            ${escapeHTML(
-                                getProductCode(product)
-                            )}
-                        </td>
-
-                        <td class="product-name">
-                            ${escapeHTML(
-                                getProductName(product)
-                            )}
-                        </td>
-
-                        <td>
-                            ${escapeHTML(
-                                getCategoryName(product, db)
-                            )}
-                        </td>
-
-                        <td class="number">
-                            ${formatNumber(result.opening)}
-                        </td>
-
-                        <td class="number stock-in">
-                            ${formatNumber(result.imported)}
-                        </td>
-
-                        <td class="number stock-out">
-                            ${formatNumber(result.exported)}
-                        </td>
-
-                        <td class="number stock-ending">
-                            ${formatNumber(result.ending)}
-                        </td>
-
-                        <td>
-                            ${stockBadge(product)}
-                        </td>
-
-                    </tr>
-                `;
-            })
-            .join('');
-
-        // Tổng cộng.
         tableFooter.innerHTML = `
             <tr>
-
-                <td colspan="3">
-                    TỔNG CỘNG
-                </td>
-
-                <td class="number">
-                    ${formatNumber(sumOpening)}
-                </td>
-
-                <td class="number stock-in">
-                    ${formatNumber(sumImport)}
-                </td>
-
-                <td class="number stock-out">
-                    ${formatNumber(sumExport)}
-                </td>
-
-                <td class="number stock-ending">
-                    ${formatNumber(sumEnding)}
-                </td>
-
+                <td colspan="3">TỔNG CỘNG</td>
+                <td class="number">${formatNumber(totals.opening)}</td>
+                <td class="number stock-in">${formatNumber(totals.imported)}</td>
+                <td class="number stock-out">${formatNumber(totals.exported)}</td>
+                <td class="number stock-ending">${formatNumber(totals.ending)}</td>
                 <td>—</td>
-
-            </tr>
-        `;
+            </tr>`;
     }
 
-    // THÔNG BÁO KHOẢNG THỜI GIAN
     function renderPeriodNote(fromDate, toDate) {
         periodNote.classList.remove('error');
 
         if (!fromDate && !toDate) {
-            periodNote.textContent =
-                'Đang hiển thị toàn bộ lịch sử ' +
-                'nhập – xuất – tồn đến hiện tại.';
-
-            return;
+            periodNote.textContent = 'Đang hiển thị toàn bộ lịch sử nhập – xuất – tồn đến hiện tại.';
+        } else if (fromDate && !toDate) {
+            periodNote.textContent = `Đang hiển thị từ ${formatDate(fromDate)} đến hiện tại.`;
+        } else if (!fromDate && toDate) {
+            periodNote.textContent = `Đang hiển thị từ đầu lịch sử đến ${formatDate(toDate)}.`;
+        } else {
+            periodNote.textContent = `Đang hiển thị từ ${formatDate(fromDate)} đến ${formatDate(toDate)}.`;
         }
-
-        if (fromDate && !toDate) {
-            periodNote.textContent =
-                'Đang hiển thị từ ' +
-                formatDate(fromDate) +
-                ' đến hiện tại.';
-
-            return;
-        }
-
-        if (!fromDate && toDate) {
-            periodNote.textContent =
-                'Đang hiển thị từ đầu lịch sử đến ' +
-                formatDate(toDate) +
-                '.';
-
-            return;
-        }
-
-        periodNote.textContent =
-            'Đang hiển thị từ ' +
-            formatDate(fromDate) +
-            ' đến ' +
-            formatDate(toDate) +
-            '.';
     }
 
-    // KIỂM TRA NGÀY
     function validateDates(fromDate, toDate) {
         const today = getToday();
 
-        if (
-            fromDate &&
-            toDate &&
-            fromDate > toDate
-        ) {
-            return (
-                'Ngày bắt đầu phải trước hoặc ' +
-                'bằng ngày kết thúc.'
-            );
+        if (fromDate && toDate && fromDate > toDate) {
+            return 'Ngày bắt đầu phải trước hoặc bằng ngày kết thúc.';
         }
-
         if (fromDate && fromDate > today) {
-            return (
-                'Ngày bắt đầu không được ' +
-                'lớn hơn ngày hiện tại.'
-            );
+            return 'Ngày bắt đầu không được lớn hơn ngày hiện tại.';
         }
-
         if (toDate && toDate > today) {
-            return (
-                'Ngày kết thúc không được ' +
-                'lớn hơn ngày hiện tại.'
-            );
+            return 'Ngày kết thúc không được lớn hơn ngày hiện tại.';
         }
-
         return '';
     }
 
-
-    // 16. HIỂN THỊ TOÀN BỘ GIAO DIỆN
     function render() {
         const db = getDB();
+        const fromDate = toDateKey(fromInput.value);
+        const toDate = toDateKey(toInput.value);
+        const products = getFilteredProducts(db);
 
-        const fromDate = fromInput.value;
-        const toDate = toInput.value;
-
-        const products =
-            getFilteredProducts(db);
-
-        // Thống kê và cảnh báo dựa trên
-        // tồn kho hiện tại.
         renderStatistics(products);
-
         renderWarnings(products);
 
-        // Kiểm tra ngày.
-        const error = validateDates(
-            fromDate,
-            toDate
-        );
-
+        const error = validateDates(fromDate, toDate);
         if (error) {
             periodNote.classList.add('error');
-
             periodNote.textContent = error;
-
-            tableBody.innerHTML = `
-                <tr>
-                    <td colspan="8" class="empty-row">
-                        ${escapeHTML(error)}
-                    </td>
-                </tr>
-            `;
-
+            tableBody.innerHTML = `<tr><td colspan="8" class="empty-row">${escapeHTML(error)}</td></tr>`;
             tableFooter.innerHTML = '';
-
             dataNote.textContent = '';
-
             return;
         }
 
-        renderPeriodNote(fromDate, toDate);
+        const allMovements = getAllMovements(db);
 
-        renderInventoryTable(
-            products,
-            db,
-            fromDate,
-            toDate
-        );
+        renderPeriodNote(fromDate, toDate);
+        renderInventoryTable(products, db, allMovements, fromDate, toDate);
 
         dataNote.textContent =
-            'Lưu ý: Báo cáo tồn kho trong quá khứ ' +
-            'chỉ chính xác khi lịch sử nhập, xuất ' +
-            'và điều chỉnh tồn kho được ghi nhận ' +
-            'đầy đủ. Trạng thái cảnh báo luôn ' +
-            'phản ánh số lượng tồn hiện tại.';
+            'Ngày nhập trong báo cáo được lấy từ ngày nhập trên phiếu (import_date); ' +
+            'chỉ phiếu đã hoàn thành mới được tính, phiếu nháp không được tính. ' +
+            'Các biến động hoàn kho do hủy đơn được tính là tăng tồn. ' +
+            'Tồn đầu kỳ phụ thuộc vào việc lịch sử biến động kho được ghi nhận đầy đủ.';
     }
 
-    // SỰ KIỆN TÌM KIẾM VÀ LỌC
-    searchInput.addEventListener(
-        'input',
-        render
-    );
+    searchInput.addEventListener('input', render);
+    categorySelect.addEventListener('change', render);
+    fromInput.addEventListener('change', render);
+    toInput.addEventListener('change', render);
 
-    categorySelect.addEventListener(
-        'change',
-        render
-    );
+    resetButton.addEventListener('click', function () {
+        searchInput.value = '';
+        categorySelect.value = 'all';
+        fromInput.value = '';
+        toInput.value = '';
+        render();
+    });
 
-    fromInput.addEventListener(
-        'change',
-        render
-    );
+    warningToggle.addEventListener('click', function () {
+        const expanded = warningToggle.getAttribute('aria-expanded') === 'true';
+        setWarningExpanded(!expanded);
+    });
 
-    toInput.addEventListener(
-        'change',
-        render
-    );
-
-    // ĐẶT LẠI BỘ LỌC
-    resetButton.addEventListener(
-        'click',
-        function () {
-
-            searchInput.value = '';
-
-            categorySelect.value = 'all';
-
-            fromInput.value = '';
-
-            toInput.value = '';
-
-            render();
-        }
-    );
-
-    renderCategories();
-
+    setWarningExpanded(false);
+    renderCategories(getDB());
     render();
-
 })();

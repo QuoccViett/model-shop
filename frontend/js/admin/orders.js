@@ -1,5 +1,4 @@
 /*QUẢN LÝ ĐƠN HÀNG - MODEL SHOP*/
-
 (function () {
     'use strict';
     // KHỞI TẠO
@@ -57,20 +56,24 @@
         );
     }
 
+    function normalizeStatus(status) {
+        return window.ORDER_STATUS ? window.ORDER_STATUS.normalize(status) : ({ new: 'order_created', processed: 'order_confirmed', payment_success: 'order_created' }[status] || status);
+    }
+
     function getStatusText(status) {
         const labels = {
-            new: 'Mới đặt',
-            processed: 'Đã xử lý',
-            delivered: 'Đã giao',
+            order_created: 'Đặt hàng thành công',
+            order_confirmed: 'Đã xác nhận',
+            shipping: 'Đang giao',
+            delivered: 'Giao hàng thành công',
             cancelled: 'Đã hủy'
         };
-
-        return labels[status] || status;
+        return labels[normalizeStatus(status)] || status;
     }
     // HIỂN THỊ MÀU TRẠNG THÁI
     function statusBadge(status) {
         return `
-            <span class="status-badge status-${esc(status)}">
+            <span class="status-badge status-${esc(normalizeStatus(status))}">
                 ${esc(getStatusText(status))}
             </span>
         `;
@@ -84,6 +87,23 @@
         };
 
         return labels[method] || method || '—';
+    }
+    // Trạng thái thanh toán được xác định tự động theo phương thức và trạng thái đơn.
+    // COD chỉ thanh toán khi giao thành công; online đã thanh toán trừ trường hợp đơn bị hủy.
+    function getPaymentStatus(order) {
+        const orderStatus = normalizeStatus(order.status);
+        const paymentMethod = order.payment_method === 'transfer' ? 'online' : order.payment_method;
+
+        if (orderStatus === 'cancelled') return 'unpaid';
+        if (paymentMethod === 'online') return 'paid';
+        if (paymentMethod === 'cod' && orderStatus === 'delivered') return 'paid';
+        return 'unpaid';
+    }
+
+    function paymentStatusBadge(order) {
+        const status = getPaymentStatus(order);
+        const label = status === 'paid' ? 'Đã thanh toán' : 'Chưa thanh toán';
+        return `<span class="payment-status-badge payment-status-${status}">${label}</span>`;
     }
 
     function getOrderItems(orderId, db = getDB()) {
@@ -170,21 +190,11 @@
                                     Tất cả trạng thái
                                 </option>
 
-                                <option value="new">
-                                    Mới đặt
-                                </option>
-
-                                <option value="processed">
-                                    Đã xử lý
-                                </option>
-
-                                <option value="delivered">
-                                    Đã giao
-                                </option>
-
-                                <option value="cancelled">
-                                    Đã hủy
-                                </option>
+                                <option value="order_created">Đặt hàng thành công</option>
+                                <option value="order_confirmed">Đã xác nhận</option>
+                                <option value="shipping">Đang giao</option>
+                                <option value="delivered">Giao hàng thành công</option>
+                                <option value="cancelled">Đã hủy</option>
 
                             </select>
                         </label>
@@ -270,7 +280,7 @@
             // Lọc trạng thái
             if (
                 status !== 'all' &&
-                order.status !== status
+                normalizeStatus(order.status) !== status
             ) {
                 return false;
             }
@@ -569,6 +579,11 @@
                                 ${esc(getPaymentText(order.payment_method))}
                             </div>
 
+                            <div class="detail-item">
+                                <strong>Trạng thái thanh toán:</strong>
+                                ${paymentStatusBadge(order)}
+                            </div>
+
                         </div>
 
                     </div>
@@ -755,336 +770,110 @@
 
     });
 
-    // KIỂM TRA TRẠNG THÁI CUỐI
-
+    // Trạng thái giao thành công và đã hủy là trạng thái kết thúc.
     function isFinalStatus(status) {
-
-        return (
-            status === 'delivered' ||
-            status === 'cancelled'
-        );
+        return ['delivered', 'cancelled'].indexOf(normalizeStatus(status)) !== -1;
     }
 
-    // TẠO DANH SÁCH TRẠNG THÁI
+    // Chỉ hiển thị những trạng thái được phép đi tới từ trạng thái hiện tại.
     function getStatusOptions(currentStatus) {
-
-        if (currentStatus === 'new') {
-
-            return `
-                <option value="new" selected>
-                    Mới đặt
-                </option>
-
-                <option value="processed">
-                    Đã xử lý
-                </option>
-
-                <option value="cancelled">
-                    Đã hủy
-                </option>
-            `;
-        }
-
-        if (currentStatus === 'processed') {
-
-            return `
-                <option value="processed" selected>
-                    Đã xử lý
-                </option>
-
-                <option value="delivered">
-                    Đã giao
-                </option>
-
-                <option value="cancelled">
-                    Đã hủy
-                </option>
-            `;
-        }
-
-        return `
-            <option value="${esc(currentStatus)}" selected>
-                ${esc(getStatusText(currentStatus))}
-            </option>
-        `;
+        const current = normalizeStatus(currentStatus);
+        const transitions = window.ORDER_STATUS ? window.ORDER_STATUS.transitions[current] : [];
+        const options = [current].concat(transitions || []);
+        const labels = {
+            order_created: 'Đặt hàng thành công', order_confirmed: 'Đã xác nhận',
+            shipping: 'Đang giao', delivered: 'Giao hàng thành công', cancelled: 'Đã hủy'
+        };
+        return options.map(function (status) {
+            return '<option value="' + esc(status) + '"' + (status === current ? ' selected' : '') + '>' + esc(labels[status]) + '</option>';
+        }).join('');
     }
 
     // 13. CẬP NHẬT TRẠNG THÁI ĐƠN HÀNG
     function updateOrderStatus(orderId) {
-
         const db = getDB();
-
         const order = findById(db.orders, orderId);
-
-        const modal = document.querySelector(
-            '.order-modal-overlay'
-        );
-
+        const modal = document.querySelector('.order-modal-overlay');
         if (!modal || !order) return;
-
-        const select = modal.querySelector(
-            '#order-next-status'
-        );
-
-        const messageBox = modal.querySelector(
-            '#order-message'
-        );
-
+        const select = modal.querySelector('#order-next-status');
+        const messageBox = modal.querySelector('#order-message');
         if (!select || !messageBox) return;
-
-        const oldStatus = order.status;
-        const newStatus = select.value;
-
-        // HIỂN THỊ THÔNG BÁO
-
-        function showMessage(message, isError = false) {
-
-            messageBox.className =
-                'message ' + (isError ? 'error' : 'success');
-
+        const oldStatus = normalizeStatus(order.status);
+        const newStatus = normalizeStatus(select.value);
+        function showMessage(message, isError) {
+            messageBox.className = 'message ' + (isError ? 'error' : 'success');
             messageBox.textContent = message;
         }
-
-        // Không thay đổi
-        if (oldStatus === newStatus) {
-
-            showMessage(
-                'Trạng thái đơn hàng không thay đổi.',
-                true
-            );
-
-            return;
+        if (oldStatus === newStatus) return showMessage('Trạng thái đơn hàng không thay đổi.', true);
+        if (!window.ORDER_STATUS || !window.ORDER_STATUS.canTransition(oldStatus, newStatus)) {
+            return showMessage('Không thể chuyển trạng thái theo luồng đơn hàng đã quy định.', true);
         }
 
-        // Đơn hàng đã kết thúc
-        if (isFinalStatus(oldStatus)) {
-
-            showMessage(
-                'Đơn hàng đã kết thúc, không thể cập nhật.',
-                true
-            );
-
-            return;
-        }
-
-        // KIỂM TRA CHUYỂN TRẠNG THÁI
-        const validTransition =
-            (
-                oldStatus === 'new' &&
-                (
-                    newStatus === 'processed' ||
-                    newStatus === 'cancelled'
-                )
-            ) ||
-            (
-                oldStatus === 'processed' &&
-                (
-                    newStatus === 'delivered' ||
-                    newStatus === 'cancelled'
-                )
-            );
-
-        if (!validTransition) {
-
-            showMessage(
-                'Không thể chuyển sang trạng thái này.',
-                true
-            );
-
-            return;
-        }
-
-        // Lấy sản phẩm của đơn hàng
         const items = getOrderItems(orderId, db);
-
-        // ỚI ĐẶT -> ĐÃ XỬ LÝ
-        // KIỂM TRA VÀ TRỪ TỒN KHO
-
-        if (
-            oldStatus === 'new' &&
-            newStatus === 'processed'
-        ) {
-
-            const requiredQuantities = new Map();
-
-            // Tổng hợp số lượng từng sản phẩm
+        // Khi xác nhận: kiểm tra đủ hàng, sau đó mới trừ kho (chỉ một lần).
+        if (newStatus === 'order_confirmed') {
+            const required = new Map();
             for (const item of items) {
-
-                const productId = Number(item.product_id);
-                const quantity = Number(item.quantity);
-
-                if (
-                    !Number.isFinite(quantity) ||
-                    quantity <= 0
-                ) {
-
-                    showMessage(
-                        'Số lượng sản phẩm không hợp lệ.',
-                        true
-                    );
-
-                    return;
-                }
-
-                requiredQuantities.set(
-                    productId,
-                    (requiredQuantities.get(productId) || 0) + quantity
-                );
+                const pid = Number(item.product_id), qty = Number(item.quantity);
+                if (!Number.isFinite(qty) || qty <= 0) return showMessage('Số lượng sản phẩm không hợp lệ.', true);
+                required.set(pid, (required.get(pid) || 0) + qty);
             }
-
-            // Kiểm tra đủ tồn kho
-            for (const [productId, quantity] of requiredQuantities) {
-
-                const product = getProduct(productId, db);
-
-                if (!product) {
-
-                    showMessage(
-                        'Có sản phẩm trong đơn hàng không còn tồn tại.',
-                        true
-                    );
-
-                    return;
-                }
-
-                if (
-                    Number(product.stock_qty || 0) < quantity
-                ) {
-
-                    showMessage(
-                        'Sản phẩm ' + product.name +
-                        ' không đủ tồn kho.',
-                        true
-                    );
-
-                    return;
-                }
+            for (const [pid, qty] of required) {
+                const product = getProduct(pid, db);
+                if (!product) return showMessage('Có sản phẩm trong đơn hàng không còn tồn tại.', true);
+                if (Number(product.stock_qty || 0) < qty) return showMessage('Sản phẩm ' + product.name + ' không đủ tồn kho.', true);
             }
-
-            // Trừ tồn kho
-            for (const [productId, quantity] of requiredQuantities) {
-
-                const product = getProduct(productId, db);
-
-                product.stock_qty =
-                    Number(product.stock_qty || 0) - quantity;
-
-                db.stock_movements.push({
-
-                    id: getNextId(db.stock_movements),
-
-                    product_id: product.id,
-
-                    movement_date: todayString(),
-
-                    movement_type: 'export',
-
-                    quantity: -quantity,
-
-                    ref_type: 'order',
-
-                    ref_id: order.id
-
-                });
-            }
-        }
-
-        // ĐÃ XỬ LÝ -> ĐÃ HỦY
-        // HOÀN LẠI TỒN KHO
-
-        if (
-            oldStatus === 'processed' &&
-            newStatus === 'cancelled'
-        ) {
-
-            const returnQuantities = new Map();
-
-            for (const item of items) {
-
-                const productId = Number(item.product_id);
-                const quantity = Number(item.quantity);
-
-                if (
-                    !Number.isFinite(quantity) ||
-                    quantity <= 0
-                ) {
-
-                    showMessage(
-                        'Số lượng sản phẩm không hợp lệ.',
-                        true
-                    );
-
-                    return;
-                }
-
-                returnQuantities.set(
-                    productId,
-                    (returnQuantities.get(productId) || 0) + quantity
-                );
-            }
-
-            // Hoàn lại số lượng sản phẩm
-            for (const [productId, quantity] of returnQuantities) {
-
-                const product = getProduct(productId, db);
-
-                if (product) {
-
-                    product.stock_qty =
-                        Number(product.stock_qty || 0) + quantity;
-
+            const hasExport = db.stock_movements.some(function (m) { return m.movement_type === 'export' && m.ref_type === 'order' && Number(m.ref_id) === Number(order.id); });
+            if (!hasExport) {
+                for (const [pid, qty] of required) {
+                    const product = getProduct(pid, db);
+                    product.stock_qty = Number(product.stock_qty || 0) - qty;
                     db.stock_movements.push({
-
-                        id: getNextId(db.stock_movements),
-
-                        product_id: product.id,
-
-                        movement_date: todayString(),
-
-                        movement_type: 'cancel_return',
-
-                        quantity: quantity,
-
-                        ref_type: 'order',
-
-                        ref_id: order.id
-
+                        id: getNextId(db.stock_movements), product_id: product.id,
+                        movement_date: todayString(), movement_type: 'export', quantity: -qty,
+                        ref_type: 'order', ref_id: order.id
                     });
                 }
             }
         }
 
-        // 16. LƯU TRẠNG THÁI MỚI
-        order.status = newStatus;
-
-        order.updated_at = Shop.nowString();
-
-        Shop.saveDB(db);
-
-        // Cập nhật bảng đơn hàng
-        renderTable();
-
-        // Mở lại popup với trạng thái mới
-        openOrderDetail(orderId);
-
-        // Thông báo thành công
-        const updatedModal = document.querySelector(
-            '.order-modal-overlay'
-        );
-
-        if (updatedModal) {
-
-            const updatedMessage = updatedModal.querySelector(
-                '#order-message'
-            );
-
-            if (updatedMessage) {
-
-                updatedMessage.className = 'message success';
-
-                updatedMessage.textContent =
-                    'Cập nhật trạng thái đơn hàng thành công!';
+        // Hủy ở bất kỳ bước nào sau khi xác nhận/giao: chỉ hoàn kho nếu đã xuất kho.
+        if (newStatus === 'cancelled') {
+            const movements = db.stock_movements.filter(function (m) { return m.ref_type === 'order' && Number(m.ref_id) === Number(order.id); });
+            const hasExport = movements.some(function (m) { return m.movement_type === 'export'; });
+            const alreadyReturned = movements.some(function (m) { return m.movement_type === 'cancel_return'; });
+            if (hasExport && !alreadyReturned) {
+                const quantities = new Map();
+                items.forEach(function (item) {
+                    const pid = Number(item.product_id), qty = Number(item.quantity);
+                    quantities.set(pid, (quantities.get(pid) || 0) + qty);
+                });
+                for (const [pid, qty] of quantities) {
+                    const product = getProduct(pid, db);
+                    if (!product) continue;
+                    product.stock_qty = Number(product.stock_qty || 0) + qty;
+                    db.stock_movements.push({
+                        id: getNextId(db.stock_movements), product_id: product.id,
+                        movement_date: todayString(), movement_type: 'cancel_return', quantity: qty,
+                        ref_type: 'order', ref_id: order.id
+                    });
+                }
             }
+        }
+
+        order.status = newStatus;
+        order.updated_at = Shop.nowString();
+        Shop.saveDB(db);
+        window.dispatchEvent(new CustomEvent('modelshop:orders-updated'));
+        renderTable();
+        openOrderDetail(orderId);
+        const updatedModal = document.querySelector('.order-modal-overlay');
+        const updatedMessage = updatedModal && updatedModal.querySelector('#order-message');
+        if (updatedMessage) {
+            updatedMessage.className = 'message success';
+            updatedMessage.textContent = newStatus === 'cancelled'
+                ? 'Đã hủy đơn hàng. Tồn kho được hoàn lại nếu đơn đã xuất kho; doanh thu và lợi nhuận sẽ tự loại đơn này.'
+                : 'Cập nhật trạng thái đơn hàng thành công!';
         }
     }
 
