@@ -1,5 +1,6 @@
 /*
    prices.js - TRANG QUẢN LÝ GIÁ BÁN (giao diện)
+   Khung HTML nằm ở admin/prices.html, file này chỉ đổ dữ liệu và xử lý sự kiện.
    Nghiệp vụ nằm ở js/admin/shop-prices.js
 */
 (function () {
@@ -19,81 +20,17 @@
         return Shop.findById(Shop.loadDB().categories || [], id);
     }
 
-    function categoryOptions() {
-        return Shop.getAllCategories().map(function (c) {
-            return '<option value="' + c.id + '">' + esc(c.name) + '</option>';
-        }).join('');
+    // Đổ danh sách loại vào ô chọn lọc (khung <select> nằm sẵn trong prices.html)
+    function fillCategorySelect() {
+        const select = document.getElementById('price-category');
+        Shop.getAllCategories().forEach(function (c) {
+            const opt = document.createElement('option');
+            opt.value = c.id;
+            opt.textContent = c.name;
+            select.appendChild(opt);
+        });
     }
-
-    const pageHTML = `
-        <div class="dashboard-content">
-            <div class="page-title">
-                <h1>Quản lý giá bán</h1>
-                <p>Trang chủ / Quản lý giá bán</p>
-            </div>
-
-            <div class="price-hint">
-                <strong>Cách tính:</strong> giá bán = giá vốn x (1 + % lợi nhuận ÷ 100), làm tròn đến nghìn đồng.<br>
-                <strong>Ưu tiên:</strong> % lợi nhuận riêng của sản phẩm được dùng trước. Sản phẩm để trống ô % riêng sẽ dùng % của loại.<br>
-                Giá vốn do phiếu nhập hàng quyết định, sản phẩm chưa nhập hàng thì chưa có giá bán.
-            </div>
-
-            <div class="data-table-section price-section">
-                <h3>1. % lợi nhuận theo loại sản phẩm</h3>
-                <p class="section-note">Áp dụng cho mọi sản phẩm trong loại chưa có % riêng.</p>
-                <div class="table-responsive">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Loại sản phẩm</th>
-                                <th>Số sản phẩm</th>
-                                <th>Số sản phẩm có % riêng</th>
-                                <th>% lợi nhuận của loại</th>
-                                <th>Trạng thái</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody id="category-price-body"></tbody>
-                    </table>
-                </div>
-            </div>
-
-            <div class="data-table-section price-section">
-                <h3>2. Giá vốn, % lợi nhuận và giá bán theo sản phẩm</h3>
-                <p class="section-note">Gõ % riêng rồi bấm Lưu (hoặc Enter). Giá bán xem trước ngay khi gõ.</p>
-                <div class="table-actions-bar">
-                    <div class="search-filter-group import-filters-inline">
-                        <input type="text" id="price-search" placeholder="Tìm theo mã hoặc tên sản phẩm...">
-                        <select id="price-category">
-                            <option value="all">Tất cả loại</option>
-                            ${categoryOptions()}
-                        </select>
-                    </div>
-                    <span class="muted" id="price-count"></span>
-                </div>
-                <div class="table-responsive">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Mã</th>
-                                <th>Tên sản phẩm</th>
-                                <th>Loại</th>
-                                <th class="text-right">Giá vốn</th>
-                                <th>% lợi nhuận riêng</th>
-                                <th>% đang áp dụng</th>
-                                <th class="text-right">Giá bán</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody id="product-price-body"></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-        <div class="price-toast" id="price-toast"></div>
-    `;
-
-    mainContent.insertAdjacentHTML('beforeend', pageHTML);
+    fillCategorySelect();
 
     const categoryBody = document.getElementById('category-price-body');
     const productBody = document.getElementById('product-price-body');

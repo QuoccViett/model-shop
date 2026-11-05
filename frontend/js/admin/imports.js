@@ -1,7 +1,8 @@
 /*
    imports.js - TRANG QUẢN LÝ NHẬP HÀNG (giao diện)
+   Khung HTML (bảng, form, modal) nằm ở admin/imports.html, file này chỉ đổ dữ liệu và xử lý sự kiện.
    Nghiệp vụ nằm ở js/admin/shop-imports.js (Shop.addReceipt, Shop.completeReceipt...)
-    */
+*/
 (function () {
     'use strict';
     const mainContent = document.querySelector('.admin-main');
@@ -28,110 +29,6 @@
             ? '<span class="status-badge active">Đã hoàn thành</span>'
             : '<span class="status-badge draft">Nháp - chưa hoàn thành</span>';
     }
-
-    const pageHTML = `
-        <div class="dashboard-content">
-            <div class="page-title">
-                <h1>Quản lý nhập hàng</h1>
-                <p>Trang chủ / Quản lý nhập hàng</p>
-            </div>
-
-            <div class="data-table-section">
-                <div class="table-actions-bar">
-                    <div class="search-filter-group import-filters">
-                        <input type="text" id="imp-search" placeholder="Tìm theo mã phiếu, ghi chú, mã / tên sản phẩm...">
-                        <label class="date-field">Từ ngày <input type="date" id="imp-from"></label>
-                        <label class="date-field">Đến ngày <input type="date" id="imp-to"></label>
-                        <select id="imp-status">
-                            <option value="all">Tất cả tình trạng</option>
-                            <option value="draft">Nháp - chưa hoàn thành</option>
-                            <option value="completed">Đã hoàn thành</option>
-                        </select>
-                    </div>
-                    <button class="btn-add" id="btn-add-receipt">
-                    Thêm phiếu nhập
-                    </button>
-                </div>
-
-                <div class="table-responsive">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Mã phiếu</th>
-                                <th>Ngày nhập</th>
-                                <th>Ghi chú</th>
-                                <th>Số dòng</th>
-                                <th class="text-right">Tổng tiền nhập</th>
-                                <th>Tình trạng</th>
-                                <th>Hành động</th>
-                            </tr>
-                        </thead>
-                        <tbody id="receipt-table-body"></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- MODAL THÊM / SỬA PHIẾU NHẬP -->
-        <div class="admin-modal" id="receipt-modal">
-            <div class="modal-content modal-wide">
-                <div class="modal-header">
-                    <h3 id="receipt-modal-title">Thêm phiếu nhập</h3>
-                    <button class="modal-close" id="btn-close-receipt">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <input type="hidden" id="receipt-id">
-                    <div class="receipt-head">
-                        <div class="form-group">
-                            <label>Ngày nhập *</label>
-                            <input type="date" id="receipt-date">
-                        </div>
-                        <div class="form-group">
-                            <label>Ghi chú</label>
-                            <input type="text" id="receipt-note" placeholder="Ví dụ: Nhập Gundam đợt 2">
-                        </div>
-                    </div>
-
-                    <table class="receipt-items">
-                        <thead>
-                            <tr>
-                                <th>Sản phẩm *</th>
-                                <th class="col-price">Giá nhập (đ) *</th>
-                                <th class="col-qty">Số lượng *</th>
-                                <th class="col-sum">Thành tiền</th>
-                                <th class="col-del"></th>
-                            </tr>
-                        </thead>
-                        <tbody id="receipt-lines"></tbody>
-                    </table>
-                    <button type="button" class="btn-line-add" id="btn-add-line">
-                    Thêm dòng sản phẩm
-                    </button>
-                    <div class="receipt-total">Tổng tiền phiếu: <strong id="receipt-total">0 đ</strong></div>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn-secondary" id="btn-cancel-receipt">Hủy</button>
-                    <button class="btn-primary" id="btn-save-receipt">Lưu phiếu</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- MODAL XEM CHI TIẾT PHIẾU -->
-        <div class="admin-modal" id="view-modal">
-            <div class="modal-content modal-wide">
-                <div class="modal-header">
-                    <h3 id="view-modal-title">Chi tiết phiếu nhập</h3>
-                    <button class="modal-close" id="btn-close-view">&times;</button>
-                </div>
-                <div class="modal-body" id="view-modal-body"></div>
-                <div class="modal-footer">
-                    <button class="btn-secondary" id="btn-ok-view">Đóng</button>
-                </div>
-            </div>
-        </div>
-    `;
-
-    mainContent.insertAdjacentHTML('beforeend', pageHTML);
 
     const searchInput = document.getElementById('imp-search');
     const fromInput = document.getElementById('imp-from');
