@@ -1,44 +1,35 @@
 /* QUẢN LÝ TỒN KHO */
-
 .inventory-page {
     width: 100%;
     min-width: 0;
     padding-bottom: 30px;
 }
-
 .inventory-page *,
 .inventory-page *::before,
 .inventory-page *::after {
     box-sizing: border-box;
 }
-
 /*TIÊU ĐỀ TRANG*/
-
 .inventory-page .page-title {
     margin-bottom: 24px;
 }
-
 .inventory-page .page-title h1 {
     margin: 0 0 8px;
     font-size: 25px;
     color: #333;
 }
-
 .inventory-page .page-title p {
     margin: 0;
     font-size: 14px;
     color: #777;
 }
-
 /*THẺ THỐNG KÊ*/
-
 .inventory-stats {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 16px;
     margin-bottom: 22px;
 }
-
 .inventory-stat-card {
     display: flex;
     align-items: center;
@@ -53,7 +44,6 @@
 
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
 }
-
 .inventory-stat-card .stat-icon {
     display: flex;
     align-items: center;
@@ -66,42 +56,34 @@
     border-radius: 10px;
     font-size: 21px;
 }
-
 .inventory-stat-card .stat-icon.blue {
     color: #2563eb;
     background: #dbeafe;
 }
-
 .inventory-stat-card .stat-icon.green {
     color: #16a34a;
     background: #dcfce7;
 }
-
 .inventory-stat-card .stat-icon.orange {
     color: #ea580c;
     background: #ffedd5;
 }
-
 .inventory-stat-card .stat-icon.red {
     color: #dc2626;
     background: #fee2e2;
 }
-
 .inventory-stat-card span {
     display: block;
     margin-bottom: 7px;
     font-size: 13px;
     color: #777;
 }
-
 .inventory-stat-card strong {
     display: block;
     font-size: 26px;
     color: #222;
 }
-
 /*KHUNG NỘI DUNG */
-
 .inventory-panel {
     min-width: 0;
     margin-bottom: 22px;
@@ -111,23 +93,19 @@
     border: 1px solid #edf0f4;
     border-radius: 10px;
 }
-
 .inventory-panel-title {
     display: flex;
     align-items: center;
     justify-content: space-between;
     margin-bottom: 20px;
 }
-
 .inventory-panel-title h2 {
     margin: 0;
     font-size: 18px;
     font-weight: 600;
     color: #333;
 }
-
 /*BỘ LỌC */
-
 .inventory-filters {
     display: grid;
 
@@ -140,20 +118,17 @@
     gap: 15px;
     align-items: end;
 }
-
 .inventory-page .filter-field {
     display: flex;
     flex-direction: column;
     gap: 7px;
     min-width: 0;
 }
-
 .inventory-page .filter-field span {
     font-size: 13px;
     font-weight: 600;
     color: #555;
 }
-
 .inventory-page .filter-field input,
 .inventory-page .filter-field select {
     width: 100%;
@@ -171,19 +146,16 @@
 
     font-size: 14px;
 }
-
 .inventory-page .filter-field input:focus,
 .inventory-page .filter-field select:focus {
     border-color: #ff6600;
     box-shadow: 0 0 0 2px rgba(255, 102, 0, 0.1);
 }
-
 .inventory-filter-actions {
     display: flex;
     justify-content: flex-end;
     margin-top: 15px;
 }
-
 .inventory-page .btn-reset {
     display: inline-flex;
     align-items: center;
@@ -201,31 +173,24 @@
     font-size: 14px;
     cursor: pointer;
 }
-
 .inventory-page .btn-reset:hover {
     background: #f3f4f6;
 }
-
 .inventory-filter-note {
     margin: 14px 0 0;
     font-size: 13px;
     line-height: 1.6;
     color: #64748b;
 }
-
 .inventory-filter-note.error {
     color: #dc2626;
 }
-
 /* CẢNH BÁO TỒN KHO CÓ THỂ THU GỌN */
-
 .inventory-warning-panel {
     padding: 0;
     overflow: hidden;
 }
-
 /* Nút tiêu đề */
-
 .inventory-warning-toggle {
     display: flex;
     align-items: center;
@@ -243,18 +208,14 @@
 
     transition: background 0.2s ease;
 }
-
 .inventory-warning-toggle:hover {
     background: #fff7ed;
 }
-
 .inventory-warning-toggle:focus-visible {
     outline: 2px solid #ff6600;
     outline-offset: -2px;
 }
-
 /* Nội dung tiêu đề */
-
 .inventory-warning-heading {
     display: flex;
     align-items: center;
@@ -266,15 +227,12 @@
     font-weight: 600;
     color: #333;
 }
-
 .inventory-warning-heading > i {
     flex-shrink: 0;
     color: #ea580c;
     font-size: 19px;
 }
-
 /* Số lượng cảnh báo */
-
 .inventory-warning-count {
     display: inline-flex;
     align-items: center;
@@ -294,14 +252,11 @@
     font-size: 12px;
     font-weight: 700;
 }
-
 .inventory-warning-count.is-empty {
     background: #dcfce7;
     color: #15803d;
 }
-
 /* Mũi tên */
-
 .inventory-warning-arrow {
     flex-shrink: 0;
     color: #777;
@@ -309,34 +264,26 @@
 
     transition: transform 0.25s ease;
 }
-
 .inventory-warning-toggle[aria-expanded="true"]
 .inventory-warning-arrow {
     transform: rotate(180deg);
 }
-
 /* Phần nội dung mở rộng */
-
 .inventory-warning-content {
     padding: 0 22px 20px;
     border-top: 1px solid #f1f1f1;
 }
-
 .inventory-warning-content[hidden] {
     display: none;
 }
-
 .inventory-warning-content .inventory-warning-list {
     padding-top: 15px;
 }
-
 /* DANH SÁCH CẢNH BÁO */
-
 .inventory-warning-list {
     display: grid;
     gap: 10px;
 }
-
 .inventory-warning-item {
     display: flex;
     justify-content: space-between;
@@ -350,26 +297,22 @@
     border-left: 4px solid #f97316;
     border-radius: 6px;
 }
-
 .inventory-warning-item.out {
     background: #fef2f2;
     border-color: #fecaca;
     border-left-color: #dc2626;
 }
-
 .inventory-warning-item strong {
     display: block;
     margin-bottom: 5px;
     font-size: 14px;
     color: #333;
 }
-
 .inventory-warning-item p {
     margin: 0;
     font-size: 13px;
     color: #666;
 }
-
 .inventory-warning-quantity {
     flex-shrink: 0;
     text-align: right;
@@ -377,11 +320,9 @@
     font-weight: 700;
     color: #ea580c;
 }
-
 .inventory-warning-item.out .inventory-warning-quantity {
     color: #dc2626;
 }
-
 .inventory-no-warning {
     padding: 18px;
 
@@ -393,14 +334,11 @@
 
     font-size: 14px;
 }
-
 /* BẢNG NHẬP - XUẤT - TỒN*/
-
 .inventory-table-wrap {
     width: 100%;
     overflow-x: auto;
 }
-
 .inventory-table {
     width: 100%;
     min-width: 960px;
@@ -408,7 +346,6 @@
     border-collapse: collapse;
     background: #fff;
 }
-
 .inventory-table th,
 .inventory-table td {
     padding: 13px 12px;
@@ -419,57 +356,46 @@
     font-size: 13px;
     vertical-align: middle;
 }
-
 .inventory-table thead th {
     background: #f8fafc;
     color: #374151;
     font-weight: 600;
     white-space: nowrap;
 }
-
 .inventory-table tbody tr:hover {
     background: #f8faff;
 }
-
 .inventory-table .number {
     text-align: right;
     font-variant-numeric: tabular-nums;
 }
-
 .inventory-table .product-name {
     font-weight: 600;
     color: #333;
 }
-
 .inventory-table .stock-in {
     color: #16a34a;
     font-weight: 600;
 }
-
 .inventory-table .stock-out {
     color: #dc2626;
     font-weight: 600;
 }
-
 .inventory-table .stock-ending {
     color: #2563eb;
     font-weight: 700;
 }
-
 .inventory-table .empty-row {
     padding: 30px;
     text-align: center;
     color: #888;
 }
-
 .inventory-table tfoot td {
     background: #f8fafc;
     font-weight: 700;
     color: #333;
 }
-
 /* TRẠNG THÁI TỒN KHO*/
-
 .inventory-page .stock-badge {
     display: inline-flex;
     align-items: center;
@@ -482,31 +408,25 @@
     font-weight: 600;
     white-space: nowrap;
 }
-
 .inventory-page .stock-badge.in-stock {
     color: #15803d;
     background: #dcfce7;
 }
-
 .inventory-page .stock-badge.low-stock {
     color: #c2410c;
     background: #ffedd5;
 }
-
 .inventory-page .stock-badge.out-stock {
     color: #b91c1c;
     background: #fee2e2;
 }
-
 .inventory-data-note {
     margin: 14px 0 0;
     color: #64748b;
     font-size: 13px;
     line-height: 1.6;
 }
-
 /*  RESPONSIVE*/
-
 @media (max-width: 1200px) {
 
     .inventory-stats {
@@ -518,7 +438,6 @@
     }
 
 }
-
 @media (max-width: 650px) {
 
     .inventory-stats,
@@ -568,4 +487,36 @@
         width: 100%;
     }
 
+}
+/* trạng thái lọc*/
+.inventory-page .filter-field input:disabled,
+.inventory-page .filter-field select:disabled {
+    background: #f8fafc;
+    cursor: not-allowed;
+}
+.inventory-page .inventory-table tbody tr:focus-within {
+    background: #fff7ed;
+}
+.inventory-page .inventory-table th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+.inventory-page .inventory-filter-note {
+    overflow-wrap: anywhere;
+}
+@media (max-width: 420px) {
+    .inventory-stat-card {
+        gap: 12px;
+    }
+
+    .inventory-stat-card .stat-icon {
+        width: 44px;
+        height: 44px;
+        font-size: 18px;
+    }
+
+    .inventory-stat-card strong {
+        font-size: 22px;
+    }
 }
