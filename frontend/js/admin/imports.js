@@ -69,6 +69,8 @@
                         <tbody id="receipt-table-body"></tbody>
                     </table>
                 </div>
+
+                <div class="admin-pagination" id="receipt-pagination"></div>
             </div>
         </div>
 
@@ -138,6 +140,12 @@
     const toInput = document.getElementById('imp-to');
     const statusSelect = document.getElementById('imp-status');
     const tableBody = document.getElementById('receipt-table-body');
+    const receiptPager = window.AdminPagination.create({
+        container: 'receipt-pagination',
+        pageSize: 10,
+        label: 'phiếu nhập',
+        onChange: function () { renderTable(); }
+    });
 
     const receiptModal = document.getElementById('receipt-modal');
     const viewModal = document.getElementById('view-modal');
@@ -151,6 +159,7 @@
     /* DANH SÁCH PHIẾU */
     function renderTable() {
         if (fromInput.value && toInput.value && fromInput.value > toInput.value) {
+            receiptPager.render(0);
             tableBody.innerHTML = '<tr><td colspan="7" class="empty-row">Khoảng ngày không hợp lệ: "Từ ngày" phải trước hoặc bằng "Đến ngày".</td></tr>';
             return;
         }
@@ -161,13 +170,15 @@
             from: fromInput.value,
             to: toInput.value
         });
+        const paged = receiptPager.slice(receipts);
+        receiptPager.render(paged.total);
 
         if (receipts.length === 0) {
             tableBody.innerHTML = '<tr><td colspan="7" class="empty-row">Không tìm thấy phiếu nhập nào.</td></tr>';
             return;
         }
 
-        tableBody.innerHTML = receipts.map(function (r) {
+        tableBody.innerHTML = paged.items.map(function (r) {
             const isDraft = r.status === 'draft';
             const lineCount = Shop.getReceiptItems(r.id).length;
             const draftButtons = isDraft ? `
@@ -190,10 +201,22 @@
         }).join('');
     }
 
-    searchInput.addEventListener('input', renderTable);
-    fromInput.addEventListener('change', renderTable);
-    toInput.addEventListener('change', renderTable);
-    statusSelect.addEventListener('change', renderTable);
+    searchInput.addEventListener('input', function () {
+        receiptPager.reset();
+        renderTable();
+    });
+    fromInput.addEventListener('change', function () {
+        receiptPager.reset();
+        renderTable();
+    });
+    toInput.addEventListener('change', function () {
+        receiptPager.reset();
+        renderTable();
+    });
+    statusSelect.addEventListener('change', function () {
+        receiptPager.reset();
+        renderTable();
+    });
 
     tableBody.addEventListener('click', function (e) {
         const btn = e.target.closest('[data-action]');
