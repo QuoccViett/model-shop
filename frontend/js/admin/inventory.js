@@ -30,6 +30,13 @@
     const statLowStock = $('stat-low-stock');
     const statOutStock = $('stat-out-stock');
 
+    const inventoryPager = window.AdminPagination.create({
+        container: 'inventory-pagination',
+        pageSize: 10,
+        label: 'sản phẩm',
+        onChange: function () { render(); }
+    });
+
     const DEFAULT_LOW_STOCK = 5;
     const numberFormatter = new Intl.NumberFormat('vi-VN');
 
@@ -368,21 +375,28 @@
 
     function renderInventoryTable(products, db, allMovements, fromDate, toDate) {
         if (!products.length) {
+            inventoryPager.render(0);
             tableBody.innerHTML = `
                 <tr><td colspan="8" class="empty-row">Không tìm thấy sản phẩm phù hợp.</td></tr>`;
             tableFooter.innerHTML = '';
             return;
         }
 
+        // Tính tổng cho toàn bộ danh sách đã lọc (không chỉ trang đang xem)
         const totals = { opening: 0, imported: 0, exported: 0, ending: 0 };
-
-        tableBody.innerHTML = products.map(product => {
+        products.forEach(product => {
             const result = calculateInventory(product, allMovements, fromDate, toDate);
-
             totals.opening += result.opening;
             totals.imported += result.imported;
             totals.exported += result.exported;
             totals.ending += result.ending;
+        });
+
+        const paged = inventoryPager.slice(products);
+        inventoryPager.render(paged.total);
+
+        tableBody.innerHTML = paged.items.map(product => {
+            const result = calculateInventory(product, allMovements, fromDate, toDate);
 
             return `
                 <tr>
@@ -448,6 +462,7 @@
 
         const error = validateDates(fromDate, toDate);
         if (error) {
+            inventoryPager.render(0);
             periodNote.classList.add('error');
             periodNote.textContent = error;
             tableBody.innerHTML = `<tr><td colspan="8" class="empty-row">${escapeHTML(error)}</td></tr>`;
@@ -468,16 +483,29 @@
             'Tồn đầu kỳ phụ thuộc vào việc lịch sử biến động kho được ghi nhận đầy đủ.';
     }
 
-    searchInput.addEventListener('input', render);
-    categorySelect.addEventListener('change', render);
-    fromInput.addEventListener('change', render);
-    toInput.addEventListener('change', render);
+    searchInput.addEventListener('input', function () {
+        inventoryPager.reset();
+        render();
+    });
+    categorySelect.addEventListener('change', function () {
+        inventoryPager.reset();
+        render();
+    });
+    fromInput.addEventListener('change', function () {
+        inventoryPager.reset();
+        render();
+    });
+    toInput.addEventListener('change', function () {
+        inventoryPager.reset();
+        render();
+    });
 
     resetButton.addEventListener('click', function () {
         searchInput.value = '';
         categorySelect.value = 'all';
         fromInput.value = '';
         toInput.value = '';
+        inventoryPager.reset();
         render();
     });
 

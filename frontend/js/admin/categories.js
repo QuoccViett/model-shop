@@ -43,6 +43,8 @@
                         </tbody>
                     </table>
                 </div>
+
+                <div class="admin-pagination" id="category-pagination"></div>
             </div>
         </div>
 
@@ -83,6 +85,12 @@
     const searchInput = document.getElementById('search-input');
     const filterStatus = document.getElementById('filter-status');
     const tableBody = document.getElementById('category-table-body');
+    const categoryPager = window.AdminPagination.create({
+        container: 'category-pagination',
+        pageSize: 10,
+        label: 'loại sản phẩm',
+        onChange: function () { renderTable(); }
+    });
     
     const modal = document.getElementById('category-modal');
     const btnOpenAdd = document.getElementById('btn-open-add-modal');
@@ -100,13 +108,15 @@
         const keyword = searchInput.value;
         const status = filterStatus.value;
         const categories = Shop.filterCategories({ keyword, status });
+        const paged = categoryPager.slice(categories);
+        categoryPager.render(paged.total);
 
         if (categories.length === 0) {
             tableBody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: #777; padding: 20px;">Không tìm thấy loại sản phẩm nào.</td></tr>`;
             return;
         }
 
-        tableBody.innerHTML = categories.map(c => {
+        tableBody.innerHTML = paged.items.map(c => {
             const isHidden = c.is_hidden;
             const statusClass = isHidden ? 'locked' : 'active';
             const statusText = isHidden ? 'Đang ẩn' : 'Hiển thị';
@@ -130,8 +140,14 @@
         }).join('');
     }
 
-    searchInput.addEventListener('input', renderTable);
-    filterStatus.addEventListener('change', renderTable);
+    searchInput.addEventListener('input', function () {
+        categoryPager.reset();
+        renderTable();
+    });
+    filterStatus.addEventListener('change', function () {
+        categoryPager.reset();
+        renderTable();
+    });
 
     btnOpenAdd.addEventListener('click', function () {
         modalTitle.innerText = 'Thêm loại sản phẩm mới';

@@ -225,6 +225,8 @@
 
                 </div>
 
+                <div class="admin-pagination" id="order-pagination"></div>
+
             </div>
 
         </div>
@@ -243,6 +245,15 @@
 
     const tableBody = document.getElementById('order-table-body');
 
+    const orderPager = window.AdminPagination.create({
+        container: 'order-pagination',
+        pageSize: 10,
+        label: 'đơn hàng',
+        onChange: function () {
+            renderTable();
+        }
+    });
+
     // HIỂN THỊ DANH SÁCH ĐƠN HÀNG
     function renderTable() {
 
@@ -258,6 +269,8 @@
 
         // Kiểm tra khoảng ngày
         if (from && to && from > to) {
+
+            orderPager.render(0);
 
             tableBody.innerHTML = `
                 <tr>
@@ -328,6 +341,9 @@
             return Number(b.id) - Number(a.id);
         });
 
+        const paged = orderPager.slice(orders);
+        orderPager.render(paged.total);
+
         // Không có đơn hàng
         if (orders.length === 0) {
 
@@ -343,7 +359,7 @@
         }
 
         // Hiển thị bảng
-        tableBody.innerHTML = orders.map(function (order) {
+        tableBody.innerHTML = paged.items.map(function (order) {
 
             const customer = getCustomer(order, db);
 
@@ -400,13 +416,25 @@
 
     // TÌM KIẾM VÀ LỌC
 
-    searchInput.addEventListener('input', renderTable);
+    searchInput.addEventListener('input', function () {
+        orderPager.reset();
+        renderTable();
+    });
 
-    fromInput.addEventListener('change', renderTable);
+    fromInput.addEventListener('change', function () {
+        orderPager.reset();
+        renderTable();
+    });
 
-    toInput.addEventListener('change', renderTable);
+    toInput.addEventListener('change', function () {
+        orderPager.reset();
+        renderTable();
+    });
 
-    statusSelect.addEventListener('change', renderTable);
+    statusSelect.addEventListener('change', function () {
+        orderPager.reset();
+        renderTable();
+    });
 
     // ĐÓNG POPUP CHI TIẾT
 
