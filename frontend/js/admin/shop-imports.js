@@ -47,7 +47,7 @@
     }
 
     function getReceiptItems(receiptId) {
-        return getDB().import_receipt_items.filter(function (i) { return i.receipt_id == receiptId; });
+        return getDB().import_receipt_items.filter(function (i) { return i.receipt_id == receiptId && !i.is_hidden; });
     }
 
     function getReceiptTotal(receiptId) {
@@ -67,13 +67,14 @@
         const to = opts.to || '';
 
         return db.import_receipts.filter(function (r) {
-            if (status !== 'all' && r.status !== status) return false;
+            if (status === 'hidden' ? !r.is_hidden : r.is_hidden) return false;
+            if (status !== 'all' && status !== 'hidden' && r.status !== status) return false;
             if (from && r.import_date < from) return false;
             if (to && r.import_date > to) return false;
             if (keyword) {
                 let text = getReceiptCode(r.id) + ' ' + (r.note || '');
                 db.import_receipt_items.forEach(function (i) {
-                    if (i.receipt_id !== r.id) return;
+                    if (i.receipt_id !== r.id || i.is_hidden) return;
                     const p = Shop.findById(db.products, i.product_id);
                     if (p) text += ' ' + p.code + ' ' + p.name;
                 });
@@ -86,6 +87,13 @@
     // Kiểm tra dữ liệu phiếu; trả về chuỗi lỗi hoặc null nếu hợp lệ
     function validateReceipt(data) {
         if (!data || !data.import_date) return 'Vui lòng chọn ngày nhập!';
+        const today = new Date();
+        const localToday = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
+        const parsedDate = new Date(data.import_date + 'T00:00:00');
+        const validDate = /^\d{4}-\d{2}-\d{2}$/.test(data.import_date) && !Number.isNaN(parsedDate.getTime()) &&
+            parsedDate.getFullYear() + '-' + String(parsedDate.getMonth() + 1).padStart(2, '0') + '-' + String(parsedDate.getDate()).padStart(2, '0') === data.import_date;
+        if (!validDate) return 'Ngày nhập không hợp lệ!';
+        if (data.import_date > localToday) return 'Ngày nhập không được ở tương lai!';
         if (!Array.isArray(data.items) || data.items.length === 0) {
             return 'Phiếu nhập phải có ít nhất 1 sản phẩm!';
         }
@@ -94,7 +102,10 @@
             const it = data.items[k];
             const line = 'Dòng ' + (k + 1) + ': ';
             if (!it.product_id) return line + 'vui lòng chọn sản phẩm!';
-            if (!Shop.getProductByIdIgnoreHidden(it.product_id)) return line + 'sản phẩm không tồn tại!';
+            const product = Shop.getProductByIdIgnoreHidden(it.product_id);
+            if (!product || product.is_deleted) return line + 'sản phẩm không còn kinh doanh!';
+            const category = Shop.getAllCategoryIgnoreHidden(product.category_id);
+            if (!category || category.is_deleted) return line + 'loại sản phẩm đã bị xóa!';
             if (seen[it.product_id]) return line + 'sản phẩm bị trùng, hãy gộp vào một dòng!';
             seen[it.product_id] = true;
 
@@ -114,7 +125,8 @@
                 receipt_id: receiptId,
                 product_id: Number(it.product_id),
                 quantity: Number(it.quantity),
-                import_price: Number(it.import_price)
+                import_price: Number(it.import_price),
+                is_hidden: false
             });
         });
     }
@@ -129,6 +141,7 @@
             id: nextId(db.import_receipts),
             import_date: data.import_date,
             status: 'draft',
+            is_hidden: false,
             note: String(data.note || '').trim(),
             created_at: Shop.nowString(),
             completed_at: null
@@ -144,7 +157,7 @@
         const db = getDB();
         const receipt = db.import_receipts.find(function (r) { return r.id == id; });
         if (!receipt) return { success: false, message: 'Không tìm thấy phiếu nhập!' };
-        if (receipt.status !== 'draft') {
+        if (receipt.status !== 'draft' || receipt.is_hidden) {
             return { success: false, message: 'Phiếu đã hoàn thành, không thể sửa!' };
         }
         const err = validateReceipt(data);
@@ -152,7 +165,9 @@
 
         receipt.import_date = data.import_date;
         receipt.note = String(data.note || '').trim();
-        db.import_receipt_items = db.import_receipt_items.filter(function (i) { return i.receipt_id !== receipt.id; });
+        db.import_receipt_items.forEach(function (item) {
+            if (item.receipt_id === receipt.id && !item.is_hidden) item.is_hidden = true;
+        });
         writeItems(db, receipt.id, data.items);
         Shop.saveDB(db);
         return { success: true, message: 'Đã cập nhật phiếu ' + getReceiptCode(receipt.id) + '!', data: receipt };
@@ -163,13 +178,21 @@
         const db = getDB();
         const receipt = db.import_receipts.find(function (r) { return r.id == id; });
         if (!receipt) return { success: false, message: 'Không tìm thấy phiếu nhập!' };
-        if (receipt.status !== 'draft') {
+        if (receipt.status !== 'draft' || receipt.is_hidden) {
             return { success: false, message: 'Phiếu đã hoàn thành, không thể xóa!' };
         }
-        db.import_receipts = db.import_receipts.filter(function (r) { return r.id !== receipt.id; });
-        db.import_receipt_items = db.import_receipt_items.filter(function (i) { return i.receipt_id !== receipt.id; });
+        receipt.is_hidden = true;
         Shop.saveDB(db);
-        return { success: true, message: 'Đã xóa phiếu ' + getReceiptCode(receipt.id) + '!' };
+        return { success: true, message: 'Đã ẩn phiếu ' + getReceiptCode(receipt.id) + ' và giữ nguyên dữ liệu!' };
+    }
+
+    function restoreReceipt(id) {
+        const db = getDB();
+        const receipt = db.import_receipts.find(function (r) { return r.id == id; });
+        if (!receipt || !receipt.is_hidden) return { success: false, message: 'Không tìm thấy phiếu đã ẩn!' };
+        receipt.is_hidden = false;
+        Shop.saveDB(db);
+        return { success: true, message: 'Đã khôi phục phiếu ' + getReceiptCode(receipt.id) + '!' };
     }
 
     // Hoàn thành phiếu: cộng tồn, tính giá vốn bình quân, ghi sổ kho
@@ -177,11 +200,13 @@
         const db = getDB();
         const receipt = db.import_receipts.find(function (r) { return r.id == id; });
         if (!receipt) return { success: false, message: 'Không tìm thấy phiếu nhập!' };
-        if (receipt.status !== 'draft') {
+        if (receipt.status !== 'draft' || receipt.is_hidden) {
             return { success: false, message: 'Phiếu này đã hoàn thành trước đó!' };
         }
+        const dateError = validateReceipt({ import_date: receipt.import_date, items: db.import_receipt_items.filter(function (i) { return i.receipt_id === receipt.id && !i.is_hidden; }) });
+        if (dateError) return { success: false, message: dateError };
 
-        const items = db.import_receipt_items.filter(function (i) { return i.receipt_id === receipt.id; });
+        const items = db.import_receipt_items.filter(function (i) { return i.receipt_id === receipt.id && !i.is_hidden; });
         if (items.length === 0) return { success: false, message: 'Phiếu chưa có sản phẩm nào!' };
 
         // Kiểm tra hết trước khi thay đổi bất cứ thứ gì
@@ -228,6 +253,7 @@
         addReceipt: addReceipt,
         updateReceipt: updateReceipt,
         deleteReceipt: deleteReceipt,
+        restoreReceipt: restoreReceipt,
         completeReceipt: completeReceipt
     });
 })(window);

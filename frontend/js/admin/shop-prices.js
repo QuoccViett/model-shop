@@ -18,8 +18,6 @@
         return;
     }
 
-    const MAX_PERCENT = 1000;
-
     function getDB() {
         const db = Shop.loadDB();
         if (!db.categories) db.categories = [];
@@ -43,35 +41,22 @@
 
     // %LN đang áp dụng: ưu tiên của sản phẩm, không có thì lấy của loại
     function getAppliedProfit(p) {
-        const own = getProductOwnProfit(p);
-        if (own !== null) return own;
-        return getCategoryProfit(Shop.findById(getDB().categories, p.category_id));
+        return Shop.getProfitPercent(p);
     }
 
     // Tính giá bán từ giá vốn và %LN; chưa có giá vốn thì trả về 0
     function priceFromCost(cost, profit) {
-        cost = Number(cost || 0);
-        if (!(cost > 0)) return 0;
-        return Math.round((cost * (1 + Number(profit || 0) / 100)) / 1000) * 1000;
+        return Shop.getPrice({ cost_price: cost, profit_percent: profit });
     }
 
     function calcSellPrice(p) {
-        return priceFromCost(p.cost_price, getAppliedProfit(p));
+        return Shop.getPrice(p);
     }
 
     // Kiểm tra và chuẩn hóa ô nhập %LN
     // allowBlank = true: để trống nghĩa là "theo loại" (chỉ dùng cho sản phẩm)
     function parsePercent(value, allowBlank) {
-        if (isBlank(value)) {
-            return allowBlank
-                ? { ok: true, value: null }
-                : { ok: false, message: 'Vui lòng nhập % lợi nhuận!' };
-        }
-        const n = Number(String(value).trim().replace(',', '.'));
-        if (!Number.isFinite(n)) return { ok: false, message: '% lợi nhuận phải là số!' };
-        if (n < 0) return { ok: false, message: '% lợi nhuận không được âm!' };
-        if (n > MAX_PERCENT) return { ok: false, message: '% lợi nhuận không được vượt quá ' + MAX_PERCENT + '%!' };
-        return { ok: true, value: Math.round(n * 100) / 100 };
+        return Shop.parseProfitPercent(value, allowBlank);
     }
 
     // Đặt %LN cho một loại
@@ -82,6 +67,7 @@
         const db = getDB();
         const cat = Shop.findById(db.categories, id);
         if (!cat) return { success: false, message: 'Không tìm thấy loại sản phẩm!' };
+        if (cat.is_deleted) return { success: false, message: 'Hãy khôi phục loại sản phẩm trước khi sửa giá.' };
 
         cat.profit_percent = parsed.value;
         Shop.saveDB(db);
@@ -96,6 +82,9 @@
         const db = getDB();
         const p = Shop.findById(db.products, id);
         if (!p) return { success: false, message: 'Không tìm thấy sản phẩm!' };
+        if (p.is_deleted) return { success: false, message: 'Hãy khôi phục sản phẩm trước khi sửa giá.' };
+        const category = Shop.findById(db.categories, p.category_id);
+        if (!category || category.is_deleted) return { success: false, message: 'Hãy khôi phục loại sản phẩm trước khi sửa giá.' };
 
         p.profit_percent = parsed.value;
         Shop.saveDB(db);
@@ -110,7 +99,10 @@
         opts = opts || {};
         const keyword = Shop.normalize(String(opts.keyword || '').trim());
         const cat = opts.category_id;
-        return getDB().products.filter(function (p) {
+        const db = getDB();
+        return db.products.filter(function (p) {
+            const category = Shop.findById(db.categories, p.category_id);
+            if (p.is_deleted || !category || category.is_deleted) return false;
             if (!isBlank(cat) && cat !== 'all' && Number(p.category_id) !== Number(cat)) return false;
             if (keyword && Shop.normalize((p.code || '') + ' ' + (p.name || '')).indexOf(keyword) === -1) return false;
             return true;

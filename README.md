@@ -16,6 +16,7 @@
 | Chủ đề | Quy tắc |
 |---|---|
 | **Phiếu nhập** | 2 trạng thái: *Nháp* và *Đã hoàn thành*. Chỉ sửa / xóa khi còn Nháp. Bấm "Hoàn thành" mới cộng tồn và cập nhật giá vốn. Không có nhà cung cấp (đúng đề). |
+| **Ngày nhập** | Không nhận ngày tương lai. Phiếu ghi ngày quá khứ được cộng tồn và tính giá vốn bình quân tại lúc hoàn thành; ngày ghi trên sổ kho là ngày nhập, không tính lại giá vốn của các giao dịch đã hoàn thành trước đó. |
 | **Giá vốn** | Bình quân gia quyền: `giá vốn mới = (tồn cũ × giá vốn cũ + SL nhập × giá nhập) / (tồn cũ + SL nhập)` |
 | **Giá bán** | `giá bán = giá vốn × (1 + %LN / 100)`, làm tròn đến nghìn |
 | **% Lợi nhuận** | Đặt theo loại (mặc định cho mọi SP trong loại) và có thể đặt riêng theo sản phẩm. **Ưu tiên: %LN của sản phẩm > %LN của loại.** |
@@ -23,7 +24,8 @@
 | **Đặt hàng** | Kiểm tra tồn khi đặt (không cho đặt quá số lượng còn); chốt **giá bán tại thời điểm đặt** vào chi tiết đơn, giá đổi sau này không làm sai đơn cũ. |
 | **Tồn kho** | Không chỉ lưu một con số, mà lưu **sổ biến động kho** (mỗi lần nhập / xuất là một dòng). Nhờ đó tra được tồn tại một thời điểm và làm báo cáo nhập - xuất - tồn. |
 | **Cảnh báo sắp hết** | Mỗi SP có `ngưỡng cảnh báo` (mặc định 5); tồn ≤ ngưỡng thì hiện cảnh báo trên dashboard. |
-| **Xóa / Ẩn** | SP / loại đã phát sinh nhập hoặc bán thì **chỉ ẩn**; chưa phát sinh thì xóa hẳn. SP thuộc loại đã ẩn cũng không hiển thị cho khách. |
+| **Xóa / Ẩn** | Sản phẩm và loại có thao tác ẩn/hiện riêng; xóa chỉ đánh dấu `is_deleted` và giữ nguyên bản ghi, lịch sử. Bản ghi đã xóa chỉ hiện nút khôi phục và khôi phục giữ trạng thái ẩn trước đó. Sản phẩm thuộc loại đã ẩn hoặc đã xóa không hiển thị cho khách. Phiếu nhập nháp cũng được giữ khi ẩn. |
+| **Trạng thái sản phẩm theo loại** | Khi loại bị ẩn, sản phẩm thuộc loại đó hiện trạng thái ẩn và chỉ còn nút chỉnh sửa. Khi loại bị xóa, sản phẩm hiện trạng thái đã xóa và không có nút thao tác; bảng sản phẩm ẩn cột Hành động nếu trang hiện tại không có thao tác nào. Khôi phục loại để quản lý sản phẩm trở lại. Trạng thái riêng của sản phẩm không đổi. |
 | **Khóa tài khoản** | Tài khoản bị khóa không đăng nhập được. Reset mật khẩu về mật khẩu mặc định (`123456`). |
 | **Giỏ hàng** | Bắt buộc đăng nhập. Chưa đăng nhập bấm "Mua" thì chuyển sang trang đăng nhập. Giỏ lưu phía trình duyệt theo từng khách; tồn và giá được kiểm tra lại khi đặt hàng. |
 | **Thanh toán** | Mặc định **Tiền mặt khi nhận hàng**; ngoài ra Chuyển khoản, Thanh toán trực tuyến (có thể giả lập thanh toán VNPay nếu có thời gian). |
@@ -158,9 +160,9 @@ erDiagram
 | Bảng | Vai trò | Ghi chú |
 |---|---|---|
 | `admins` | Tài khoản quản trị | Tách riêng với khách nên đăng nhập riêng |
-| `customers` | Tài khoản khách | `is_locked` để khóa; địa chỉ tách 4 trường |
-| `categories` | Loại sản phẩm | `profit_percent` là %LN mặc định của loại; `is_hidden` để ẩn |
-| `products` | Sản phẩm | `profit_percent` NULL nghĩa là dùng của loại; `cost_price`, `stock_qty` là cột tính sẵn |
+| `customers` | Tài khoản khách | `is_locked` để khóa, `is_deleted` để xóa mềm; địa chỉ tách 4 trường |
+| `categories` | Loại sản phẩm | `profit_percent` là %LN mặc định; `is_hidden` để ẩn, `is_deleted` để xóa mềm |
+| `products` | Sản phẩm | `profit_percent` NULL nghĩa là dùng của loại; `is_hidden` để ẩn, `is_deleted` để xóa mềm; `cost_price`, `stock_qty` là cột tính sẵn |
 | `import_receipts` | Phiếu nhập | `status` = `draft` / `completed` |
 | `import_receipt_items` | Chi tiết phiếu nhập | Số lượng và giá nhập từng SP |
 | `stock_movements` | Sổ biến động kho | `quantity` có dấu (+ vào, − ra); nguồn sự thật của tồn kho |

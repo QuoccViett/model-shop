@@ -160,7 +160,7 @@
             if (!receiptDate) return;
 
             db.import_receipt_items
-                .filter(item => String(item.receipt_id) === String(receipt.id))
+                .filter(item => String(item.receipt_id) === String(receipt.id) && !item.is_hidden)
                 .forEach(item => {
                     const quantity = Math.abs(number(item.quantity));
                     if (!quantity) return;

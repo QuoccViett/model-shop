@@ -34,7 +34,8 @@
     // Thêm sản phẩm vào giỏ và kiểm tra tồn kho
     function addToCart(productId, qty) {
         if (!Shop.getCurrentUser()) return { ok: false, authRequired: true, error: 'Vui lòng đăng nhập để sử dụng giỏ hàng.' };
-        qty = Math.max(1, Number(qty) || 1);
+        qty = Number(qty);
+        if (!Number.isSafeInteger(qty) || qty < 1) return { ok: false, error: 'Số lượng phải là số nguyên dương.' };
         const p = Shop.getProductById(productId);
         if (!p) return { ok: false, error: 'Sản phẩm không tồn tại hoặc đã bị ẩn.' };
 
@@ -42,7 +43,7 @@
         const cart = readCart();
         const item = cart.find(function (i) { return i.product_id === p.id; });
         const newQty = (item ? item.quantity : 0) + qty;
-        if (newQty > stock) return { ok: false, error: 'Chỉ còn ' + stock + ' sản phẩm trong kho.' };
+        if (!Number.isSafeInteger(newQty) || newQty > stock) return { ok: false, error: 'Số lượng không hợp lệ hoặc vượt tồn kho.' };
 
         if (item) item.quantity = newQty;
         else cart.push({ product_id: p.id, quantity: qty });
@@ -57,7 +58,8 @@
         const cart = readCart();
         const item = cart.find(function (i) { return i.product_id === Number(productId); });
         if (!item) return { ok: false, error: 'Không có trong giỏ.' };
-        if (!qty || qty < 1) return removeFromCart(productId);
+        if (qty === 0) return removeFromCart(productId);
+        if (!Number.isSafeInteger(qty) || qty < 1) return { ok: false, error: 'Số lượng phải là số nguyên dương.' };
 
         const p = Shop.getProductById(productId);
         const stock = p ? Number(p.stock_qty || 0) : 0;
@@ -139,8 +141,10 @@
         if (err) return { ok: false, error: err };
 
         const lines = getCartDetailed();
+        if (lines.length !== readCart().length) return { ok: false, error: 'Giỏ hàng có sản phẩm đã ngừng bán. Vui lòng xóa sản phẩm đó trước khi đặt.' };
         if (!lines.length) return { ok: false, error: 'Giỏ hàng đang trống.' };
         for (let i = 0; i < lines.length; i++) {
+            if (!Number.isSafeInteger(lines[i].quantity) || lines[i].quantity < 1) return { ok: false, error: 'Số lượng sản phẩm trong giỏ không hợp lệ.' };
             if (lines[i].quantity > lines[i].stock) {
                 return { ok: false, error: '"' + lines[i].product.name + '" chỉ còn ' + lines[i].stock + ' sản phẩm.' };
             }
@@ -224,8 +228,8 @@
     function reorderOrder(orderId) {
         const detail = getOrderDetail(orderId);
         if (!detail) return { ok: false, error: 'Không tìm thấy đơn hàng.' };
-        if (Shop.normalizeStatus(detail.order.status) !== 'cancelled') {
-            return { ok: false, error: 'Chỉ có thể đặt lại đơn hàng đã hủy.' };
+        if (['cancelled', 'delivered'].indexOf(Shop.normalizeStatus(detail.order.status)) === -1) {
+            return { ok: false, error: 'Chỉ có thể đặt lại đơn hàng đã hủy hoặc đã giao.' };
         }
 
         const currentCart = readCart();
@@ -233,12 +237,13 @@
         for (let i = 0; i < detail.items.length; i++) {
             const item = detail.items[i];
             const product = item.product;
-            if (!product) return { ok: false, error: 'Một sản phẩm trong đơn không còn kinh doanh.' };
+            if (!product || !Shop.getProductById(product.id)) return { ok: false, error: 'Một sản phẩm trong đơn không còn kinh doanh.' };
             const productId = Number(product.id);
+            if (!Number.isSafeInteger(Number(item.quantity)) || Number(item.quantity) < 1) return { ok: false, error: 'Số lượng trong đơn không hợp lệ.' };
             requested[productId] = (requested[productId] || 0) + Number(item.quantity);
             const current = currentCart.find(function (cartItem) { return Number(cartItem.product_id) === productId; });
             const stock = Number(product.stock_qty || 0);
-            if ((current ? Number(current.quantity) : 0) + requested[productId] > stock) {
+            if (!Number.isSafeInteger((current ? Number(current.quantity) : 0) + requested[productId]) || (current ? Number(current.quantity) : 0) + requested[productId] > stock) {
                 return { ok: false, error: '"' + product.name + '" không đủ số lượng tồn kho.' };
             }
         }

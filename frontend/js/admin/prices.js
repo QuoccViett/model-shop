@@ -24,7 +24,7 @@
     // Đổ danh sách loại vào ô chọn lọc (khung <select> nằm sẵn trong prices.html)
     function fillCategorySelect() {
         const select = document.getElementById('price-category');
-        Shop.getAllCategories().forEach(function (c) {
+        Shop.getAllCategories().filter(function (c) { return !c.is_deleted; }).forEach(function (c) {
             const opt = document.createElement('option');
             opt.value = c.id;
             opt.textContent = c.name;
@@ -65,8 +65,8 @@
 
     /*BẢNG LOẠI*/
     function renderCategories() {
-        const categories = Shop.getAllCategories();
-        const products = Shop.getAllProducts();
+        const categories = Shop.getAllCategories().filter(function (c) { return !c.is_deleted; });
+        const products = Shop.getAllProducts().filter(function (p) { return !p.is_deleted; });
 
         const paged = categoryPager.slice(categories);
         categoryPager.render(paged.total);
