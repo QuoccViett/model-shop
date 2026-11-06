@@ -55,6 +55,8 @@
                         </tbody>
                     </table>
                 </div>
+
+                <div class="admin-pagination" id="product-pagination"></div>
             </div>
         </div>
 
@@ -156,6 +158,12 @@
     const filterCategory = document.getElementById('filter-category');
     const filterStatus = document.getElementById('filter-status');
     const tableBody = document.getElementById('product-table-body');
+    const productPager = window.AdminPagination.create({
+        container: 'product-pagination',
+        pageSize: 10,
+        label: 'sản phẩm',
+        onChange: function () { renderTable(); }
+    });
     
     const modal = document.getElementById('product-modal');
     const btnOpenAdd = document.getElementById('btn-open-add-modal');
@@ -185,13 +193,15 @@
         const category_id = filterCategory.value;
         const status = filterStatus.value;
         const products = Shop.filterProducts({ keyword, status, category_id });
+        const paged = productPager.slice(products);
+        productPager.render(paged.total);
 
         if (products.length === 0) {
             tableBody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: #777; padding: 20px;">Không tìm thấy sản phẩm nào.</td></tr>`;
             return;
         }
 
-        tableBody.innerHTML = products.map(p => {
+        tableBody.innerHTML = paged.items.map(p => {
             const isHidden = p.is_hidden;
             const statusClass = isHidden ? 'locked' : 'active';
             const statusText = isHidden ? 'Đang ẩn' : 'Hiển thị';
@@ -219,9 +229,18 @@
         }).join('');
     }
 
-    searchInput.addEventListener('input', renderTable);
-    filterCategory.addEventListener('change', renderTable);
-    filterStatus.addEventListener('change', renderTable);
+    searchInput.addEventListener('input', function () {
+        productPager.reset();
+        renderTable();
+    });
+    filterCategory.addEventListener('change', function () {
+        productPager.reset();
+        renderTable();
+    });
+    filterStatus.addEventListener('change', function () {
+        productPager.reset();
+        renderTable();
+    });
 
     btnOpenAdd.addEventListener('click', function () {
         modalTitle.innerText = 'Thêm sản phẩm mới';

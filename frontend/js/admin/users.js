@@ -47,6 +47,8 @@
                         </tbody>
                     </table>
                 </div>
+
+                <div class="admin-pagination" id="user-pagination"></div>
             </div>
         </div>
 
@@ -97,6 +99,12 @@
     const searchInput = document.getElementById('search-input');
     const filterStatus = document.getElementById('filter-status');
     const tableBody = document.getElementById('customer-table-body');
+    const userPager = window.AdminPagination.create({
+        container: 'user-pagination',
+        pageSize: 10,
+        label: 'người dùng',
+        onChange: function () { renderTable(); }
+    });
     
     const modal = document.getElementById('customer-modal');
     const btnOpenAdd = document.getElementById('btn-open-add-modal');
@@ -120,13 +128,15 @@
 
         // Sử dụng hàm filterCustomers đã có sẵn trong data.js
         const customers = Shop.filterUsers({ keyword, status });
+        const paged = userPager.slice(customers);
+        userPager.render(paged.total);
 
         if (customers.length === 0) {
             tableBody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: #777; padding: 20px;">Không tìm thấy khách hàng nào.</td></tr>`;
             return;
         }
 
-        tableBody.innerHTML = customers.map(c => {
+        tableBody.innerHTML = paged.items.map(c => {
             const isLocked = c.is_locked;
             const statusClass = isLocked ? 'locked' : 'active';
             const statusText = isLocked ? 'Bị khóa' : 'Hoạt động';
@@ -154,9 +164,15 @@
         }).join('');
     }
 
-    // Sự kiện tìm kiếm & lọc
-    searchInput.addEventListener('input', renderTable);
-    filterStatus.addEventListener('change', renderTable);
+    // Sự kiện tìm kiếm & lọc (đưa về trang 1 mỗi khi bộ lọc thay đổi)
+    searchInput.addEventListener('input', function () {
+        userPager.reset();
+        renderTable();
+    });
+    filterStatus.addEventListener('change', function () {
+        userPager.reset();
+        renderTable();
+    });
 
     // Mở modal Thêm mới
     btnOpenAdd.addEventListener('click', function () {

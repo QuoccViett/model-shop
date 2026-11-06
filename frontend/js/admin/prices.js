@@ -38,6 +38,19 @@
     const categorySelect = document.getElementById('price-category');
     const countBox = document.getElementById('price-count');
     const toastBox = document.getElementById('price-toast');
+
+    const categoryPager = window.AdminPagination.create({
+        container: 'category-price-pagination',
+        pageSize: 10,
+        label: 'loại sản phẩm',
+        onChange: function () { renderCategories(); }
+    });
+    const productPager = window.AdminPagination.create({
+        container: 'product-price-pagination',
+        pageSize: 10,
+        label: 'sản phẩm',
+        onChange: function () { renderProducts(); }
+    });
     
 
     /*THÔNG BÁO*/
@@ -54,12 +67,15 @@
         const categories = Shop.getAllCategories();
         const products = Shop.getAllProducts();
 
+        const paged = categoryPager.slice(categories);
+        categoryPager.render(paged.total);
+
         if (categories.length === 0) {
             categoryBody.innerHTML = '<tr><td colspan="6" class="empty-row">Chưa có loại sản phẩm nào.</td></tr>';
             return;
         }
 
-        categoryBody.innerHTML = categories.map(function (c) {
+        categoryBody.innerHTML = paged.items.map(function (c) {
             const inCat = products.filter(function (p) { return Number(p.category_id) === Number(c.id); });
             const ownCount = inCat.filter(function (p) { return Shop.getProductOwnProfit(p) !== null; }).length;
             const value = (c.profit_percent === null || c.profit_percent === undefined || c.profit_percent === '')
@@ -157,13 +173,15 @@
             keyword: searchInput.value,
             category_id: categorySelect.value
         });
+        const paged = productPager.slice(list);
         countBox.textContent = 'Hiển thị ' + list.length + ' sản phẩm';
+        productPager.render(paged.total);
 
         if (list.length === 0) {
             productBody.innerHTML = '<tr><td colspan="8" class="empty-row">Không tìm thấy sản phẩm nào.</td></tr>';
             return;
         }
-        productBody.innerHTML = list.map(productRowHTML).join('');
+        productBody.innerHTML = paged.items.map(productRowHTML).join('');
         refreshProductRows();
     }
 
@@ -182,8 +200,14 @@
     }
 
     /* SỰ KIỆN */
-    searchInput.addEventListener('input', renderProducts);
-    categorySelect.addEventListener('change', renderProducts);
+    searchInput.addEventListener('input', function () {
+        productPager.reset();
+        renderProducts();
+    });
+    categorySelect.addEventListener('change', function () {
+        productPager.reset();
+        renderProducts();
+    });
 
     productBody.addEventListener('input', function (e) {
         if (e.target.classList.contains('own-input')) updateRowView(e.target.closest('tr'));
