@@ -76,10 +76,10 @@
         }
         const suggestions = query.length >= 2
             ? Shop.queryProducts({ keyword: query }).slice(0, 5).map(function (product) {
-                return '<a class="suggestion-item" role="option" aria-selected="false" data-suggestion href="' + productUrl(product) + '"><img src="' + esc(UI.imageSrc(product.image)) + '" alt=""><span class="suggestion-copy"><strong>' + esc(product.name) + '</strong><small>' + esc(Shop.formatPrice(Shop.getSalePrice(product))) + '</small></span></a>';
+                return '<a class="suggestion-item" role="option" aria-selected="false" data-suggestion href="' + productUrl(product) + '"><img ' + UI.imageAttrs(product.image) + ' alt=""><span class="suggestion-copy"><strong>' + esc(product.name) + '</strong><small>' + esc(Shop.formatPrice(Shop.getSalePrice(product))) + '</small></span></a>';
             })
             : Shop.getBestSellers(5).concat(Shop.getNewest(5)).filter(function (p, i, list) { return list.findIndex(function (item) { return item.id === p.id; }) === i; }).slice(0, 5).map(function (product) {
-                return '<a class="suggestion-item" role="option" aria-selected="false" data-suggestion href="' + productUrl(product) + '"><img src="' + esc(UI.imageSrc(product.image)) + '" alt=""><span class="suggestion-copy"><strong>' + esc(product.name) + '</strong><small>' + esc(Shop.formatPrice(Shop.getSalePrice(product))) + '</small></span></a>';
+                return '<a class="suggestion-item" role="option" aria-selected="false" data-suggestion href="' + productUrl(product) + '"><img ' + UI.imageAttrs(product.image) + ' alt=""><span class="suggestion-copy"><strong>' + esc(product.name) + '</strong><small>' + esc(Shop.formatPrice(Shop.getSalePrice(product))) + '</small></span></a>';
             });
         const heading = 'Gợi ý sản phẩm';
         const content = suggestions.length

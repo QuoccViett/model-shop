@@ -95,16 +95,25 @@
                             <input type="text" id="product-name" required placeholder="Nhập tên sản phẩm...">
                         </div>
 
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div class="form-group">
+                            <label>Thương hiệu (Brand)</label>
+                            <input type="text" id="product-brand" placeholder="Ví dụ: Bandai, Tamiya...">
+                        </div>
+                        <div class="product-image-fields">
                             <div class="form-group">
-                                <label>Thương hiệu (Brand)</label>
-                                <input type="text" id="product-brand" placeholder="Ví dụ: Bandai, Tamiya...">
+                                <label for="product-image-1">Ảnh đại diện *</label>
+                                <input type="file" id="product-image-1" accept="image/jpeg,image/png,image/webp">
+                                <div class="product-image-preview" id="product-preview-1">Chưa chọn ảnh</div>
+                                <button type="button" class="product-image-clear" data-image-slot="0">Xóa ảnh</button>
                             </div>
                             <div class="form-group">
-                                <label>Link hình ảnh (Image URL)</label>
-                                <input type="text" id="product-image" placeholder="https://...">
+                                <label for="product-image-2">Ảnh bổ sung</label>
+                                <input type="file" id="product-image-2" accept="image/jpeg,image/png,image/webp">
+                                <div class="product-image-preview" id="product-preview-2">Chưa chọn ảnh</div>
+                                <button type="button" class="product-image-clear" data-image-slot="1">Xóa ảnh</button>
                             </div>
                         </div>
+                        <p class="product-image-help">JPEG, PNG hoặc WebP; tối đa 5 MB mỗi ảnh.</p>
 
                         <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
                             <div class="form-group">
@@ -184,7 +193,11 @@
     const inputCategory = document.getElementById('product-category');
     const inputName = document.getElementById('product-name');
     const inputBrand = document.getElementById('product-brand');
-    const inputImage = document.getElementById('product-image');
+    const imageInputs = [document.getElementById('product-image-1'), document.getElementById('product-image-2')];
+    const imagePreviews = [document.getElementById('product-preview-1'), document.getElementById('product-preview-2')];
+    const imageRefs = ['', ''];
+    const imageFiles = [null, null];
+    const previewUrls = ['', ''];
     const inputScale = document.getElementById('product-scale');
     const inputMaterial = document.getElementById('product-material');
     const inputSize = document.getElementById('product-size');
@@ -230,7 +243,7 @@
 
             return `
                 <tr>
-                    <td><img src="${imgSrc}" alt="" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;"></td>
+                    <td><img ${window.ShopImages ? ShopImages.attrs(imgSrc) : `src="${Shop.escapeHtml(imgSrc)}"`} alt="" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;"></td>
                     <td><code>${Shop.escapeHtml(p.code || 'N/A')}</code></td>
                     <td><strong>${Shop.escapeHtml(p.name)}</strong></td>
                     <td>${Shop.escapeHtml(p.brand || 'N/A')}</td>
@@ -264,6 +277,88 @@
         renderTable();
     });
 
+    function clearPreviewUrl(slot) {
+        if (previewUrls[slot]) URL.revokeObjectURL(previewUrls[slot]);
+        previewUrls[slot] = '';
+    }
+
+    function renderImagePreview(slot) {
+        const preview = imagePreviews[slot];
+        preview.replaceChildren();
+        if (imageFiles[slot]) {
+            previewUrls[slot] = URL.createObjectURL(imageFiles[slot]);
+            const img = document.createElement('img');
+            img.src = previewUrls[slot];
+            img.alt = 'Xem trước ảnh ' + (slot + 1);
+            preview.appendChild(img);
+        } else if (imageRefs[slot]) {
+            const ref = imageRefs[slot];
+            const img = document.createElement('img');
+            img.alt = 'Ảnh sản phẩm ' + (slot + 1);
+            preview.appendChild(img);
+            const source = ref.startsWith('idb:') ? ShopImages.url(ref) : Promise.resolve(ref);
+            source.then(function (url) {
+                if (imageRefs[slot] === ref && !imageFiles[slot]) img.src = url;
+            }).catch(function () { preview.textContent = 'Không đọc được ảnh'; });
+        } else {
+            preview.textContent = 'Chưa chọn ảnh';
+        }
+    }
+
+    function resetImages(refs) {
+        imageInputs.forEach(function (input, slot) {
+            clearPreviewUrl(slot);
+            input.value = '';
+            imageFiles[slot] = null;
+            imageRefs[slot] = refs[slot] || '';
+            renderImagePreview(slot);
+        });
+    }
+
+    imageInputs.forEach(function (input, slot) {
+        input.addEventListener('change', function () {
+            const file = input.files[0];
+            if (!file) return;
+            if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 5 * 1024 * 1024) {
+                alert('Chỉ chọn ảnh JPEG, PNG hoặc WebP, tối đa 5 MB.');
+                clearPreviewUrl(slot);
+                input.value = '';
+                imageFiles[slot] = null;
+                renderImagePreview(slot);
+                return;
+            }
+            clearPreviewUrl(slot);
+            imageFiles[slot] = file;
+            renderImagePreview(slot);
+        });
+    });
+
+    document.querySelectorAll('.product-image-clear').forEach(function (button) {
+        button.addEventListener('click', function () {
+            const slot = Number(button.dataset.imageSlot);
+            clearPreviewUrl(slot);
+            imageInputs[slot].value = '';
+            imageFiles[slot] = null;
+            imageRefs[slot] = '';
+            renderImagePreview(slot);
+        });
+    });
+
+    async function resizeImage(file) {
+        const bitmap = await createImageBitmap(file);
+        try {
+            const scale = Math.min(1, 1200 / Math.max(bitmap.width, bitmap.height));
+            const canvas = document.createElement('canvas');
+            canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+            canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+            canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+            const compressed = await new Promise(function (resolve) { canvas.toBlob(resolve, 'image/webp', 0.82); });
+            return compressed && compressed.type === 'image/webp' && compressed.size < file.size ? compressed : file;
+        } finally {
+            bitmap.close();
+        }
+    }
+
     btnOpenAdd.addEventListener('click', function () {
         modalTitle.innerText = 'Thêm sản phẩm mới';
         inputId.value = '';
@@ -272,7 +367,7 @@
         inputCategory.value = '';
         inputName.value = '';
         inputBrand.value = '';
-        inputImage.value = '';
+        resetImages(['', '']);
         inputScale.value = '';
         inputMaterial.value = '';
         inputSize.value = '';
@@ -287,6 +382,7 @@
 
     function closeModal() {
         modal.classList.remove('show');
+        resetImages(['', '']);
     }
     btnCloseModal.addEventListener('click', closeModal);
     btnCancelModal.addEventListener('click', closeModal);
@@ -294,14 +390,19 @@
         if (e.target === modal) closeModal();
     });
 
-    btnSaveProduct.addEventListener('click', function () {
+    btnSaveProduct.addEventListener('click', async function () {
+        if (btnSaveProduct.disabled) return;
         const id = inputId.value;
+        if (!imageFiles[0] && !imageRefs[0]) {
+            alert('Vui lòng chọn ảnh đại diện cho sản phẩm!');
+            return;
+        }
         const productData = {
             code: inputCode.value.trim(),
             category_id: inputCategory.value,
             name: inputName.value.trim(),
             brand: inputBrand.value.trim(),
-            image: inputImage.value.trim(),
+            image: imageRefs[0],
             scale: inputScale.value.trim(),
             material: inputMaterial.value.trim(),
             size: inputSize.value.trim(),
@@ -317,21 +418,43 @@
             alert('Vui lòng điền đầy đủ Mã, Tên và chọn Loại sản phẩm!');
             return;
         }
-
-        if (id) {
-            const res = Shop.updateProduct(id, productData);
-            alert(res.message);
-            if (res.success) {
-                closeModal();
-                renderTable();
+        if (imageFiles.some(Boolean) && !window.ShopImages) {
+            alert('Trình duyệt không hỗ trợ lưu ảnh trên thiết bị này.');
+            return;
+        }
+        const oldRefs = imageRefs.slice();
+        const newRefs = [];
+        let saved = false;
+        btnSaveProduct.disabled = true;
+        try {
+            const refs = imageRefs.slice();
+            for (let slot = 0; slot < imageFiles.length; slot++) {
+                if (!imageFiles[slot]) continue;
+                const blob = await resizeImage(imageFiles[slot]);
+                refs[slot] = await ShopImages.put(blob);
+                newRefs.push(refs[slot]);
             }
-        } else {
-            const res = Shop.addProduct(productData);
-            alert(res.message);
-            if (res.success) {
-                closeModal();
-                renderTable();
+            productData.image = refs[0];
+            productData.images = refs.filter(Boolean);
+            const res = id ? Shop.updateProduct(id, productData) : Shop.addProduct(productData);
+            if (!res.success) {
+                await Promise.all(newRefs.map(function (ref) { return ShopImages.remove(ref); }));
+                alert(res.message);
+                return;
             }
+            saved = true;
+            closeModal();
+            renderTable();
+            oldRefs.filter(function (ref) { return ref && !refs.includes(ref); }).forEach(function (ref) {
+                ShopImages.remove(ref).catch(function () {});
+            });
+            alert(res.message);
+        } catch (error) {
+            if (!saved) await Promise.all(newRefs.map(function (ref) { return ShopImages.remove(ref).catch(function () {}); }));
+            console.error('Không lưu được sản phẩm hoặc ảnh:', error);
+            alert('Không lưu được sản phẩm hoặc ảnh: ' + error.message);
+        } finally {
+            btnSaveProduct.disabled = false;
         }
     });
 
@@ -346,7 +469,7 @@
         inputCategory.value = product.category_id || '';
         inputName.value = product.name || '';
         inputBrand.value = product.brand || '';
-        inputImage.value = product.image || '';
+        resetImages(Array.isArray(product.images) && product.images.length ? product.images : [product.image || '']);
         inputScale.value = product.scale || 'Chưa thiết lập';
         inputMaterial.value = product.material || '';
         inputSize.value = product.size || '';

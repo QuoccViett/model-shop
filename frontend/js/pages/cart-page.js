@@ -32,7 +32,7 @@
             lines.map(function (line) {
                 const p = line.product;
                 return '<div class="shop-cart-item">' +
-                    '<a href="product.html?id=' + p.id + '"><img class="shop-cart-thumb" src="' + esc(UI.imageSrc(p.image)) + '" alt="' + esc(p.name) + '"></a>' +
+                    '<a href="product.html?id=' + p.id + '"><img class="shop-cart-thumb" ' + UI.imageAttrs(p.image) + ' alt="' + esc(p.name) + '"></a>' +
                     '<div><a class="shop-cart-title" href="product.html?id=' + p.id + '">' + esc(p.name) + '</a>' +
                     '<div class="shop-muted">Đơn giá: ' + money(line.unit_price) + '</div>' +
                     '<div class="shop-muted">Tồn kho: ' + line.stock + '</div>' +
