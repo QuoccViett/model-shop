@@ -119,7 +119,26 @@
                 return obj;
             });
         });
+        (db.products || []).forEach(function (product) {
+            if (global.DB_PRODUCT_ASSETS && global.DB_PRODUCT_ASSETS[product.code]) {
+                product.images = global.DB_PRODUCT_ASSETS[product.code].slice();
+            }
+        });
         return db;
+    }
+
+    function useBundledProductImages(db) {
+        if (!global.DB_PRODUCT_ASSETS || !Array.isArray(db.products)) return;
+        let changed = false;
+        db.products.forEach(function (product) {
+            const images = global.DB_PRODUCT_ASSETS[product.code];
+            if (!images || !/^https:\/\/placehold\.co\//i.test(product.image || '')) return;
+            if (Array.isArray(product.images) && product.images.length > 1) return;
+            product.image = images[0];
+            product.images = images.slice();
+            changed = true;
+        });
+        if (changed) saveDB(db);
     }
 
     function saveDB(db) {
@@ -153,6 +172,7 @@
             normalizeCustomerDeletion(cache);
             removeLegacyDiscontinuedCategory(cache);
             normalizeAccountNotifications(cache);
+            useBundledProductImages(cache);
             return cache;
         }
         const raw = localStorage.getItem(DB_KEY);
@@ -175,6 +195,7 @@
         normalizeCustomerDeletion(cache);
         removeLegacyDiscontinuedCategory(cache);
         normalizeAccountNotifications(cache);
+        useBundledProductImages(cache);
         if (typeof DB_SEED !== 'undefined' && DB_SEED.notifications) {
             const notificationColumns = Object.keys(DB_SCHEMA.notifications.columns);
             let changed = false;

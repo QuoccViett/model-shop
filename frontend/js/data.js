@@ -287,7 +287,7 @@
     products: {
       columns: {
         id: 'int pk', category_id: 'int fk categories.id', code: 'string unique', name: 'string',
-        image: 'string? (link ảnh; sau này thay bằng ảnh lưu trong DB)', description: 'text?', brand: 'string?', scale: 'string?', material: 'string?',
+        image: 'string? (đường dẫn ảnh trong assets/img hoặc URL)', description: 'text?', brand: 'string?', scale: 'string?', material: 'string?',
         size: 'string?', profit_percent: 'number? (null = theo loại)', cost_price: 'int default 0',
         stock_qty: 'int default 0', low_stock_threshold: 'int default 5', is_hidden: 'boolean default false',
         sale_percent: 'int default 0 (% giảm giá hiển thị, 0 = không sale)'
@@ -1091,6 +1091,48 @@
 
   };
 
+  // Ảnh đã có trong dự án: đường dẫn tương đối với thư mục frontend để dùng được trên hosting tĩnh.
+  // Mỗi mã sản phẩm có tối đa hai ảnh; ảnh đầu là ảnh đại diện.
+  var bundledImageFolders = {
+    GD001: 'Mô hình SD 00 QANT 364',
+    GD002: 'Mô hình lắp ráp SD Unicorn Gundam Perfectibility Mecha Unicorn',
+    GD003: 'Mô hình lắp ráp SD HEROES Alternative Justice Infinite Dragon Bandai',
+    GD004: 'Mô hình lắp ráp SD W Heroes Sasuke Delta Gundam Bandai',
+    GD005: 'Mô Hình Lắp Ráp Sdw Heroes Nobunaga Gundam Epyon Dark Mask Ver. Bandai',
+    GD006: 'Mô Hình Lắp Ráp Gundam Bandai SD Zhang Fei God Gundam Trương Phi 03',
+    GD007: 'Mô Hình Lắp Ráp Gundam Bandai SD 002 Guan Yu Yun Chang V Gundam',
+    GD008: 'Mô hình lắp ráp Gundam Bandai SD Liu Bei Unicorn Gundam 01',
+    GD021: 'Mô Hình Lắp Ráp Hello KITTYRX-78-2 Gundam [SD Ex-standard] Bandai',
+    MB001: 'Mô Hình 172 Metal Build ZhuKui - Thiên Sư Chung Quỳ Cangdao',
+    MB002: 'Mô Hình Metal Build 1100 Sun Wukong Moshow - Tề Thiên Võ Thánh',
+    MB004: 'Mô Hình Ráp Sẵn Metal Build MCT-AP04 Duke of Wei Guo Progenitor Effect Moshow Toys',
+    MB007: 'Mô Hình Metal Build MNQ-XH08X Wukong Ngộ Không Motor Nuclear',
+    BD001: 'Mô Hình Lắp Ráp Plannosaurus Spinosaurus 1915 Bandai',
+    BD004: 'Mô Hình Lắp Ráp Plannosaurus Tyrannosaurus Tropical Jungle Ver. Bandai',
+    MM001: 'Mô Hình Lắp Ráp 30MM 1144 EXM-A9rk Spinatio - Royal Knight Type Bandai',
+    MM004: 'Mô Hình Lắp Ráp 30MM 1144 Exm Verdenova Verdenova',
+    PK002: 'Bộ Thanh Chà Nhám Sợi Carbon STEDI MS-D2 – 3 Kích Thước',
+    PK006: 'New folder'
+  };
+  var DB_PRODUCT_ASSETS = {};
+  Object.keys(bundledImageFolders).forEach(function (code) {
+    var folder = bundledImageFolders[code];
+    var baseName = code === 'PK006'
+      ? 'Nhíp Cao Cấp DSPIAE AT-TZ04 – Nhíp Đầu Cong Cho Gunpla, Model Kit, Decal'
+      : folder;
+    var suffixes = code === 'MM004' ? ['_!.webp', '_2.jpg']
+      : code === 'PK002' ? ['_1.webp', '_!.webp']
+      : code === 'PK006' ? ['_1.webp', '.webp']
+      : ['_1.webp', '_2.webp'];
+    DB_PRODUCT_ASSETS[code] = suffixes.map(function (suffix) {
+      return 'assets/img/' + encodeURIComponent(folder) + '/' + encodeURIComponent(baseName + suffix);
+    });
+  });
+  DB_SEED.products.forEach(function (product) {
+    if (DB_PRODUCT_ASSETS[product[2]]) product[4] = DB_PRODUCT_ASSETS[product[2]][0];
+  });
+
+  global.DB_PRODUCT_ASSETS = DB_PRODUCT_ASSETS;
   global.DB_ENUMS = DB_ENUMS;
   global.DB_SCHEMA = DB_SCHEMA;
   global.DB_SEED = DB_SEED;

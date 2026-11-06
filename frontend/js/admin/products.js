@@ -198,6 +198,11 @@
     const imageRefs = ['', ''];
     const imageFiles = [null, null];
     const previewUrls = ['', ''];
+
+    function adminImageSrc(src) {
+        if (!src || /^(https?:|data:|blob:|idb:|\/|\.\.)/i.test(src)) return src;
+        return '../' + src;
+    }
     const inputScale = document.getElementById('product-scale');
     const inputMaterial = document.getElementById('product-material');
     const inputSize = document.getElementById('product-size');
@@ -239,7 +244,7 @@
             const eyeIcon = isHidden ? 'fa-eye-slash' : 'fa-eye';
             const eyeTitle = isHidden ? 'Hiển thị sản phẩm' : 'Ẩn sản phẩm';
             const formattedPrice = Number(p.cost_price || 0).toLocaleString('vi-VN') + ' đ';
-            const imgSrc = p.image || 'https://placehold.co/600x600/e8590c/ffffff?text=No+Img';
+            const imgSrc = adminImageSrc(p.image) || 'https://placehold.co/600x600/e8590c/ffffff?text=No+Img';
 
             return `
                 <tr>
@@ -296,7 +301,7 @@
             const img = document.createElement('img');
             img.alt = 'Ảnh sản phẩm ' + (slot + 1);
             preview.appendChild(img);
-            const source = ref.startsWith('idb:') ? ShopImages.url(ref) : Promise.resolve(ref);
+            const source = ref.startsWith('idb:') ? ShopImages.url(ref) : Promise.resolve(adminImageSrc(ref));
             source.then(function (url) {
                 if (imageRefs[slot] === ref && !imageFiles[slot]) img.src = url;
             }).catch(function () { preview.textContent = 'Không đọc được ảnh'; });
