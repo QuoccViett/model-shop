@@ -284,22 +284,10 @@
             });
     }
 
-    const STATUS_TEXT = {
-        order_created: 'Đặt hàng thành công',
-        payment_success: 'Thanh toán thành công',
-        order_confirmed: 'Đã xác nhận',
-        shipping: 'Đang giao',
-        delivered: 'Giao hàng thành công',
-        cancelled: 'Đã hủy',
-        new: 'Đặt hàng thành công',
-        processed: 'Đã xác nhận'
-    };
-
     global.Cart = {
         mergeGuestCart: mergeGuestCart,
         PAYMENTS: PAYMENTS,
         PAYMENT_CHANNELS: PAYMENT_CHANNELS,
-        STATUS_TEXT: STATUS_TEXT,
         addToCart: addToCart,
         updateQuantity: updateQuantity,
         removeFromCart: removeFromCart,

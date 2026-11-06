@@ -25,7 +25,7 @@
         '<h1>Chi tiết đơn hàng #' + order.id + '</h1><section class="shop-panel">' +
         '<div class="shop-order-meta">' +
         '<div><strong>Ngày đặt hàng</strong>' + esc(order.order_date) + '</div>' +
-        '<div><strong>Trạng thái</strong><span class="shop-status ' + esc(order.status) + '">' + esc(Cart.STATUS_TEXT[order.status] || order.status) + '</span></div>' +
+        '<div><strong>Trạng thái</strong><span class="shop-status ' + ORDER_STATUS.className(order.status) + '">' + esc(ORDER_STATUS.get(order.status).label) + '</span></div>' +
         '<div><strong>Người nhận</strong>' + esc(order.receiver_name) + '<br>' + esc(order.receiver_phone) + '</div>' +
         '<div><strong>Địa chỉ giao hàng</strong>' + esc(address) + '</div>' +
         '<div><strong>Phương thức thanh toán</strong>' + esc(Cart.PAYMENTS[order.payment_method] || order.payment_method) +

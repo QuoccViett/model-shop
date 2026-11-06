@@ -970,10 +970,7 @@
         return (db.orders || []).filter(function (o) {
             if (Number(o.customer_id) !== Number(user.id)) return false;
             if (!statusGroup || statusGroup === 'all') return true;
-            const status = normalizeStatus(o.status);
-            return statusGroup === 'processing' ? ['order_created', 'payment_success', 'order_confirmed'].indexOf(status) !== -1 :
-                statusGroup === 'shipping' ? status === 'shipping' :
-                statusGroup === 'completed' ? status === 'delivered' : statusGroup === 'cancelled' && status === 'cancelled';
+            return Boolean(global.ORDER_STATUS && global.ORDER_STATUS.get(o.status).group === statusGroup);
         }).sort(function (a, b) { return String(b.order_date).localeCompare(String(a.order_date)); });
     }
 
@@ -985,32 +982,75 @@
         return order && Number(order.customer_id) === Number(user.id) ? order : null;
     }
 
-    // Đánh dấu đơn hàng là đã hủy và tạo thông báo cho người dùng
-    function cancelOrder(id) {
-        const order = getOrderById(id);
-        if (!order || !global.ORDER_STATUS || !global.ORDER_STATUS.canCancel(order.status)) {
-            return { ok: false, error: 'Đơn hàng này không thể hủy.' };
-        }
+    // Một đường cập nhật trạng thái cho cả quản trị và khách hàng; tồn kho đổi cùng lần lưu đơn.
+    function changeOrderStatus(id, nextStatus) {
         const db = loadDB();
-        order.status = 'cancelled';
+        const order = findById(db.orders, id);
+        if (!order || !global.ORDER_STATUS || !global.ORDER_STATUS.all[nextStatus]) {
+            return { ok: false, error: 'Đơn hàng hoặc trạng thái không hợp lệ.' };
+        }
+        if (!global.ORDER_STATUS.canTransition(order.status, nextStatus, order.payment_method)) {
+            return { ok: false, error: 'Không thể chuyển trạng thái theo luồng đơn hàng đã quy định.' };
+        }
+
+        const movements = db.stock_movements || (db.stock_movements = []);
+        const products = db.products || [];
+        const orderMovements = movements.filter(function (movement) {
+            return movement.ref_type === 'order' && Number(movement.ref_id) === Number(id);
+        });
+        const quantities = new Map();
+        (db.order_items || []).filter(function (item) { return Number(item.order_id) === Number(id); })
+            .forEach(function (item) {
+                const productId = Number(item.product_id), quantity = Number(item.quantity);
+                quantities.set(productId, (quantities.get(productId) || 0) + quantity);
+            });
+        const stockChanges = [];
+        if (nextStatus === 'order_confirmed') {
+            for (const [productId, quantity] of quantities) {
+                if (!Number.isFinite(quantity) || quantity <= 0) return { ok: false, error: 'Số lượng sản phẩm không hợp lệ.' };
+                const product = findById(products, productId);
+                if (!product) return { ok: false, error: 'Có sản phẩm trong đơn hàng không còn tồn tại.' };
+                if (!orderMovements.some(function (movement) { return movement.movement_type === 'export' && Number(movement.product_id) === productId; })) {
+                    if (Number(product.stock_qty || 0) < quantity) return { ok: false, error: 'Sản phẩm ' + product.name + ' không đủ tồn kho.' };
+                    stockChanges.push({ product: product, quantity: -quantity, type: 'export' });
+                }
+            }
+        } else if (nextStatus === 'cancelled') {
+            const outstanding = new Map();
+            orderMovements.forEach(function (movement) {
+                if (movement.movement_type !== 'export' && movement.movement_type !== 'cancel_return') return;
+                const productId = Number(movement.product_id);
+                outstanding.set(productId, (outstanding.get(productId) || 0) - Number(movement.quantity));
+            });
+            for (const [productId, quantity] of outstanding) {
+                const product = findById(products, productId);
+                if (quantity > 0 && product) stockChanges.push({ product: product, quantity: quantity, type: 'cancel_return' });
+            }
+        }
+        stockChanges.forEach(function (change) {
+            change.product.stock_qty = Number(change.product.stock_qty || 0) + change.quantity;
+            movements.push({
+                id: movements.reduce(function (max, movement) { return Math.max(max, Number(movement.id) || 0); }, 0) + 1,
+                product_id: change.product.id, movement_date: new Date().toLocaleDateString('en-CA'),
+                movement_type: change.type, quantity: change.quantity, ref_type: 'order', ref_id: order.id
+            });
+        });
+        order.status = nextStatus;
         order.updated_at = nowString();
         saveDB(db);
-        createNotification(order.customer_id, 'cancelled', order.id);
+        createNotification(order.customer_id, nextStatus, order.id);
+        global.dispatchEvent(new CustomEvent('modelshop:orders-updated'));
         return { ok: true };
     }
 
-    // Cập nhật trạng thái theo đúng thứ tự của quy trình đơn hàng
+    function cancelOrder(id) {
+        if (!getOrderById(id)) return { ok: false, error: 'Đơn hàng này không thể hủy.' };
+        return changeOrderStatus(id, 'cancelled');
+    }
+
     function updateOrderStatus(id, nextStatus) {
-        const order = getOrderById(id);
-        const next = normalizeStatus(nextStatus);
-        if (!order || !global.ORDER_STATUS || global.ORDER_STATUS.flow.indexOf(next) === -1) return { ok: false, error: 'Đơn hàng không hợp lệ.' };
-        const expected = global.ORDER_STATUS.next(order.status, order.payment_method);
-        if (expected !== next) return { ok: false, error: 'Trạng thái tiếp theo không hợp lệ.' };
-        order.status = next;
-        order.updated_at = nowString();
-        saveDB(loadDB());
-        createNotification(order.customer_id, next, order.id);
-        return { ok: true };
+        if (!getOrderById(id)) return { ok: false, error: 'Đơn hàng không hợp lệ.' };
+        return changeOrderStatus(id, nextStatus);
     }
 
     // Công khai API dùng chung cho giao diện
@@ -1054,6 +1094,7 @@
         getMyOrders: getMyOrders,
         getOrderById: getOrderById,
         cancelOrder: cancelOrder,
+        changeOrderStatus: changeOrderStatus,
         updateOrderStatus: updateOrderStatus,
         getOrderCode: getOrderCode,
         getAllUsers: getAllUsers,

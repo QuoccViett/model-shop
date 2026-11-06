@@ -11,10 +11,10 @@
         '<a href="profile.html">Tài khoản</a> / Đơn hàng của tôi</div><h1>Lịch sử mua hàng</h1>' +
         (orders.length ? orders.map(function (details) {
             const order = details.order;
-            const status = Cart.STATUS_TEXT[order.status] || order.status;
+            const status = ORDER_STATUS.get(order.status).label;
             return '<article class="shop-panel shop-order-card"><div class="shop-order-head"><div><strong>Đơn hàng #' + order.id + '</strong>' +
                 '<div class="shop-muted">Ngày đặt: ' + esc(order.order_date) + '</div></div>' +
-                '<span class="shop-status ' + esc(order.status) + '">' + esc(status) + '</span></div>' +
+                '<span class="shop-status ' + ORDER_STATUS.className(order.status) + '">' + esc(status) + '</span></div>' +
                 '<div class="shop-muted">' + details.items.length + ' loại sản phẩm · ' +
                 esc(Cart.PAYMENTS[order.payment_method] || order.payment_method) + '</div>' +
                 '<div class="shop-order-footer"><span>Tổng tiền: <strong>' + Shop.formatPrice(order.total_amount) + '</strong></span>' +
