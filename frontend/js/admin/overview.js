@@ -1,5 +1,6 @@
 (function () {
     'use strict';
+    if (!window.AdminAuthenticated) return;
 
     function renderOverviewStats() {
         const statsBox = document.getElementById('overview-stats');

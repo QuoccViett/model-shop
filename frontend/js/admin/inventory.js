@@ -1,6 +1,7 @@
 /* MODEL SHOP - QUẢN LÝ TỒN KHO */
 (function () {
     'use strict';
+    if (!window.AdminAuthenticated) return;
 
     if (!window.Shop || typeof Shop.loadDB !== 'function') {
         console.error('Không tìm thấy Shop.loadDB(). Kiểm tra data.js và common.js.');

@@ -1,5 +1,6 @@
 (function () {
     'use strict';
+    if (!window.AdminAuthenticated) return;
 
     // Render cấu trúc HTML giao diện Quản lý người dùng vào main
     const mainContent = document.querySelector('.admin-main');

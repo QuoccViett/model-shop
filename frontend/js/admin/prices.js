@@ -5,6 +5,7 @@
 */
 (function () {
     'use strict';
+    if (!window.AdminAuthenticated) return;
 
     const mainContent = document.querySelector('.admin-main');
     if (!mainContent) return;
