@@ -149,38 +149,6 @@
     white-space: nowrap;
 }
 
-/* MỚI ĐẶT - XANH DƯƠNG */
-
-.orders-page .status-new,
-.order-modal-overlay .status-new {
-    color: #2563eb;
-    background-color: #dbeafe;
-}
-
-/* ĐÃ XỬ LÝ - CAM */
-
-.orders-page .status-processed,
-.order-modal-overlay .status-processed {
-    color: #ea580c;
-    background-color: #ffedd5;
-}
-
-/* ĐÃ GIAO - XANH LÁ */
-
-.orders-page .status-delivered,
-.order-modal-overlay .status-delivered {
-    color: #16a34a;
-    background-color: #dcfce7;
-}
-
-/* ĐÃ HỦY - ĐỎ */
-
-.orders-page .status-cancelled,
-.order-modal-overlay .status-cancelled {
-    color: #dc2626;
-    background-color: #fee2e2;
-}
-
 /* NÚT HÀNH ĐỘNG*/
 
 .orders-page .btn-action {
@@ -593,12 +561,6 @@
     }
 
 }
-/* Trạng thái đơn hàng theo quy trình 5 bước */
-.orders-page .status-order_created, .order-modal-overlay .status-order_created { color:#2563eb; background:#dbeafe; }
-.orders-page .status-order_confirmed, .order-modal-overlay .status-order_confirmed { color:#7c3aed; background:#ede9fe; }
-.orders-page .status-shipping, .order-modal-overlay .status-shipping { color:#c2410c; background:#ffedd5; }
-
-
 /* TRẠNG THÁI THANH TOÁN TRONG CHI TIẾT ĐƠN HÀNG */
 .order-modal-overlay .payment-status-badge {
     display: inline-flex;
@@ -612,11 +574,11 @@
 }
 
 .order-modal-overlay .payment-status-paid {
-    color: #15803d;
-    background-color: #dcfce7;
+    color: var(--status-delivered-text);
+    background-color: var(--status-delivered-bg);
 }
 
 .order-modal-overlay .payment-status-unpaid {
-    color: #b45309;
-    background-color: #fef3c7;
+    color: var(--status-shipping-text);
+    background-color: var(--status-shipping-bg);
 }

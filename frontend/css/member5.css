@@ -470,41 +470,8 @@
     display: inline-block;
     padding: 4px 10px;
     border-radius: 14px;
-    background: #e8eef6;
-    color: #334155;
     font-weight: 600;
     font-size: 13px;
-}
-
-.shop-status.delivered {
-    background: #e7f6ec;
-    color: #17653a;
-}
-
-.shop-status.cancelled {
-    background: #fdecea;
-    color: #b42318;
-}
-
-.shop-status.order_created,
-.shop-status.new {
-    background: #fff4e8;
-    color: #a64b00;
-}
-
-.shop-status.payment_success {
-    background: #e8eefc;
-    color: #3158a6;
-}
-
-.shop-status.order_confirmed {
-    background: #e8f5fb;
-    color: #17627a;
-}
-
-.shop-status.shipping {
-    background: #fff8df;
-    color: #8a6500;
 }
 
 .shop-order-card {

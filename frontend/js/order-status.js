@@ -2,14 +2,14 @@
     'use strict';
 
     const STATUS = {
-        order_created: { label: 'Đặt hàng thành công', color: 'var(--status-order-created)', icon: 'Đặt hàng', group: 'processing' },
-        payment_success: { label: 'Thanh toán thành công', color: 'var(--status-payment-success)', icon: 'Thanh toán', group: 'processing' },
-        order_confirmed: { label: 'Đã xác nhận', color: 'var(--status-order-confirmed)', icon: 'Đã xác nhận', group: 'processing' },
+        order_created: { label: 'Đặt hàng thành công', color: 'var(--status-order-created)', icon: 'Đặt hàng', group: 'processing', cancellable: true },
+        payment_success: { label: 'Thanh toán thành công', color: 'var(--status-payment-success)', icon: 'Thanh toán', group: 'processing', cancellable: true },
+        order_confirmed: { label: 'Đã xác nhận', color: 'var(--status-order-confirmed)', icon: 'Đã xác nhận', group: 'processing', cancellable: true },
         shipping: { label: 'Đang giao', color: 'var(--status-shipping)', icon: 'Đang giao', group: 'shipping' },
         delivered: { label: 'Giao hàng thành công', color: 'var(--status-delivered)', icon: 'Đã giao', group: 'completed' },
         cancelled: { label: 'Đã hủy', color: 'var(--status-cancelled)', icon: 'Đã hủy', group: 'cancelled' }
     };
-    const FLOW = ['order_created', 'payment_success', 'order_confirmed', 'shipping', 'delivered'];
+    const FLOW = Object.keys(STATUS).filter(function (status) { return status !== 'cancelled'; });
     const OLD = { new: 'order_created', processed: 'order_confirmed', delivered: 'delivered', cancelled: 'cancelled' };
 
     global.ORDER_STATUS = {
@@ -22,12 +22,31 @@
         },
         normalize: function (status) { return STATUS[status] ? status : (OLD[status] || 'order_created'); },
         get: function (status) { return STATUS[this.normalize(status)]; },
-        canCancel: function (status) { return ['order_created', 'payment_success', 'order_confirmed'].indexOf(this.normalize(status)) !== -1; },
-        next: function (status, paymentMethod) {
+        className: function (status) { return 'status-' + this.normalize(status).replace(/_/g, '-'); },
+        flowFor: function (paymentMethod) {
+            return FLOW.filter(function (status) {
+                return status !== 'payment_success' || paymentMethod === 'online' || paymentMethod === 'transfer';
+            });
+        },
+        allowedTransitions: function (status, paymentMethod) {
             const current = this.normalize(status);
-            if (current === 'order_created' && paymentMethod === 'cod') return 'order_confirmed';
-            const index = FLOW.indexOf(current);
-            return index >= 0 && index < FLOW.length - 1 ? FLOW[index + 1] : null;
+            const flow = this.flowFor(paymentMethod);
+            const index = flow.indexOf(current);
+            const allowed = index >= 0 && index < flow.length - 1 ? [flow[index + 1]] : [];
+            if (this.canCancel(current)) allowed.push('cancelled');
+            return allowed;
+        },
+        canTransition: function (status, nextStatus, paymentMethod) {
+            return this.allowedTransitions(status, paymentMethod).indexOf(nextStatus) !== -1;
+        },
+        canCancel: function (status) { return Boolean(this.get(status).cancellable); },
+        paymentStatus: function (order) {
+            const status = this.normalize(order.status);
+            if (status === 'cancelled') return 'unpaid';
+            if (order.payment_method === 'online' || order.payment_method === 'transfer') {
+                return status === 'order_created' ? 'unpaid' : 'paid';
+            }
+            return status === 'delivered' ? 'paid' : 'unpaid';
         }
     };
 })(window);
