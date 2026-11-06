@@ -113,6 +113,7 @@
         minmax(180px, 1.5fr)
         minmax(160px, 1.2fr)
         minmax(140px, 1fr)
+        minmax(160px, 1.2fr)
         minmax(140px, 1fr);
 
     gap: 15px;
@@ -419,6 +420,10 @@
 .inventory-page .stock-badge.out-stock {
     color: #b91c1c;
     background: #fee2e2;
+}
+.inventory-page .stock-badge.discontinued {
+    color: #475467;
+    background: #eaecf0;
 }
 .inventory-data-note {
     margin: 14px 0 0;

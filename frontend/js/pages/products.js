@@ -9,6 +9,9 @@
     const priceKey = params.get('price') || '';
     const minParam = params.get('min');
     const maxParam = params.get('max');
+    let invalidPriceUrl = [minParam, maxParam].some(function (value) {
+        return value !== null && value.trim() !== '' && (!Number.isFinite(Number(value)) || Number(value) < 0);
+    });
     const sort = params.get('sort') || '';
     const onSale = params.get('sale') === '1';
     const form = document.getElementById('filter-form');
@@ -46,15 +49,10 @@
         return brands.find(function (item) { return item.toLocaleLowerCase() === brandParam.toLocaleLowerCase(); }) || brandParam;
     }
 
-    // Đọc giá nhập tay và ép số âm về 0
+    // Giữ giá trị 0 khác với trường bỏ trống.
     function readCustomPrice(input) {
         if (input.value.trim() === '') return null;
         const value = Number(input.value);
-        if (!Number.isFinite(value)) return null;
-        if (value < 0) {
-            input.value = '0';
-            return 0;
-        }
         return value;
     }
 
@@ -62,6 +60,7 @@
     function getPriceFilter() {
         const min = readCustomPrice(minInput);
         const max = readCustomPrice(maxInput);
+        if (invalidPriceUrl || [min, max].some(function (value) { return value !== null && (!Number.isFinite(value) || value < 0); })) return { min: min, max: max, invalid: true };
         if (min !== null || max !== null) return { min: min, max: max, invalid: min !== null && max !== null && min > max };
         const selectedRadio = form.querySelector('input[name="price"]:checked');
         const selected = PRICE_RANGES.find(function (range) { return selectedRadio && range.key === selectedRadio.value; });
@@ -70,6 +69,7 @@
 
     // Lọc sản phẩm đồng thời theo từ khóa, giá, danh mục, hãng và khuyến mãi
     function filterProducts(filters) {
+        if (filters.invalid) return [];
         return Shop.queryProducts({
             keyword: filters.keyword,
             categoryId: filters.categoryId,
@@ -155,7 +155,7 @@
     function applyFilters() {
         const priceFilter = getPriceFilter();
         if (priceFilter.invalid) {
-            showPriceError('Giá tối thiểu không được lớn hơn giá tối đa');
+            showPriceError('Khoảng giá không hợp lệ. Giá phải là số không âm và giá tối thiểu không lớn hơn giá tối đa.');
             return;
         }
         showPriceError('');
@@ -181,6 +181,7 @@
     form.addEventListener('change', function (event) {
         if (event.target === minInput || event.target === maxInput) return;
         if (event.target.name === 'price') {
+            invalidPriceUrl = false;
             minInput.value = '';
             maxInput.value = '';
         }
@@ -190,6 +191,7 @@
     // Bỏ radio khoảng giá khi người dùng nhập giá tùy chỉnh
     [minInput, maxInput].forEach(function (input) {
         input.addEventListener('input', function () {
+            invalidPriceUrl = false;
             form.querySelectorAll('input[name="price"]').forEach(function (radioInput) { radioInput.checked = false; });
             showPriceError('');
         });
@@ -198,6 +200,7 @@
     form.addEventListener('submit', function (event) { event.preventDefault(); applyFilters(); });
 
     const priceFilter = getPriceFilter();
+    if (priceFilter.invalid) showPriceError('Khoảng giá không hợp lệ. Giá phải là số không âm và giá tối thiểu không lớn hơn giá tối đa.');
     const filteredProducts = filterProducts({
         keyword: keyword,
         categoryId: categoryId,

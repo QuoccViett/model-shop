@@ -20,7 +20,7 @@
                             <option value="all">Tất cả trạng thái</option>
                             <option value="active">Đang hiển thị</option>
                             <option value="hidden">Đang ẩn</option>
-                            <option value="deleted">Đã xóa</option>
+                            <option value="deleted">Ngừng kinh doanh</option>
                         </select>
                     </div>
                     <button class="btn-add" id="btn-open-add-modal">
@@ -121,7 +121,7 @@
         tableBody.innerHTML = paged.items.map(c => {
             const isHidden = c.is_hidden;
             const statusClass = c.is_deleted || isHidden ? 'locked' : 'active';
-            const statusText = c.is_deleted ? 'Đã xóa' : (isHidden ? 'Đang ẩn' : 'Hiển thị');
+            const statusText = c.is_deleted ? 'Ngừng kinh doanh' : (isHidden ? 'Đang ẩn' : 'Hiển thị');
             const eyeIcon = isHidden ? 'fa-eye-slash' : 'fa-eye';
             const eyeTitle = isHidden ? 'Hiển thị danh mục' : 'Ẩn danh mục';
 
@@ -132,13 +132,13 @@
                     <td>${Shop.escapeHtml(c.description || 'Không có mô tả')}</td>
                     <td>${c.profit_percent !== null && c.profit_percent !== undefined ? c.profit_percent + '%' : 'Mặc định'}</td>
                     <td><span class="status-badge ${statusClass}">${statusText}</span></td>
-                    <td>
+                    <td><div class="table-action-group">
                         ${c.is_deleted
                             ? `<button class="btn-action lock" onclick="window.restoreCategory(${c.id})" title="Khôi phục loại sản phẩm"><i class="fa-solid fa-rotate-left"></i></button>`
                             : `<button class="btn-action edit" onclick="window.editCategory(${c.id})" title="Chỉnh sửa"><i class="fa-solid fa-pen"></i></button>
                                <button class="btn-action lock" onclick="window.toggleHideCategory(${c.id})" title="${eyeTitle}"><i class="fa-solid ${eyeIcon}"></i></button>
                                <button class="btn-action delete" onclick="window.removeCategory(${c.id})" title="Xóa loại sản phẩm"><i class="fa-solid fa-trash"></i></button>`}
-                    </td>
+                    </div></td>
                 </tr>
             `;
         }).join('');
@@ -222,7 +222,7 @@
     };
 
     window.removeCategory = function (id) {
-        if (!confirm('Xóa mềm loại sản phẩm này? Dữ liệu và lịch sử vẫn được giữ lại.')) return;
+        if (!confirm('Ngừng kinh doanh loại sản phẩm này? Tất cả sản phẩm thuộc loại này cũng sẽ chuyển sang ngừng kinh doanh. Dữ liệu và lịch sử vẫn được giữ lại.')) return;
         const res = Shop.deleteCategory(id);
         alert(res.message);
         renderTable();

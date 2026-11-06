@@ -16,18 +16,24 @@
     }
     // Dựng nội dung chi tiết đơn hàng
     const order = detail.order;
+    const code = Shop.getOrderCode(order.id);
+    function amount(value, fallback) { return value !== null && value !== undefined && value !== '' && Number.isFinite(Number(value)) ? Number(value) : fallback; }
+    const shipping = amount(order.shipping_fee, 0), discount = amount(order.discount_amount, 0);
+    const total = amount(order.total_amount, amount(order.subtotal, detail.total) + shipping - discount);
+    const subtotal = amount(order.subtotal, total - shipping + discount);
     const success = params.get('success') === '1';
     const address = [order.ship_address_detail, order.ship_ward, order.ship_district, order.ship_city].filter(Boolean).join(', ');
     app.innerHTML = '<div class="breadcrumb"><a href="../index.html">Trang chủ</a> / ' +
-        '<a href="profile.html#orders/' + order.id + '">Đơn hàng của tôi</a> / Đơn #' + order.id + '</div>' +
+        '<a href="profile.html#orders/' + order.id + '">Đơn hàng của tôi</a> / Đơn #' + code + '</div>' +
         (success ? '<section class="shop-panel shop-confirmation"><span class="check">✓</span><h1>Đặt hàng thành công!</h1>' +
-            '<p>Đơn hàng #' + order.id + ' đã được ghi nhận. Cửa hàng sẽ tiếp nhận và xử lý đơn.</p></section>' : '') +
-        '<h1>Chi tiết đơn hàng #' + order.id + '</h1><section class="shop-panel">' +
+            '<p>Đơn hàng #' + code + ' đã được ghi nhận. Cửa hàng sẽ tiếp nhận và xử lý đơn.</p></section>' : '') +
+        '<h1>Chi tiết đơn hàng #' + code + '</h1><section class="shop-panel">' +
         '<div class="shop-order-meta">' +
         '<div><strong>Ngày đặt hàng</strong>' + esc(order.order_date) + '</div>' +
         '<div><strong>Trạng thái</strong><span class="shop-status ' + ORDER_STATUS.className(order.status) + '">' + esc(ORDER_STATUS.get(order.status).label) + '</span></div>' +
         '<div><strong>Người nhận</strong>' + esc(order.receiver_name) + '<br>' + esc(order.receiver_phone) + '</div>' +
         '<div><strong>Địa chỉ giao hàng</strong>' + esc(address) + '</div>' +
+        '<div><strong>Ghi chú</strong>' + esc(order.order_note || '—') + '</div>' +
         '<div><strong>Phương thức thanh toán</strong>' + esc(Cart.PAYMENTS[order.payment_method] || order.payment_method) +
             (order.payment_channel && Cart.PAYMENT_CHANNELS[order.payment_channel] ? ' — ' + esc(Cart.PAYMENT_CHANNELS[order.payment_channel]) : '') + '</div>' +
         '</div></section><section class="shop-panel"><h2>Sản phẩm trong đơn</h2>' +
@@ -37,8 +43,12 @@
             return '<tr><td>' + (p ? '<a class="shop-text-link" href="product.html?id=' + p.id + '">' + esc(p.name) + '</a>' :
                 'Sản phẩm #' + item.product_id + ' (đã xóa)') + '</td><td>' + Shop.formatPrice(item.unit_price) + '</td>' +
                 '<td>' + item.quantity + '</td><td>' + Shop.formatPrice(item.subtotal) + '</td></tr>';
-        }).join('') + '</tbody></table></div><div class="shop-summary-line shop-summary-total"><span>Tổng tiền đơn hàng</span><strong>' +
-        Shop.formatPrice(order.total_amount) + '</strong></div></section>' +
+        }).join('') + '</tbody></table></div>' +
+        '<div class="shop-summary-line"><span>Tạm tính</span><strong>' + Shop.formatPrice(subtotal) + '</strong></div>' +
+        '<div class="shop-summary-line"><span>Phí vận chuyển</span><strong>' + Shop.formatPrice(shipping) + '</strong></div>' +
+        '<div class="shop-summary-line"><span>Giảm giá</span><strong>' + Shop.formatPrice(discount) + '</strong></div>' +
+        '<div class="shop-summary-line shop-summary-total"><span>Tổng tiền đơn hàng</span><strong>' +
+        Shop.formatPrice(total) + '</strong></div></section>' +
         (['cancelled', 'delivered'].indexOf(Shop.normalizeStatus(order.status)) !== -1 ? '<button type="button" class="btn" id="reorder-cancelled-order">Đặt lại đơn</button> ' : '') +
         '<a href="profile.html#orders/' + order.id + '" class="btn">Xem trong tài khoản</a> ' +
         '<a href="products.html" class="shop-text-link" style="margin-left:15px">Tiếp tục mua sắm</a>';

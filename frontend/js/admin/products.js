@@ -12,7 +12,7 @@
     }
 
     function getCategoryFilterOptions() {
-        return Shop.getAllCategories().map(c => `<option value="${c.id}">${Shop.escapeHtml(c.name)}${c.is_deleted ? ' (đã xóa)' : ''}</option>`).join('');
+        return Shop.getAllCategories().filter(c => !c.is_deleted).map(c => `<option value="${c.id}">${Shop.escapeHtml(c.name)}${c.is_hidden ? ' (đang ẩn)' : ''}</option>`).join('');
     }
 
     const productHTML = `
@@ -34,7 +34,7 @@
                             <option value="all">Tất cả trạng thái</option>
                             <option value="active">Đang hiển thị</option>
                             <option value="hidden">Đang ẩn</option>
-                            <option value="deleted">Đã xóa</option>
+                            <option value="deleted">Ngừng kinh doanh</option>
                         </select>
                     </div>
                     <button class="btn-add" id="btn-open-add-modal">
@@ -220,9 +220,9 @@
             const categoryHidden = category && category.is_hidden;
             const effectiveStatus = Shop.getProductDisplayStatus(p, category);
             const statusClass = effectiveStatus === 'active' ? 'active' : 'locked';
-            const statusText = category && category.is_deleted ? 'Đã xóa (loại)' :
-                category && category.is_hidden ? 'Đang ẩn (loại)' :
-                effectiveStatus === 'deleted' ? 'Đã xóa' : effectiveStatus === 'hidden' ? 'Đang ẩn' : 'Hiển thị';
+            const statusText = category && category.is_deleted ? 'Ngừng kinh doanh' :
+                category && category.is_hidden ? 'Đang ẩn' :
+                effectiveStatus === 'deleted' ? 'Ngừng kinh doanh' : effectiveStatus === 'hidden' ? 'Đang ẩn' : 'Hiển thị';
             const eyeIcon = isHidden ? 'fa-eye-slash' : 'fa-eye';
             const eyeTitle = isHidden ? 'Hiển thị sản phẩm' : 'Ẩn sản phẩm';
             const formattedPrice = Number(p.cost_price || 0).toLocaleString('vi-VN') + ' đ';
@@ -237,7 +237,7 @@
                     <td>${formattedPrice}</td>
                     <td>${p.stock_qty ?? 0}</td>
                     <td><span class="status-badge ${statusClass}">${statusText}</span></td>
-                    ${showActions ? `<td>
+                    ${showActions ? `<td><div class="table-action-group">
                         ${categoryDeleted ? '' : categoryHidden
                             ? `<button class="btn-action edit" onclick="window.editProduct(${p.id})" title="Chỉnh sửa"><i class="fa-solid fa-pen"></i></button>`
                             : p.is_deleted
@@ -245,7 +245,7 @@
                             : `<button class="btn-action edit" onclick="window.editProduct(${p.id})" title="Chỉnh sửa"><i class="fa-solid fa-pen"></i></button>
                                <button class="btn-action lock" onclick="window.toggleHideProduct(${p.id})" title="${eyeTitle}"><i class="fa-solid ${eyeIcon}"></i></button>
                                <button class="btn-action delete" onclick="window.removeProduct(${p.id})" title="Xóa sản phẩm"><i class="fa-solid fa-trash"></i></button>`}
-                    </td>` : ''}
+                    </div></td>` : ''}
                 </tr>
             `;
         }).join('');
@@ -370,7 +370,7 @@
     };
 
     window.removeProduct = function (id) {
-        if (!confirm('Xóa mềm sản phẩm này? Dữ liệu và lịch sử vẫn được giữ lại.')) return;
+        if (!confirm('Chuyển sản phẩm sang trạng thái ngừng kinh doanh? Dữ liệu và lịch sử vẫn được giữ lại.')) return;
         const res = Shop.deleteProduct(id);
         alert(res.message);
         renderTable();

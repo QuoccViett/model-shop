@@ -38,11 +38,17 @@
                             <span class="contact-error" data-error-for="email" aria-live="polite"></span>
                         </div>
                         <div class="contact-field">
+                            <label class="contact-sr-only" for="phone">Số điện thoại</label>
+                            <input type="tel" id="phone" name="phone" autocomplete="tel" placeholder="Số điện thoại *">
+                            <span class="contact-error" data-error-for="phone" aria-live="polite"></span>
+                        </div>
+                        <div class="contact-field">
                             <label class="contact-sr-only" for="message">Lời nhắn</label>
                             <textarea id="message" name="message" rows="3" placeholder="Lời nhắn *"></textarea>
                             <span class="contact-error" data-error-for="message" aria-live="polite"></span>
                         </div>
                         <p class="contact-required">*Thông tin bắt buộc</p>
+                        <p id="contactSaveError" class="contact-error" role="alert" hidden></p>
                         <button type="submit" id="contactSubmit">Gửi liên hệ</button>
                     </form>
 

@@ -9,11 +9,12 @@
         const fields = {
             fullname: document.getElementById('fullname'),
             email: document.getElementById('email'),
+            phone: document.getElementById('phone'),
             message: document.getElementById('message')
         };
 
         if (!form || !submitButton || !successBox || !resetButton ||
-            !fields.fullname || !fields.email || !fields.message) return;
+            !fields.fullname || !fields.email || !fields.phone || !fields.message) return;
 
         function validateField(name) {
             const value = fields[name].value.trim();
@@ -24,6 +25,9 @@
             if (name === 'email') {
                 if (!value) return 'Vui lòng nhập email.';
                 if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(value)) return 'Email không hợp lệ.';
+            }
+            if (name === 'phone') {
+                if (!/^(?:\+84|0)[0-9]{9,10}$/.test(value.replace(/[ .()-]/g, ''))) return 'Số điện thoại không hợp lệ.';
             }
             if (name === 'message') {
                 if (!value) return 'Vui lòng nhập nội dung.';
@@ -64,12 +68,31 @@
 
             submitButton.disabled = true;
             submitButton.textContent = 'Đang gửi...';
-            // TODO: thay setTimeout bằng fetch/mailto khi có backend
-            setTimeout(function () {
+            const saveError = document.getElementById('contactSaveError');
+            saveError.hidden = true;
+            try {
+                const db = Shop.loadDB();
+                const messages = db.contact_messages || [];
+                const entry = {
+                    id: messages.reduce(function (max, item) { return Math.max(max, Number(item.id) || 0); }, 0) + 1,
+                    full_name: fields.fullname.value.trim(),
+                    email: fields.email.value.trim(),
+                    phone: fields.phone.value.trim(),
+                    message: fields.message.value.trim(),
+                    created_at: Shop.nowString(),
+                    is_read: false
+                };
+                db.contact_messages = messages.concat(entry);
+                Shop.saveDB(db);
                 form.hidden = true;
                 successBox.hidden = false;
                 form.reset();
-            }, 800);
+            } catch (error) {
+                saveError.textContent = 'Không thể lưu liên hệ. Vui lòng thử lại.';
+                saveError.hidden = false;
+                submitButton.disabled = false;
+                submitButton.textContent = 'Gửi liên hệ';
+            }
         });
 
         resetButton.addEventListener('click', function () {

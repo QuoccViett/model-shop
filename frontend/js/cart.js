@@ -10,6 +10,7 @@
         vnpay: 'VNPAY'
     };
     const STATUS_NEW = 'order_created';
+    let reconciling = false;
 
     // ---------- Quản lý giỏ hàng theo từng tài khoản ----------
     // Tạo khóa lưu giỏ hàng cho người dùng hiện tại
@@ -26,9 +27,91 @@
     }
 
     // Lưu lại giỏ hàng sau mỗi thay đổi
-    function writeCart(cart) {
+    function writeCart(cart, silent) {
         if (!cartKey()) return;
         localStorage.setItem(cartKey(), JSON.stringify(cart));
+        cart.forEach(function (item) { localStorage.removeItem(removalKey(item.product_id)); });
+        refreshBadge(cart);
+        if (!silent) global.dispatchEvent(new CustomEvent('modelshop:cart-updated'));
+    }
+
+    function refreshBadge(cart) {
+        const badge = document.getElementById('cart-count');
+        if (badge) badge.textContent = String(cart.reduce(function (sum, item) { return sum + Number(item.quantity); }, 0));
+    }
+
+    function warningKey() {
+        return cartKey() + '_removed_lines';
+    }
+
+    function removalKey(productId) {
+        return cartKey() + '_removed_' + productId;
+    }
+
+    function takeCartWarnings() {
+        if (!cartKey()) return [];
+        const key = warningKey();
+        let warnings = [];
+        try { warnings = JSON.parse(sessionStorage.getItem(key)) || []; }
+        catch (e) { /* Ignore malformed older data. */ }
+        sessionStorage.removeItem(key);
+        return warnings;
+    }
+
+    function reconcileCart() {
+        if (reconciling) return readCart();
+        reconciling = true;
+        try {
+            return pruneCart();
+        } finally {
+            reconciling = false;
+        }
+    }
+
+    function pruneCart() {
+        const cart = readCart();
+        const cartAtStart = JSON.stringify(cart);
+        const db = Shop.loadDB();
+        const removed = [];
+        const kept = cart.filter(function (item) {
+            const product = Shop.findById(db.products || [], item.product_id);
+            if (Shop.getProductById(item.product_id)) {
+                if (product) item.product_name = product.name;
+                return true;
+            }
+            removed.push({ id: item.product_id, name: product ? product.name : item.product_name || 'Sản phẩm #' + item.product_id });
+            return false;
+        });
+        // Another tab may already have pruned or edited the cart while products were checked.
+        if (cartAtStart !== JSON.stringify(readCart())) return readCart();
+        const changed = cartKey() && JSON.stringify(kept) !== cartAtStart;
+        if (changed) writeCart(kept, true);
+        if (changed && removed.length) {
+            const key = warningKey();
+            let pending = [];
+            try { pending = JSON.parse(sessionStorage.getItem(key)) || []; }
+            catch (e) { /* Replace malformed older data. */ }
+            removed.forEach(function (item) {
+                const claim = removalKey(item.id);
+                if (localStorage.getItem(claim)) return;
+                localStorage.setItem(claim, '1');
+                pending.push(item);
+                if (typeof Shop.createNotification === 'function') {
+                    Shop.createNotification(Shop.getCurrentUser().id, 'cart_removed', null,
+                        item.name + ': Sản phẩm đã ngừng kinh doanh và tự động xóa khỏi giỏ hàng.');
+                }
+            });
+            sessionStorage.setItem(key, JSON.stringify(pending));
+        }
+        refreshBadge(kept);
+        if (changed) global.queueMicrotask(function () { global.dispatchEvent(new CustomEvent('modelshop:cart-updated')); });
+        return kept;
+    }
+
+    function getCartSnapshot() {
+        return JSON.stringify(getCartDetailed().map(function (line) {
+            return [line.product.id, line.product.name, line.quantity, line.unit_price, line.stock];
+        }));
     }
 
     // Thêm sản phẩm vào giỏ và kiểm tra tồn kho
@@ -46,7 +129,7 @@
         if (!Number.isSafeInteger(newQty) || newQty > stock) return { ok: false, error: 'Số lượng không hợp lệ hoặc vượt tồn kho.' };
 
         if (item) item.quantity = newQty;
-        else cart.push({ product_id: p.id, quantity: qty });
+        else cart.push({ product_id: p.id, product_name: p.name, quantity: qty });
         writeCart(cart);
         return { ok: true };
     }
@@ -81,17 +164,19 @@
     function clearCart() {
         const key = cartKey();
         if (key) localStorage.removeItem(key);
+        refreshBadge([]);
+        global.dispatchEvent(new CustomEvent('modelshop:cart-updated'));
     }
 
     // Tính tổng số sản phẩm đang có trong giỏ
     function getCartCount() {
-        return readCart().reduce(function (s, i) { return s + i.quantity; }, 0);
+        return reconcileCart().reduce(function (s, i) { return s + Number(i.quantity); }, 0);
     }
 
     // Lấy giỏ hàng kèm sản phẩm, giá hiện tại và tồn kho
     function getCartDetailed() {
         const lines = [];
-        readCart().forEach(function (i) {
+        reconcileCart().forEach(function (i) {
             const p = Shop.getProductById(i.product_id);
             if (!p) return;
             const price = Shop.getSalePrice(p);
@@ -129,6 +214,13 @@
 
         payment = PAYMENTS[payment] ? payment : 'cod';
         options = options || {};
+        const snapshot = getCartSnapshot();
+        if (options.cart_snapshot !== undefined && options.cart_snapshot !== snapshot) {
+            return { ok: false, cartChanged: true, error: 'Giỏ hàng đã thay đổi. Vui lòng quay lại giỏ hàng để xem lại.' };
+        }
+        if (payment === 'online' && options.payment_result !== 'success') {
+            return { ok: false, error: 'Thanh toán chưa được xác nhận thành công. Giỏ hàng được giữ nguyên.' };
+        }
         const a = {
             receiver: String(address.receiver || '').trim(),
             phone: String(address.phone || '').trim(),
@@ -271,6 +363,9 @@
     }
 
     global.Cart = {
+        reconcileCart: reconcileCart,
+        takeCartWarnings: takeCartWarnings,
+        getCartSnapshot: getCartSnapshot,
         PAYMENTS: PAYMENTS,
         PAYMENT_CHANNELS: PAYMENT_CHANNELS,
         addToCart: addToCart,
@@ -285,4 +380,9 @@
         reorderOrder: reorderOrder,
         getMyOrders: getMyOrders
     };
+    global.addEventListener('storage', function () { reconcileCart(); });
+    global.addEventListener('modelshop:db-updated', function () { reconcileCart(); });
+    global.addEventListener('focus', function () { reconcileCart(); });
+    if (cartKey()) localStorage.removeItem(cartKey() + '_review');
+    reconcileCart();
 })(window);

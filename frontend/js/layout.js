@@ -194,5 +194,7 @@
         refreshCartCount();
         notifyCart(result.ok ? 'Đã thêm sản phẩm vào giỏ hàng!' : result.error, result.ok);
     });
+    window.addEventListener('modelshop:db-updated', refreshCartCount);
+    window.addEventListener('modelshop:cart-updated', refreshCartCount);
 refreshCartCount();
 })();

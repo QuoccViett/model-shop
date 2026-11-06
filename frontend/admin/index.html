@@ -7,6 +7,7 @@
     <!-- Liên kết FontAwesome để lấy icon -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../css/admin/index.css">
+    <link rel="stylesheet" href="../css/admin/overview-notices.css">
     <script src="../js/data.js"></script>
     <script src="../js/common.js"></script>
     <script src="../js/admin/auth-guard.js"></script>
@@ -31,6 +32,22 @@
 
                 <!-- CARDS THỐNG KÊ (Tạm thời là dữ liệu ảo, sau này làm tới tách sau) -->
                 <div id="overview-stats"></div>
+                <section class="overview-notices" aria-labelledby="overview-notices-title">
+                    <div class="overview-notices-heading">
+                        <div>
+                            <p class="overview-notices-eyebrow">Cần theo dõi</p>
+                            <h2 id="overview-notices-title">Thông báo &amp; cảnh báo</h2>
+                            <p id="overview-notices-summary" aria-live="polite"></p>
+                        </div>
+                        <span class="overview-notices-total" id="overview-notices-total" aria-label="Tổng số thông báo">0</span>
+                    </div>
+                    <nav id="overview-notices-counts" class="overview-notices-counts" aria-label="Nhóm thông báo"></nav>
+                    <div id="overview-notices-list" class="overview-notices-list"></div>
+                </section>
+                <section class="overview-contacts" aria-labelledby="overview-contacts-title">
+                    <h2 id="overview-contacts-title">Liên hệ khách hàng</h2>
+                    <div id="contact-messages"></div>
+                </section>
 
             </div>
         </main>

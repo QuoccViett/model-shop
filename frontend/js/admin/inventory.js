@@ -15,6 +15,7 @@
 
     const searchInput = $('inventory-search');
     const categorySelect = $('inventory-category');
+    const statusSelect = $('inventory-status');
     const fromInput = $('inventory-from');
     const toInput = $('inventory-to');
     const resetButton = $('inventory-reset');
@@ -140,7 +141,9 @@
         return { code: 'in-stock', text: 'Còn hàng' };
     }
 
-    function stockBadge(product) {
+    function stockBadge(product, db) {
+        const category = db.categories.find(item => String(item.id) === getCategoryId(product));
+        if (product.is_deleted || (category && category.is_deleted)) return '<span class="stock-badge discontinued">Ngừng kinh doanh</span>';
         const status = getStockStatus(product);
         return `<span class="stock-badge ${status.code}">${status.text}</span>`;
     }
@@ -269,14 +272,17 @@
         const categories = new Map();
 
         db.categories.forEach(category => {
+            const name = category.name || category.category_name || 'Khác';
             categories.set(
                 String(category.id),
-                category.name || category.category_name || 'Khác'
+                category.is_deleted ? name  :
+                    category.is_hidden ? name + ' (đang ẩn)' : name
             );
         });
 
         db.products.forEach(product => {
             const id = getCategoryId(product);
+            const category = db.categories.find(item => String(item.id) === id);
             if (id && !categories.has(id)) {
                 categories.set(id, getCategoryName(product, db));
             }
@@ -299,8 +305,13 @@
     function getFilteredProducts(db) {
         const keyword = normalize(searchInput.value);
         const categoryId = categorySelect.value || 'all';
+        const businessStatus = statusSelect.value || 'all';
 
         return db.products.filter(product => {
+            const category = db.categories.find(item => String(item.id) === getCategoryId(product));
+            const discontinued = Boolean(product.is_deleted || (category && category.is_deleted));
+            if (businessStatus === 'active' && discontinued) return false;
+            if (businessStatus === 'discontinued' && !discontinued) return false;
             if (categoryId !== 'all' && getCategoryId(product) !== categoryId) {
                 return false;
             }
@@ -334,7 +345,7 @@
 
     function renderWarnings(products) {
         const warnings = products
-            .filter(product => getStockStatus(product).code !== 'in-stock')
+            .filter(product => !product.is_deleted && getStockStatus(product).code !== 'in-stock')
             .sort((a, b) => getCurrentStock(a) - getCurrentStock(b));
 
         warningCount.textContent = formatNumber(warnings.length);
@@ -408,7 +419,7 @@
                     <td class="number stock-in">${formatNumber(result.imported)}</td>
                     <td class="number stock-out">${formatNumber(result.exported)}</td>
                     <td class="number stock-ending">${formatNumber(result.ending)}</td>
-                    <td>${stockBadge(product)}</td>
+                    <td>${stockBadge(product, db)}</td>
                 </tr>`;
         }).join('');
 
@@ -492,6 +503,10 @@
         inventoryPager.reset();
         render();
     });
+    statusSelect.addEventListener('change', function () {
+        inventoryPager.reset();
+        render();
+    });
     fromInput.addEventListener('change', function () {
         inventoryPager.reset();
         render();
@@ -504,6 +519,7 @@
     resetButton.addEventListener('click', function () {
         searchInput.value = '';
         categorySelect.value = 'all';
+        statusSelect.value = 'all';
         fromInput.value = '';
         toInput.value = '';
         inventoryPager.reset();

@@ -3,30 +3,42 @@
 
     const DB_KEY = 'model_shop_db_v1';
     const PAGE_SIZE = 8;
-    const NOTIFICATION_TTL_MS = 12 * 60 * 60 * 1000;
     let cache = null;
+    let cacheRaw = null;
+    const snapshots = new WeakMap();
 
-    function parseDateValue(value) {
-        const text = String(value || '');
-        const parsed = new Date(text.indexOf('T') >= 0 ? text : text.replace(' ', 'T'));
-        return Number.isNaN(parsed.getTime()) ? null : parsed;
+    function sameValue(a, b) { return JSON.stringify(a) === JSON.stringify(b); }
+
+    // Merge only fields changed by this tab; unrelated updates from other tabs survive.
+    function mergeChanges(base, edited, latest) {
+        if (sameValue(base, edited)) return latest;
+        if (sameValue(base, latest) || sameValue(edited, latest)) return edited;
+        if (Array.isArray(base) && Array.isArray(edited) && Array.isArray(latest) &&
+            base.concat(edited, latest).every(function (row) { return row && row.id !== undefined; })) {
+            const before = new Map(base.map(function (row) { return [String(row.id), row]; }));
+            const local = new Map(edited.map(function (row) { return [String(row.id), row]; }));
+            const remote = new Map(latest.map(function (row) { return [String(row.id), row]; }));
+            const result = [];
+            new Set(Array.from(remote.keys()).concat(Array.from(local.keys()))).forEach(function (id) {
+                const row = mergeChanges(before.get(id), local.get(id), remote.get(id));
+                if (row !== undefined) result.push(row);
+            });
+            return result;
+        }
+        if (base && edited && latest && !Array.isArray(base) && typeof base === 'object' && typeof edited === 'object' && typeof latest === 'object') {
+            const result = {};
+            new Set(Object.keys(base).concat(Object.keys(edited), Object.keys(latest))).forEach(function (key) {
+                if (key === '_revision') return;
+                const value = mergeChanges(base[key], edited[key], latest[key]);
+                if (value !== undefined) result[key] = value;
+            });
+            return result;
+        }
+        throw new Error('Dữ liệu vừa được thay đổi ở tab khác. Vui lòng tải lại và thực hiện lại thao tác.');
     }
 
     function cleanupNotifications(db) {
-        if (!db || !Array.isArray(db.notifications)) return false;
-        const cutoff = Date.now() - NOTIFICATION_TTL_MS;
-        let changed = false;
-        db.notifications.forEach(function (notification) {
-            const createdAt = parseDateValue(notification.created_at);
-            if (!notification.is_hidden && createdAt && createdAt.getTime() <= cutoff) {
-                notification.is_hidden = true;
-                changed = true;
-            }
-        });
-        if (changed) {
-            saveDB(db);
-            return true;
-        }
+        // Kept for older callers. Notifications remain available for customers to review.
         return false;
     }
 
@@ -66,6 +78,34 @@
         if (changed) saveDB(db);
     }
 
+    function removeLegacyDiscontinuedCategory(db) {
+        const categories = db.categories || [];
+        const legacy = categories.find(function (category) {
+            return category.name === 'Hàng ngừng kinh doanh' &&
+                category.description === 'Loại đã ẩn (demo chức năng ẩn loại)';
+        });
+        if (!legacy) return;
+        const hasProducts = (db.products || []).some(function (product) {
+            return Number(product.category_id || product.categories_id) === Number(legacy.id);
+        });
+        if (hasProducts) return;
+        db.categories = categories.filter(function (category) { return category !== legacy; });
+        saveDB(db);
+    }
+
+    function normalizeAccountNotifications(db) {
+        let changed = false;
+        (db.notifications || []).forEach(function (item) {
+            if (['account_created', 'profile_updated', 'password_changed'].indexOf(item.type) === -1) return;
+            const message = notificationMessage(item.type);
+            if (item.message === message && !item.order_id) return;
+            item.message = message;
+            item.order_id = null;
+            changed = true;
+        });
+        if (changed) saveDB(db);
+    }
+
     function seedToObjects() {
         const db = {};
         if (typeof DB_SCHEMA === 'undefined' || typeof DB_SEED === 'undefined') {
@@ -83,16 +123,36 @@
     }
 
     function saveDB(db) {
+        const raw = localStorage.getItem(DB_KEY);
+        const latest = raw ? JSON.parse(raw) : null;
+        const base = snapshots.get(db) || (cache && db._revision === cache._revision ? snapshots.get(cache) : null);
+        if (!base && latest && db._revision !== latest._revision) {
+            throw new Error('Dữ liệu vừa được thay đổi ở tab khác. Vui lòng tải lại và thực hiện lại thao tác.');
+        }
+        const merged = base && latest ? mergeChanges(base, db, latest) : db;
+        merged._revision = Math.max(Number(latest && latest._revision) || 0, Number(db._revision) || 0) + 1;
+        if (merged !== db) {
+            Object.keys(db).forEach(function (key) { delete db[key]; });
+            Object.assign(db, merged);
+        }
+        const serialized = JSON.stringify(db);
+        localStorage.setItem(DB_KEY, serialized);
         cache = db;
-        localStorage.setItem(DB_KEY, JSON.stringify(db));
+        cacheRaw = serialized;
+        snapshots.set(db, JSON.parse(serialized));
+        global.dispatchEvent(new CustomEvent('modelshop:db-saved'));
     }
 
     function loadDB() {
+        const stored = localStorage.getItem(DB_KEY);
+        if (cache && stored !== cacheRaw) cache = null;
         if (cache) {
             cleanupNotifications(cache);
             normalizePaymentMethods(cache);
             normalizeProfitOverrides(cache);
             normalizeCustomerDeletion(cache);
+            removeLegacyDiscontinuedCategory(cache);
+            normalizeAccountNotifications(cache);
             return cache;
         }
         const raw = localStorage.getItem(DB_KEY);
@@ -108,9 +168,13 @@
             saveDB(cache);
         }
         if (!cache.notifications) cache.notifications = [];
+        cacheRaw = localStorage.getItem(DB_KEY);
+        snapshots.set(cache, JSON.parse(JSON.stringify(cache)));
         normalizePaymentMethods(cache);
         normalizeProfitOverrides(cache);
         normalizeCustomerDeletion(cache);
+        removeLegacyDiscontinuedCategory(cache);
+        normalizeAccountNotifications(cache);
         if (typeof DB_SEED !== 'undefined' && DB_SEED.notifications) {
             const notificationColumns = Object.keys(DB_SCHEMA.notifications.columns);
             let changed = false;
@@ -295,10 +359,16 @@
             const k = normalize(opts.keyword);
             list = list.filter(function (p) { return normalize(p.name).indexOf(k) !== -1; });
         }
-        if (opts.minPrice) {
+        const hasMin = !isBlank(opts.minPrice), hasMax = !isBlank(opts.maxPrice);
+        if ((hasMin && (!Number.isFinite(Number(opts.minPrice)) || Number(opts.minPrice) < 0)) ||
+            (hasMax && (!Number.isFinite(Number(opts.maxPrice)) || Number(opts.maxPrice) < 0)) ||
+            (hasMin && hasMax && Number(opts.minPrice) > Number(opts.maxPrice))) {
+            return opts.page ? paginate([], opts.page, opts.pageSize) : [];
+        }
+        if (hasMin) {
             list = list.filter(function (p) { return getSalePrice(p) >= Number(opts.minPrice); });
         }
-        if (opts.maxPrice) {
+        if (hasMax) {
             list = list.filter(function (p) { return getSalePrice(p) <= Number(opts.maxPrice); });
         }
 
@@ -566,8 +636,14 @@
         if (!category) return { success: false, message: 'Không tìm thấy danh mục!' };
         if (category.is_deleted) return { success: false, message: 'Danh mục đã được xóa trước đó.' };
         category.is_deleted = true;
+        (db.products || []).forEach(function (product) {
+            if (Number(product.category_id || product.categories_id) === Number(category.id) && !product.is_deleted) {
+                product.is_deleted = true;
+                product.discontinued_by_category_id = category.id;
+            }
+        });
         saveDB(db);
-        return { success: true, message: 'Đã xóa mềm danh mục và giữ nguyên dữ liệu.' };
+        return { success: true, message: 'Đã ngừng kinh doanh loại sản phẩm và toàn bộ sản phẩm thuộc loại này.' };
     }
 
     function restoreCategory(id) {
@@ -575,6 +651,12 @@
         const category = findById(db.categories, id);
         if (!category || !category.is_deleted) return { success: false, message: 'Không tìm thấy danh mục đã xóa!' };
         category.is_deleted = false;
+        (db.products || []).forEach(function (product) {
+            if (Number(product.discontinued_by_category_id) === Number(category.id)) {
+                product.is_deleted = false;
+                delete product.discontinued_by_category_id;
+            }
+        });
         saveDB(db);
         return { success: true, message: 'Đã khôi phục danh mục.' };
     }
@@ -643,12 +725,13 @@
         if (!db.products) return { success: false };
         const product = findById(db.products, id);
         if (!product) return { success: false, message: 'Không tìm thấy sản phẩm để xóa!' };
-        if (product.is_deleted) return { success: false, message: 'Sản phẩm đã được xóa trước đó.' };
+        if (product.is_deleted) return { success: false, message: 'Sản phẩm đã ngừng kinh doanh trước đó.' };
         const category = findById(db.categories, product.category_id);
         if (!category || category.is_hidden || category.is_deleted) return { success: false, message: 'Hãy hiện hoặc khôi phục loại sản phẩm trước.' };
         product.is_deleted = true;
+        delete product.discontinued_by_category_id;
         saveDB(db);
-        return { success: true, message: 'Đã xóa mềm sản phẩm và giữ nguyên dữ liệu.' };
+        return { success: true, message: 'Đã chuyển sản phẩm sang trạng thái ngừng kinh doanh.' };
     }
 
     function restoreProduct(id) {
@@ -656,6 +739,7 @@
         const product = findById(db.products, id);
         if (!product || !product.is_deleted) return { success: false, message: 'Không tìm thấy sản phẩm đã xóa!' };
         product.is_deleted = false;
+        delete product.discontinued_by_category_id;
         saveDB(db);
         return { success: true, message: 'Đã khôi phục sản phẩm.' };
     }
@@ -1016,15 +1100,15 @@
         return 'Đơn hàng #' + getOrderCode(orderId) + ' ' + (labels[type] || 'đã được cập nhật') + '. Cảm ơn bạn đã đặt hàng tại ModelShop.';
     }
 
-    function createNotification(customerId, type, orderId) {
+    function createNotification(customerId, type, orderId, message) {
         const db = loadDB();
         if (!db.notifications) db.notifications = [];
         const item = {
             id: db.notifications.reduce(function (max, n) { return Math.max(max, Number(n.id) || 0); }, 0) + 1,
             customer_id: Number(customerId),
-            type: global.ORDER_STATUS && global.ORDER_STATUS.notifications && global.ORDER_STATUS.notifications[type] ? type : normalizeStatus(type),
+            type: orderId ? normalizeStatus(type) : type,
             order_id: orderId ? Number(orderId) : null,
-            message: notificationMessage(normalizeStatus(type), orderId),
+            message: message || notificationMessage(orderId ? normalizeStatus(type) : type, orderId),
             is_read: false,
             created_at: nowString()
         };
@@ -1039,7 +1123,7 @@
         if (!user) return [];
         const db = loadDB();
         cleanupNotifications(db);
-        let list = (db.notifications || []).filter(function (n) { return !n.is_hidden && Number(n.customer_id) === Number(user.id); });
+        let list = (db.notifications || []).filter(function (n) { return Number(n.customer_id) === Number(user.id); });
         if (filter === 'orders') list = list.filter(function (n) { return n.order_id; });
         return list.sort(function (a, b) { return String(b.created_at).localeCompare(String(a.created_at)); });
     }
@@ -1164,6 +1248,16 @@
         if (!getOrderById(id)) return { ok: false, error: 'Đơn hàng không hợp lệ.' };
         return changeOrderStatus(id, nextStatus);
     }
+
+    global.addEventListener('storage', function (event) {
+        if (event.key !== DB_KEY && event.key !== null) return;
+        cache = null;
+        cacheRaw = null;
+        loadDB();
+        global.dispatchEvent(new CustomEvent('modelshop:db-updated'));
+        global.dispatchEvent(new CustomEvent('modelshop:notifications'));
+        global.dispatchEvent(new CustomEvent('modelshop:orders-updated'));
+    });
 
     // Công khai API dùng chung cho giao diện
     global.Shop = {
