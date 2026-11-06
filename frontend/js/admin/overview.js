@@ -23,8 +23,8 @@
         const stats = [
             ['Doanh thu đơn đã giao', Shop.formatPrice(revenue), 'wallet', '#fff3ed', '#ff6600'],
             ['Tổng đơn hàng', orders.length.toLocaleString('vi-VN'), 'cart-shopping', '#e6f4ea', '#34a853'],
-            ['Sản phẩm chưa xóa', rows('products').length.toLocaleString('vi-VN'), 'box', '#e8f0fe', '#1a73e8'],
-            ['Khách hàng chưa xóa', rows('customers').length.toLocaleString('vi-VN'), 'users', '#fef7e0', '#b08000']
+            ['Sản phẩm', rows('products').length.toLocaleString('vi-VN'), 'box', '#e8f0fe', '#1a73e8'],
+            ['Khách hàng', rows('customers').length.toLocaleString('vi-VN'), 'users', '#fef7e0', '#b08000']
         ];
         box.innerHTML = '<div class="stats-grid">' + stats.map(s => '<div class="stat-card"><div class="stat-icon" style="background-color:' + s[3] + ';color:' + s[4] + '"><i class="fa-solid fa-' + s[2] + '"></i></div><div class="stat-info"><h3>' + s[0] + '</h3><p>' + Shop.escapeHtml(s[1]) + '</p></div></div>').join('') + '</div>';
     }

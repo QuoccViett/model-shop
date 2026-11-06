@@ -119,7 +119,26 @@
                 return obj;
             });
         });
+        (db.products || []).forEach(function (product) {
+            if (global.DB_PRODUCT_ASSETS && global.DB_PRODUCT_ASSETS[product.code]) {
+                product.images = global.DB_PRODUCT_ASSETS[product.code].slice();
+            }
+        });
         return db;
+    }
+
+    function useBundledProductImages(db) {
+        if (!global.DB_PRODUCT_ASSETS || !Array.isArray(db.products)) return;
+        let changed = false;
+        db.products.forEach(function (product) {
+            const images = global.DB_PRODUCT_ASSETS[product.code];
+            if (!images || !/^https:\/\/placehold\.co\//i.test(product.image || '')) return;
+            if (Array.isArray(product.images) && product.images.length > 1) return;
+            product.image = images[0];
+            product.images = images.slice();
+            changed = true;
+        });
+        if (changed) saveDB(db);
     }
 
     function saveDB(db) {
@@ -153,6 +172,7 @@
             normalizeCustomerDeletion(cache);
             removeLegacyDiscontinuedCategory(cache);
             normalizeAccountNotifications(cache);
+            useBundledProductImages(cache);
             return cache;
         }
         const raw = localStorage.getItem(DB_KEY);
@@ -175,6 +195,7 @@
         normalizeCustomerDeletion(cache);
         removeLegacyDiscontinuedCategory(cache);
         normalizeAccountNotifications(cache);
+        useBundledProductImages(cache);
         if (typeof DB_SEED !== 'undefined' && DB_SEED.notifications) {
             const notificationColumns = Object.keys(DB_SCHEMA.notifications.columns);
             let changed = false;
@@ -572,6 +593,7 @@
             code: d.code,
             name: d.name,
             image: d.image,
+            images: Array.isArray(newProductData.images) ? newProductData.images.slice(0, 2) : [d.image],
             description: d.description || '',
             brand: d.brand,
             scale: d.scale,
@@ -687,6 +709,7 @@
             code: String(productData.code || '').trim(),
             name: String(productData.name || '').trim(),
             image: String(productData.image || '').trim(),
+            images: Array.isArray(productData.images) ? productData.images.slice(0, 2) : [String(productData.image || '').trim()],
             description: String(productData.description || '').trim(),
             brand: String(productData.brand || '').trim(),
             scale: String(productData.scale || '').trim(),
@@ -1332,4 +1355,88 @@
         deleteProduct: deleteProduct,
         restoreProduct: restoreProduct
     };
+
+    // Ảnh tải lên được lưu riêng để dữ liệu sản phẩm trong localStorage luôn gọn.
+    if (typeof indexedDB !== 'undefined' && typeof document !== 'undefined') {
+        const imageUrls = new Map();
+        let imageDatabase;
+        function openImageDatabase() {
+            if (!imageDatabase) imageDatabase = new Promise(function (resolve, reject) {
+                const request = indexedDB.open('model_shop_images_v1', 1);
+                request.onupgradeneeded = function () { request.result.createObjectStore('images'); };
+                request.onsuccess = function () { resolve(request.result); };
+                request.onerror = function () { reject(request.error); };
+            });
+            return imageDatabase;
+        }
+        async function imageTransaction(mode, action) {
+            const db = await openImageDatabase();
+            return new Promise(function (resolve, reject) {
+                const transaction = db.transaction('images', mode);
+                const request = action(transaction.objectStore('images'));
+                transaction.oncomplete = function () { resolve(request.result); };
+                transaction.onerror = function () { reject(transaction.error); };
+                transaction.onabort = function () { reject(transaction.error); };
+            });
+        }
+        async function putImage(blob) {
+            const ref = 'idb:' + crypto.randomUUID();
+            await imageTransaction('readwrite', function (store) { return store.put(blob, ref); });
+            return ref;
+        }
+        async function getImageUrl(ref) {
+            if (!ref || !ref.startsWith('idb:')) return ref || '';
+            if (imageUrls.has(ref)) return imageUrls.get(ref);
+            const pending = imageTransaction('readonly', function (store) { return store.get(ref); }).then(function (blob) {
+                return blob ? URL.createObjectURL(blob) : '';
+            }).catch(function (error) {
+                imageUrls.delete(ref);
+                throw error;
+            });
+            imageUrls.set(ref, pending);
+            return pending;
+        }
+        async function removeImage(ref) {
+            if (!ref || !ref.startsWith('idb:')) return;
+            await imageTransaction('readwrite', function (store) { return store.delete(ref); });
+            if (imageUrls.has(ref)) URL.revokeObjectURL(await imageUrls.get(ref));
+            imageUrls.delete(ref);
+        }
+        function resolveImage(element) {
+            const ref = element.dataset.imageRef || element.getAttribute('src');
+            if (!ref || !ref.startsWith('idb:')) return;
+            getImageUrl(ref).then(function (url) {
+                if ((element.dataset.imageRef || element.getAttribute('src')) === ref && element.getAttribute('src') !== url) element.src = url || '';
+            }).catch(function () {
+                if ((element.dataset.imageRef || element.getAttribute('src')) === ref) {
+                    delete element.dataset.imageRef;
+                    element.removeAttribute('src');
+                }
+            });
+        }
+        function scanImages(node) {
+            if (node.nodeType !== 1) return;
+            if (node.matches('img')) resolveImage(node);
+            node.querySelectorAll('img[data-image-ref], img[src^="idb:"]').forEach(resolveImage);
+        }
+        function startImageObserver() {
+            scanImages(document.body);
+            new MutationObserver(function (mutations) {
+                mutations.forEach(function (mutation) {
+                    if (mutation.type === 'attributes') resolveImage(mutation.target);
+                    mutation.addedNodes.forEach(scanImages);
+                });
+            }).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['src', 'data-image-ref'] });
+        }
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', startImageObserver);
+        else startImageObserver();
+        global.ShopImages = {
+            put: putImage, url: getImageUrl, remove: removeImage,
+            attrs: function (src) {
+                return src && src.startsWith('idb:')
+                    ? 'data-image-ref="' + escapeHtml(src) + '"'
+                    : 'src="' + escapeHtml(src || '') + '"';
+            }
+        };
+    }
 })(window);

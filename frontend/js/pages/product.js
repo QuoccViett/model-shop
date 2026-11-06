@@ -39,6 +39,7 @@
     ].filter(function (row) { return row[1]; });
 
     document.title = p.name + ' - ModelShop';
+    const images = (Array.isArray(p.images) && p.images.length ? p.images : [p.image]).filter(Boolean).slice(0, 2);
 
     app.innerHTML = '' +
         '<div class="breadcrumb">' +
@@ -48,7 +49,14 @@
         '</div>' +
 
         '<div class="detail">' +
-        '<div class="detail-img"><img src="' + esc(UI.imageSrc(p.image)) + '" alt="' + esc(p.name) + '"></div>' +
+        '<div class="detail-gallery">' +
+        '<div class="detail-img"><img id="detail-main-image" ' + UI.imageAttrs(images[0] || '') + ' alt="' + esc(p.name) + '"></div>' +
+        '<div class="detail-thumbnails" aria-label="Ảnh sản phẩm">' +
+        images.map(function (image, index) {
+            return '<button type="button" class="detail-thumbnail' + (index === 0 ? ' active' : '') + '" data-image-index="' + index + '" aria-label="Xem ảnh ' + (index + 1) + '" aria-pressed="' + (index === 0) + '">' +
+                '<img ' + UI.imageAttrs(image) + ' alt=""></button>';
+        }).join('') +
+        '</div></div>' +
         '<div class="detail-info">' +
         '<div class="detail-brand">' + esc(p.brand || '') + '</div>' +
         '<h1>' + esc(p.name) + '</h1>' +
@@ -75,6 +83,26 @@
         '</div>' +
 
         '<div class="section-box"><h2>Mô tả sản phẩm</h2><p>' + esc(p.description || 'Chưa có mô tả.') + '</p></div>';
+
+    const mainImage = document.getElementById('detail-main-image');
+    let selectedImageIndex = 0;
+    document.querySelectorAll('.detail-thumbnail').forEach(function (button) {
+        button.addEventListener('click', function () {
+            const index = Number(button.dataset.imageIndex);
+            selectedImageIndex = index;
+            delete mainImage.dataset.imageRef;
+            const image = images[index];
+            const source = image.startsWith('idb:') ? ShopImages.url(image) : Promise.resolve(UI.imageSrc(image));
+            source.then(function (url) {
+                if (selectedImageIndex === index) mainImage.src = url;
+            });
+            document.querySelectorAll('.detail-thumbnail').forEach(function (item) {
+                const active = item === button;
+                item.classList.toggle('active', active);
+                item.setAttribute('aria-pressed', String(active));
+            });
+        });
+    });
 
     const qty = document.getElementById('qty');
     if (qty) {

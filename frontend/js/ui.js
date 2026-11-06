@@ -7,7 +7,12 @@
         if (!src) {
             return '';
         }
-        return /^(https?:)?\/\//i.test(src) ? src : root + src;
+        return /^(https?:)?\/\//i.test(src) || src.startsWith('idb:') ? src : root + src;
+    }
+
+    function imageAttrs(src) {
+        const url = imageSrc(src);
+        return global.ShopImages ? global.ShopImages.attrs(url) : 'src="' + Shop.escapeHtml(url) + '"';
     }
 
     // Render thẻ sản phẩm dùng chung trong danh sách
@@ -22,7 +27,7 @@
         return '' +
             '<article class="product-card">' +
                 '<a class="pc-img" href="' + url + '">' +
-                    '<img src="' + Shop.escapeHtml(imageSrc(p.image)) + '" alt="' + Shop.escapeHtml(p.name) + '" loading="lazy">' +
+                    '<img ' + imageAttrs(p.image) + ' alt="' + Shop.escapeHtml(p.name) + '" loading="lazy">' +
                         (hasSale ? '<span class="pc-badge">-' + p.sale_percent + '%</span>' : '') +
                 '</a>' +
                 '<div class="pc-body">' +
@@ -87,6 +92,7 @@
           productCardSkeleton: productCardSkeleton,
           productSkeletons: productSkeletons,
           pagination: pagination,
-          imageSrc: imageSrc
+          imageSrc: imageSrc,
+          imageAttrs: imageAttrs
       };
 })(window);

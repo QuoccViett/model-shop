@@ -52,7 +52,7 @@
         }).join('') + '</div><p>Đây là thanh toán mô phỏng, không thu tiền thật. Bạn sẽ xác nhận kết quả ở bước tiếp theo.</p></div>' +
         '</section></div><aside class="shop-panel"><h2>Đơn hàng của bạn</h2>' +
         '<div class="checkout-items">' + lines.map(function (line) {
-            return '<div class="shop-invoice-item"><img src="' + esc(UI.imageSrc(line.product.image)) + '" alt="' + esc(line.product.name) + '"><span>' +
+            return '<div class="shop-invoice-item"><img ' + UI.imageAttrs(line.product.image) + ' alt="' + esc(line.product.name) + '"><span>' +
                 esc(line.product.name) + ' <b>× ' + line.quantity + '</b></span><strong>' + money(line.subtotal) + '</strong></div>';
         }).join('') + '</div>' +
         '<div class="checkout-breakdown"><div class="shop-summary-line"><span>Tạm tính</span><strong>' + money(subtotal) + '</strong></div>' +
