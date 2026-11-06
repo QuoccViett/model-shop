@@ -15,12 +15,15 @@
     function cleanupNotifications(db) {
         if (!db || !Array.isArray(db.notifications)) return false;
         const cutoff = Date.now() - NOTIFICATION_TTL_MS;
-        const before = db.notifications.length;
-        db.notifications = db.notifications.filter(function (notification) {
+        let changed = false;
+        db.notifications.forEach(function (notification) {
             const createdAt = parseDateValue(notification.created_at);
-            return !createdAt || createdAt.getTime() > cutoff;
+            if (!notification.is_hidden && createdAt && createdAt.getTime() <= cutoff) {
+                notification.is_hidden = true;
+                changed = true;
+            }
         });
-        if (db.notifications.length !== before) {
+        if (changed) {
             saveDB(db);
             return true;
         }
@@ -38,6 +41,29 @@
         });
         if (changed) saveDB(db);
         return changed;
+    }
+
+    function normalizeProfitOverrides(db) {
+        let changed = false;
+        (db.products || []).forEach(function (product) {
+            if (product.profit_percent === '') {
+                product.profit_percent = null;
+                changed = true;
+            }
+        });
+        if (changed) saveDB(db);
+    }
+
+    function normalizeCustomerDeletion(db) {
+        let changed = false;
+        (db.customers || []).forEach(function (customer) {
+            if (Object.prototype.hasOwnProperty.call(customer, 'is_hidden')) {
+                if (customer.is_hidden) customer.is_deleted = true;
+                delete customer.is_hidden;
+                changed = true;
+            }
+        });
+        if (changed) saveDB(db);
     }
 
     function seedToObjects() {
@@ -65,6 +91,8 @@
         if (cache) {
             cleanupNotifications(cache);
             normalizePaymentMethods(cache);
+            normalizeProfitOverrides(cache);
+            normalizeCustomerDeletion(cache);
             return cache;
         }
         const raw = localStorage.getItem(DB_KEY);
@@ -81,6 +109,8 @@
         }
         if (!cache.notifications) cache.notifications = [];
         normalizePaymentMethods(cache);
+        normalizeProfitOverrides(cache);
+        normalizeCustomerDeletion(cache);
         if (typeof DB_SEED !== 'undefined' && DB_SEED.notifications) {
             const notificationColumns = Object.keys(DB_SCHEMA.notifications.columns);
             let changed = false;
@@ -133,29 +163,40 @@
         };
     }
 
-    function getProfitPercent(p) {
-        if (p.profit_percent !== null && p.profit_percent !== undefined) {
-            return p.profit_percent;
+    function isBlank(value) { return value === null || value === undefined || String(value).trim() === ''; }
+
+    function parseProfitPercent(value, allowBlank) {
+        if (isBlank(value)) return allowBlank ? { ok: true, value: null } : { ok: false, message: 'Vui lòng nhập % lợi nhuận!' };
+        const number = Number(String(value).trim().replace(',', '.'));
+        if (!Number.isFinite(number) || number < 0 || number > 1000) {
+            return { ok: false, message: '% lợi nhuận phải từ 0 đến 1000!' };
         }
+        return { ok: true, value: Math.round(number * 100) / 100 };
+    }
+
+    function getProfitPercent(p) {
+        if (!isBlank(p.profit_percent)) return Number(p.profit_percent);
         const categoryId = p.category_id || p.categories_id;
         const cat = findById(loadDB().categories, categoryId);
-        return cat ? (cat.profit_percent || 0) : 0;
+        return cat && !isBlank(cat.profit_percent) ? Number(cat.profit_percent) : 0;
     }
 
     function getPrice(p) {
         const cost = Number(p.cost_price || 0);
         const profit = getProfitPercent(p);
+        if (!(cost > 0)) return 0;
         return Math.round((cost * (1 + profit / 100)) / 1000) * 1000;
     }
 
     function getSalePrice(p) {
         const basePrice = getPrice(p);
         if (!p.sale_percent) return basePrice;
-        return Math.round((basePrice * (1 - p.sale_percent / 100)) / 1000) * 1000;
+        const discount = Math.min(100, Math.max(0, Number(p.sale_percent) || 0));
+        return Math.round((basePrice * (1 - discount / 100)) / 1000) * 1000;
     }
 
     function getCategories() {
-        return (loadDB().categories || []).filter(function (c) { return !c.is_hidden; });
+        return (loadDB().categories || []).filter(function (c) { return !c.is_hidden && !c.is_deleted; });
     }
 
     function getVisibleProducts() {
@@ -164,7 +205,7 @@
         return (db.products || []).filter(function (p) {
             const categoryId = p.category_id || p.categories_id;
             const c = findById(categories, categoryId);
-            return !p.is_hidden && c && !c.is_hidden;
+            return !p.is_hidden && !p.is_deleted && c && !c.is_hidden && !c.is_deleted;
         });
     }
 
@@ -317,15 +358,26 @@
         return findById(loadDB().products, id);
     }    
 
+    function getProductDisplayStatus(product, category) {
+        if (category === undefined) category = findById(loadDB().categories, product.category_id || product.categories_id);
+        if (!category || category.is_deleted) return 'deleted';
+        if (category.is_hidden) return 'hidden';
+        if (product.is_deleted) return 'deleted';
+        if (product.is_hidden) return 'hidden';
+        return 'active';
+    }
+
     // Tìm kiếm và lọc loại sản phẩm
     function filterCategories({keyword = '', status = 'all'} = {}){
         let categories = getAllCategories();
 
         // lọc theo trạng thái ẩn/ không bị ẩn
         if (status === 'active') {
-            categories = categories.filter(c => !c.is_hidden);
+            categories = categories.filter(c => !c.is_hidden && !c.is_deleted);
         } else if (status === 'hidden') {
-            categories = categories.filter(c => c.is_hidden);
+            categories = categories.filter(c => c.is_hidden && !c.is_deleted);
+        } else if (status === 'deleted') {
+            categories = categories.filter(c => c.is_deleted);
         }
 
         //lọc theo từ khoá
@@ -343,18 +395,16 @@
     // Tìm kiếm và lọc sản phẩm
     function filterProducts({keyword = '', status = 'all', category_id = 'all'} = {}){
         let products = getAllProducts();
+        const categories = loadDB().categories || [];
 
         // lọc theo danh mục
         if (category_id !== 'all' && category_id !== '' && category_id !== null && category_id !== undefined) {
             products = products.filter(p => Number(p.category_id) === Number(category_id));
         }
 
-        // lọc theo trạng thái ẩn/ không bị ẩn
-        if (status === 'active') {
-            products = products.filter(c => !c.is_hidden);
-        } else if (status === 'hidden') {
-            products = products.filter(c => c.is_hidden);
-        }
+        if (status !== 'all') products = products.filter(function (product) {
+            return getProductDisplayStatus(product, findById(categories, product.category_id || product.categories_id)) === status;
+        });
 
         //lọc theo từ khoá
         if (keyword.trim() !== '') {
@@ -373,6 +423,8 @@
 
     // Thêm loại sản phẩm mới
     function addCategory(newCategoryData) {
+        const profit = parseProfitPercent(newCategoryData.profit_percent, true);
+        if (!profit.ok) return { success: false, message: profit.message };
         const d = {
             name: String(newCategoryData.name || '').trim(),
             description: String(newCategoryData.description || '').trim(),
@@ -389,8 +441,9 @@
             id: nextId,
             name: d.name,
             description: d.description || '',
-            profit_percent: d.profit_percent || '',
-            is_hidden: false
+            profit_percent: profit.value,
+            is_hidden: false,
+            is_deleted: false
         };
 
         db.categories.push(newCategory);
@@ -399,8 +452,28 @@
         return { success: true, message: 'Thêm danh mục mới thành công!', data: newCategory };
     }
 
+    function validateProductData(data, db, editingId) {
+        const code = String(data.code || '').trim();
+        if (!code || !String(data.name || '').trim() || !Number(data.category_id)) return 'Vui lòng nhập mã, tên và loại sản phẩm!';
+        const category = findById(db.categories, data.category_id);
+        if (!category || category.is_deleted) return 'Loại sản phẩm không tồn tại!';
+        if ((db.products || []).some(function (p) { return Number(p.id) !== Number(editingId) && String(p.code || '').toLowerCase() === code.toLowerCase(); })) return 'Mã sản phẩm đã tồn tại!';
+        if (!String(data.image || '').trim() || !String(data.description || '').trim()) return 'Vui lòng nhập hình ảnh và mô tả sản phẩm!';
+        const profit = parseProfitPercent(data.profit_percent, true);
+        if (!profit.ok) return profit.message;
+        const sale = isBlank(data.sale_percent) ? 0 : Number(data.sale_percent);
+        if (!Number.isFinite(sale) || sale < 0 || sale > 100) return '% giảm giá phải từ 0 đến 100!';
+        const threshold = isBlank(data.low_stock_threshold) ? 5 : Number(data.low_stock_threshold);
+        if (!Number.isInteger(threshold) || threshold < 0) return 'Ngưỡng cảnh báo phải là số nguyên không âm!';
+        return '';
+    }
+
     // Thêm sản phẩm mới
     function addProduct(newProductData) {
+        const db = loadDB();
+        const error = validateProductData(newProductData, db);
+        if (error) return { success: false, message: error };
+        const profit = parseProfitPercent(newProductData.profit_percent, true);
         const d = {
             category_id: Number(newProductData.category_id || 0),
             code: String(newProductData.code || '').trim(),
@@ -414,11 +487,10 @@
             profit_percent: String(newProductData.profit_percent || '').trim(),
             cost_price: String(newProductData.cost_price || '').trim(),
             stock_qty: String(newProductData.stock_qty || '').trim(),
-            low_stock_threshold: String(newProductData.low_stock_threshold || '').trim(),
+            low_stock_threshold: String(newProductData.low_stock_threshold ?? '').trim(),
             sale_percent: String(newProductData.sale_percent || '').trim(),
         };
 
-        const db = loadDB();
         if (!db.products) db.products = [];
 
         // Tự sinh ID kế tiếp tăng dần
@@ -435,12 +507,13 @@
             scale: d.scale,
             material: d.material,
             size: d.size,
-            profit_percent: d.profit_percent,
-            cost_price: d.cost_price,
-            stock_qty: d.stock_qty,
-            low_stock_threshold: d.low_stock_threshold,
+            profit_percent: profit.value,
+            cost_price: Number(d.cost_price || 0),
+            stock_qty: Number(d.stock_qty || 0),
+            low_stock_threshold: Number(d.low_stock_threshold === '' ? 5 : d.low_stock_threshold),
             is_hidden: false,
-            sale_percent: d.sale_percent
+            is_deleted: false,
+            sale_percent: Number(d.sale_percent || 0)
         };
 
         db.products.push(newProduct);
@@ -451,17 +524,20 @@
 
     // Cập nhật loại sản phẩm
     function updateCategory(id, categoryData) {
+        const profit = parseProfitPercent(categoryData.profit_percent, true);
+        if (!profit.ok) return { success: false, message: profit.message };
         const db = loadDB();
         if (!db.categories) return { success: false, message: 'Không tìm thấy dữ liệu loại sản phẩm!' };
 
         const index = db.categories.findIndex(c => c.id == id);
         if (index === -1) return { success: false, message: 'Không tìm thấy loại sản phẩm cần sửa!' };
+        if (db.categories[index].is_deleted) return { success: false, message: 'Hãy khôi phục loại sản phẩm trước khi sửa.' };
 
         db.categories[index] = {
             ...db.categories[index],
             name: String(categoryData.name || '').trim(),
             description: String(categoryData.description || '').trim(),
-            profit_percent: categoryData.profit_percent !== '' ? Number(categoryData.profit_percent) : null
+            profit_percent: profit.value
         };
 
         saveDB(db);
@@ -474,7 +550,7 @@
         if (!db.categories) return { success: false };
 
         const cat = db.categories.find(c => c.id == id);
-        if (cat) {
+        if (cat && !cat.is_deleted) {
             cat.is_hidden = !cat.is_hidden;
             saveDB(db);
             return { success: true, message: 'Thay đổi trạng thái thành công!' };
@@ -486,21 +562,21 @@
     function deleteCategory(id) {
         const db = loadDB();
         if (!db.categories) return { success: false };
+        const category = findById(db.categories, id);
+        if (!category) return { success: false, message: 'Không tìm thấy danh mục!' };
+        if (category.is_deleted) return { success: false, message: 'Danh mục đã được xóa trước đó.' };
+        category.is_deleted = true;
+        saveDB(db);
+        return { success: true, message: 'Đã xóa mềm danh mục và giữ nguyên dữ liệu.' };
+    }
 
-        // Kiểm tra xem có sản phẩm nào thuộc danh mục này không
-        const hasProducts = db.products && db.products.some(p => p.category_id == id);
-        if (hasProducts) {
-            return { success: false, message: 'Không thể xóa danh mục đang chứa sản phẩm bên trong!' };
-        }
-
-        const initialLength = db.categories.length;
-        db.categories = db.categories.filter(c => c.id != id);
-
-        if (db.categories.length < initialLength) {
-            saveDB(db);
-            return { success: true, message: 'Xóa danh mục thành công!' };
-        }
-        return { success: false, message: 'Không tìm thấy danh mục để xóa!' };
+    function restoreCategory(id) {
+        const db = loadDB();
+        const category = findById(db.categories, id);
+        if (!category || !category.is_deleted) return { success: false, message: 'Không tìm thấy danh mục đã xóa!' };
+        category.is_deleted = false;
+        saveDB(db);
+        return { success: true, message: 'Đã khôi phục danh mục.' };
     }
 
     // Cập nhật sản phẩm
@@ -510,6 +586,18 @@
 
         const index = db.products.findIndex(p => p.id == id);
         if (index === -1) return { success: false, message: 'Không tìm thấy sản phẩm cần sửa!' };
+        const currentCategory = findById(db.categories, db.products[index].category_id);
+        if (!currentCategory || currentCategory.is_deleted) {
+            return { success: false, message: 'Hãy khôi phục loại sản phẩm trước khi sửa.' };
+        }
+        if (db.products[index].is_deleted) {
+            if (!currentCategory.is_hidden) {
+                return { success: false, message: 'Hãy khôi phục sản phẩm trước khi sửa.' };
+            }
+        }
+        const error = validateProductData(productData, db, id);
+        if (error) return { success: false, message: error };
+        const profit = parseProfitPercent(productData.profit_percent, true);
 
         db.products[index] = {
             ...db.products[index],
@@ -522,10 +610,10 @@
             scale: String(productData.scale || '').trim(),
             material: String(productData.material || '').trim(),
             size: String(productData.size || '').trim(),
-            profit_percent: productData.profit_percent !== '' ? Number(productData.profit_percent) : null,
+            profit_percent: profit.value,
             cost_price: Number(productData.cost_price || 0),
             stock_qty: Number(productData.stock_qty || 0),
-            low_stock_threshold: Number(productData.low_stock_threshold || 5),
+            low_stock_threshold: Number(isBlank(productData.low_stock_threshold) ? 5 : productData.low_stock_threshold),
             sale_percent: Number(productData.sale_percent || 0)
         };
 
@@ -539,7 +627,9 @@
         if (!db.products) return { success: false };
 
         const prod = db.products.find(p => p.id == id);
-        if (prod) {
+        if (prod && !prod.is_deleted) {
+            const category = findById(db.categories, prod.category_id);
+            if (!category || category.is_hidden || category.is_deleted) return { success: false, message: 'Hãy hiện hoặc khôi phục loại sản phẩm trước.' };
             prod.is_hidden = !prod.is_hidden;
             saveDB(db);
             return { success: true, message: 'Thay đổi trạng thái sản phẩm thành công!' };
@@ -551,20 +641,29 @@
     function deleteProduct(id) {
         const db = loadDB();
         if (!db.products) return { success: false };
+        const product = findById(db.products, id);
+        if (!product) return { success: false, message: 'Không tìm thấy sản phẩm để xóa!' };
+        if (product.is_deleted) return { success: false, message: 'Sản phẩm đã được xóa trước đó.' };
+        const category = findById(db.categories, product.category_id);
+        if (!category || category.is_hidden || category.is_deleted) return { success: false, message: 'Hãy hiện hoặc khôi phục loại sản phẩm trước.' };
+        product.is_deleted = true;
+        saveDB(db);
+        return { success: true, message: 'Đã xóa mềm sản phẩm và giữ nguyên dữ liệu.' };
+    }
 
-        const initialLength = db.products.length;
-        db.products = db.products.filter(p => p.id != id);
-
-        if (db.products.length < initialLength) {
-            saveDB(db);
-            return { success: true, message: 'Xóa sản phẩm thành công!' };
-        }
-        return { success: false, message: 'Không tìm thấy sản phẩm để xóa!' };
+    function restoreProduct(id) {
+        const db = loadDB();
+        const product = findById(db.products, id);
+        if (!product || !product.is_deleted) return { success: false, message: 'Không tìm thấy sản phẩm đã xóa!' };
+        product.is_deleted = false;
+        saveDB(db);
+        return { success: true, message: 'Đã khôi phục sản phẩm.' };
     }
 
     // REGISTER
     const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const PHONE_RE = /^0\d{9}$/;
+    function validatePassword(password) { return String(password || '').length >= 6; }
 
     function nowString() {
         const d = new Date();
@@ -576,7 +675,7 @@
         const customers = loadDB().customers;
         if (!/^[A-Za-z0-9_]{4,20}$/.test(d.username)) return 'Tên đăng nhập gồm 4-20 ký tự: chữ không dấu, số hoặc dấu gạch dưới.';
         if (customers.some(function (c) { return c.username.toLowerCase() === d.username.toLowerCase(); })) return 'Tên đăng nhập đã tồn tại.';
-        if (d.password.length < 6) return 'Mật khẩu tối thiểu 6 ký tự.';
+        if (!validatePassword(d.password)) return 'Mật khẩu tối thiểu 6 ký tự.';
         if (d.password !== d.confirm) return 'Mật khẩu nhập lại không khớp.';
         if (!d.full_name) return 'Vui lòng nhập họ tên.';
         if (!EMAIL_RE.test(d.email)) return 'Email không hợp lệ.';
@@ -611,6 +710,7 @@
             district: null,
             city: null,
             is_locked: false,
+            is_deleted: false,
             created_at: nowString()
         });
         saveDB(db);
@@ -642,6 +742,7 @@
         });
 
         if (!user) return { ok: false, error: 'Sai tên đăng nhập hoặc mật khẩu' };
+        if (user.is_deleted) return { ok: false, error: 'Tài khoản của bạn đã bị xóa. Vui lòng liên hệ cửa hàng!' };
         if (user.is_locked) return { ok: false, error: 'Tài khoản của bạn đã bị khóa. Vui lòng liên hệ cửa hàng!' };
         localStorage.setItem(SESSION_KEY, String(user.id));
         return { ok: true, user: user };
@@ -659,7 +760,7 @@
         const id = localStorage.getItem(SESSION_KEY);
         if (!id) return null;
         const user = findById(loadDB().customers, id);
-        if (!user || user.is_locked) {
+        if (!user || user.is_locked || user.is_deleted) {
             logoutCustomer();
             return null;
         }
@@ -694,9 +795,11 @@
 
         // lọc theo trạng thái khoá/ mở tài khoản
         if (status === 'active') {
-            customers = customers.filter(c => !c.is_locked);
+            customers = customers.filter(c => !c.is_locked && !c.is_deleted);
         } else if (status === 'locked') {
-            customers = customers.filter(c => c.is_locked);
+            customers = customers.filter(c => c.is_locked && !c.is_deleted);
+        } else if (status === 'deleted') {
+            customers = customers.filter(c => c.is_deleted);
         }
 
         //lọc theo từ khoá
@@ -727,6 +830,9 @@
         if (error) {
             return { success: false, message: error }; 
         }
+        const address = ['address_detail', 'ward', 'district', 'city'].map(function (key) { return String(newCustomerData[key] || '').trim(); });
+        const filledAddress = address.filter(Boolean).length;
+        if (filledAddress !== 0 && filledAddress !== 4) return { success: false, message: 'Vui lòng nhập địa chỉ đầy đủ hoặc để trống cả bốn.' };
 
         const db = loadDB();
         if (!db.customers) db.customers = [];
@@ -753,11 +859,12 @@
             full_name: d.full_name || '',
             email: d.email || '',
             phone: d.phone || '',
-            address_detail: null,
-            ward: null,
-            district: null,
-            city: null,
+            address_detail: address[0] || null,
+            ward: address[1] || null,
+            district: address[2] || null,
+            city: address[3] || null,
             is_locked: false,
+            is_deleted: false,
             created_at: nowString()
         };
 
@@ -768,9 +875,7 @@
     }
 
     function resetCustomerPassword(id, newPassword) {
-        if (!newPassword || newPassword.trim() === '') {
-            return { success: false, message: 'Mật khẩu mới không được để trống!' };
-        }
+        if (!validatePassword(String(newPassword || '').trim())) return { success: false, message: 'Mật khẩu mới tối thiểu 6 ký tự.' };
 
         const db = loadDB();
         if (!db.customers) db.customers = [];
@@ -779,6 +884,7 @@
         if (!customer) {
             return { success: false, message: 'Không tìm thấy người dùng!' };
         }
+        if (customer.is_deleted) return { success: false, message: 'Hãy khôi phục khách hàng trước khi đặt lại mật khẩu.' };
 
         customer.password = newPassword.trim();
         saveDB(db);
@@ -794,7 +900,7 @@
         if (!customer) {
             return { success: false, message: 'Không tìm thấy người dùng!' };
         }
-
+        if (customer.is_deleted) return { success: false, message: 'Hãy khôi phục khách hàng trước khi đổi trạng thái khóa.' };
         customer.is_locked = !customer.is_locked;
         saveDB(db);
 
@@ -808,33 +914,37 @@
 
     function deleteCustomer(id) {
         const db = loadDB();
-        if (!db.customers) db.customers = [];
-        const index = db.customers.findIndex(c => String(c.id) === String(id));
-
-        if (index === -1) {
-            return { success: false, message: 'Không tìm thấy người dùng!' };
-        }
-
-        const deletedUser = db.customers.splice(index, 1)[0];
+        const customer = findById(db.customers, id);
+        if (!customer) return { success: false, message: 'Không tìm thấy khách hàng!' };
+        if (customer.is_deleted) return { success: false, message: 'Khách hàng đã được xóa trước đó.' };
+        customer.is_deleted = true;
         saveDB(db);
+        return { success: true, message: 'Đã xóa mềm khách hàng; hồ sơ và lịch sử đơn hàng được giữ lại.' };
+    }
 
-        return { success: true, message: `Đã xóa người dùng "${deletedUser.username}" thành công!` };
+    function restoreCustomer(id) {
+        const db = loadDB();
+        const customer = findById(db.customers, id);
+        if (!customer || !customer.is_deleted) return { success: false, message: 'Không tìm thấy khách hàng đã xóa!' };
+        customer.is_deleted = false;
+        saveDB(db);
+        return { success: true, message: 'Đã khôi phục khách hàng.' };
     }
 
     // PROFILE
     function updateProfile(userId, input) {
         const db = loadDB();
         const user = findById(db.customers, userId);
-        if (!user) return { ok: false, error: 'Không tìm thấy tài khoản.' };
+        if (!user || user.is_deleted) return { ok: false, error: 'Không tìm thấy tài khoản.' };
 
         const d = {
             full_name: String(input.full_name || '').trim(),
             email: String(input.email || '').trim(),
             phone: String(input.phone || '').trim(),
-            address_detail: String(input.address_detail || '').trim(),
-            ward: String(input.ward || '').trim(),
-            district: String(input.district || '').trim(),
-            city: String(input.city || '').trim(),
+            address_detail: String(input.address_detail === undefined ? (user.address_detail || '') : input.address_detail || '').trim(),
+            ward: String(input.ward === undefined ? (user.ward || '') : input.ward || '').trim(),
+            district: String(input.district === undefined ? (user.district || '') : input.district || '').trim(),
+            city: String(input.city === undefined ? (user.city || '') : input.city || '').trim(),
         };
 
         if (!d.full_name) return { ok: false, error: 'Vui lòng nhập họ tên.' };
@@ -864,12 +974,12 @@
     function changePassword(userId, current, next, confirm) {
         const db = loadDB();
         const user = findById(db.customers, userId);
-        if (!user) return { ok: false, error: 'Không tìm thấy tài khoản.' };
+        if (!user || user.is_deleted) return { ok: false, error: 'Không tìm thấy tài khoản.' };
         current = String(current || '');
         next = String(next || '');
         confirm = String(confirm || '');
         if (user.password !== current) return { ok: false, error: 'Mật khẩu hiện tại không đúng.' };
-        if (next.length < 6) return { ok: false, error: 'Mật khẩu mới tối thiểu 6 ký tự.' };
+        if (!validatePassword(next)) return { ok: false, error: 'Mật khẩu mới tối thiểu 6 ký tự.' };
         if (next !== confirm) return { ok: false, error: 'Mật khẩu nhập lại không khớp.' };
         if (next === current) return { ok: false, error: 'Mật khẩu mới phải khác mật khẩu hiện tại' };
         user.password = next;
@@ -929,7 +1039,7 @@
         if (!user) return [];
         const db = loadDB();
         cleanupNotifications(db);
-        let list = (db.notifications || []).filter(function (n) { return Number(n.customer_id) === Number(user.id); });
+        let list = (db.notifications || []).filter(function (n) { return !n.is_hidden && Number(n.customer_id) === Number(user.id); });
         if (filter === 'orders') list = list.filter(function (n) { return n.order_id; });
         return list.sort(function (a, b) { return String(b.created_at).localeCompare(String(a.created_at)); });
     }
@@ -1007,7 +1117,7 @@
         const stockChanges = [];
         if (nextStatus === 'order_confirmed') {
             for (const [productId, quantity] of quantities) {
-                if (!Number.isFinite(quantity) || quantity <= 0) return { ok: false, error: 'Số lượng sản phẩm không hợp lệ.' };
+                if (!Number.isSafeInteger(quantity) || quantity <= 0) return { ok: false, error: 'Số lượng sản phẩm không hợp lệ.' };
                 const product = findById(products, productId);
                 if (!product) return { ok: false, error: 'Có sản phẩm trong đơn hàng không còn tồn tại.' };
                 if (!orderMovements.some(function (movement) { return movement.movement_type === 'export' && Number(movement.product_id) === productId; })) {
@@ -1023,8 +1133,10 @@
                 outstanding.set(productId, (outstanding.get(productId) || 0) - Number(movement.quantity));
             });
             for (const [productId, quantity] of outstanding) {
+                if (!Number.isSafeInteger(quantity) || quantity < 0) return { ok: false, error: 'Số lượng hoàn kho không hợp lệ.' };
                 const product = findById(products, productId);
-                if (quantity > 0 && product) stockChanges.push({ product: product, quantity: quantity, type: 'cancel_return' });
+                if (quantity > 0 && !product) return { ok: false, error: 'Có sản phẩm trong đơn hàng không còn tồn tại.' };
+                if (quantity > 0) stockChanges.push({ product: product, quantity: quantity, type: 'cancel_return' });
             }
         }
         stockChanges.forEach(function (change) {
@@ -1064,6 +1176,9 @@
         escapeHtml: escapeHtml,
         paginate: paginate,
         getPrice: getPrice,
+        getProfitPercent: getProfitPercent,
+        parseProfitPercent: parseProfitPercent,
+        validatePassword: validatePassword,
         getSalePrice: getSalePrice,
         getCategories: getCategories,
         getCategoryById: getCategoryById,
@@ -1104,10 +1219,12 @@
         resetCustomerPassword: resetCustomerPassword,
         toggleLockCustomer: toggleLockCustomer,
         deleteCustomer: deleteCustomer,
+        restoreCustomer: restoreCustomer,
         getAllCategories: getAllCategories,
         getAllProducts: getAllProducts,
         getAllCategoryIgnoreHidden: getAllCategoryIgnoreHidden,
         getProductByIdIgnoreHidden: getProductByIdIgnoreHidden,
+        getProductDisplayStatus: getProductDisplayStatus,
         filterCategories: filterCategories,
         filterProducts: filterProducts,
         addCategory: addCategory,
@@ -1117,6 +1234,8 @@
         toggleHideCategory: toggleHideCategory,
         toggleHideProduct: toggleHideProduct,
         deleteCategory: deleteCategory,
-        deleteProduct: deleteProduct
+        restoreCategory: restoreCategory,
+        deleteProduct: deleteProduct,
+        restoreProduct: restoreProduct
     };
 })(window);

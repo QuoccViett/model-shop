@@ -25,7 +25,8 @@
         return parts.length === 3 ? parts[2] + '/' + parts[1] + '/' + parts[0] : s;
     }
 
-    function statusBadge(status) {
+    function statusBadge(status, hidden) {
+        if (hidden) return '<span class="status-badge locked">Đã ẩn</span>';
         return status === 'completed'
             ? '<span class="status-badge active">Đã hoàn thành</span>'
             : '<span class="status-badge draft">Nháp - chưa hoàn thành</span>';
@@ -75,12 +76,12 @@
         }
 
         tableBody.innerHTML = paged.items.map(function (r) {
-            const isDraft = r.status === 'draft';
+            const isDraft = r.status === 'draft' && !r.is_hidden;
             const lineCount = Shop.getReceiptItems(r.id).length;
             const draftButtons = isDraft ? `
                 <button class="btn-action edit" data-action="edit" data-id="${r.id}" title="Sửa phiếu"><i class="fa-solid fa-pen"></i></button>
                 <button class="btn-action complete" data-action="complete" data-id="${r.id}" title="Hoàn thành phiếu"><i class="fa-solid fa-check"></i></button>
-                <button class="btn-action delete" data-action="delete" data-id="${r.id}" title="Xóa phiếu"><i class="fa-solid fa-trash"></i></button>` : '';
+                <button class="btn-action delete" data-action="delete" data-id="${r.id}" title="Ẩn phiếu"><i class="fa-solid fa-eye-slash"></i></button>` : '';
             return `
                 <tr>
                     <td><code>${Shop.getReceiptCode(r.id)}</code></td>
@@ -88,10 +89,11 @@
                     <td>${esc(r.note || '')}</td>
                     <td>${lineCount}</td>
                     <td class="text-right">${money(Shop.getReceiptTotal(r.id))}</td>
-                    <td>${statusBadge(r.status)}</td>
+                    <td>${statusBadge(r.status, r.is_hidden)}</td>
                     <td class="action-cell">
                         <button class="btn-action view" data-action="view" data-id="${r.id}" title="Xem chi tiết"><i class="fa-solid fa-eye"></i></button>
                         ${draftButtons}
+                        ${r.is_hidden ? `<button class="btn-action edit" data-action="restore" data-id="${r.id}" title="Khôi phục phiếu"><i class="fa-solid fa-rotate-left"></i></button>` : ''}
                     </td>
                 </tr>`;
         }).join('');
@@ -124,6 +126,7 @@
         else if (action === 'edit') openForm(id);
         else if (action === 'complete') completeReceipt(id);
         else if (action === 'delete') removeReceipt(id);
+        else if (action === 'restore') restoreReceipt(id);
     });
 
     function completeReceipt(id) {
@@ -135,8 +138,14 @@
     }
 
     function removeReceipt(id) {
-        if (!confirm('Bạn có chắc chắn muốn xóa phiếu ' + Shop.getReceiptCode(id) + '?')) return;
+        if (!confirm('Ẩn phiếu ' + Shop.getReceiptCode(id) + '? Dữ liệu sẽ được giữ lại.')) return;
         const res = Shop.deleteReceipt(id);
+        alert(res.message);
+        renderTable();
+    }
+
+    function restoreReceipt(id) {
+        const res = Shop.restoreReceipt(id);
         alert(res.message);
         renderTable();
     }
@@ -163,7 +172,7 @@
         document.getElementById('view-modal-body').innerHTML = `
             <div class="receipt-info">
                 <div><span>Ngày nhập:</span> <strong>${showDate(r.import_date)}</strong></div>
-                <div><span>Tình trạng:</span> ${statusBadge(r.status)}</div>
+                <div><span>Tình trạng:</span> ${statusBadge(r.status, r.is_hidden)}</div>
                 <div><span>Ngày tạo:</span> ${esc(r.created_at || '')}</div>
                 <div><span>Ngày hoàn thành:</span> ${r.completed_at ? esc(r.completed_at) : '—'}</div>
                 <div style="grid-column: 1 / -1;"><span>Ghi chú:</span> ${esc(r.note || '—')}</div>
@@ -185,7 +194,10 @@
 
     /* FORM THÊM / SỬA */
     function productOptions(selectedId) {
-    const products = Shop.getAllProducts().slice().sort(function (a, b) {
+    const products = Shop.getAllProducts().filter(function (p) {
+        const category = Shop.getAllCategoryIgnoreHidden(p.category_id);
+        return !p.is_deleted && category && !category.is_deleted;
+    }).sort(function (a, b) {
         return String(a.code).localeCompare(String(b.code));
     });
 

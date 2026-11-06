@@ -6,9 +6,13 @@
     if (!mainContent) return;
 
     // Lấy danh sách categories để đổ vào thẻ <select> phân loại trong form
-    function getCategoryOptions() {
-        const categories = Shop.getAllCategories();
+    function getCategoryOptions(includeDeletedId) {
+        const categories = Shop.getAllCategories().filter(c => !c.is_deleted || Number(c.id) === Number(includeDeletedId));
         return categories.map(c => `<option value="${c.id}">${Shop.escapeHtml(c.name)}</option>`).join('');
+    }
+
+    function getCategoryFilterOptions() {
+        return Shop.getAllCategories().map(c => `<option value="${c.id}">${Shop.escapeHtml(c.name)}${c.is_deleted ? ' (đã xóa)' : ''}</option>`).join('');
     }
 
     const productHTML = `
@@ -24,12 +28,13 @@
                         <input type="text" id="search-input" placeholder="Tìm theo mã, tên, thương hiệu, mô tả...">
                         <select id="filter-category">
                             <option value="all">Lọc theo danh mục</option>
-                            ${getCategoryOptions()}
+                            ${getCategoryFilterOptions()}
                         </select>
                         <select id="filter-status">
                             <option value="all">Tất cả trạng thái</option>
                             <option value="active">Đang hiển thị</option>
                             <option value="hidden">Đang ẩn</option>
+                            <option value="deleted">Đã xóa</option>
                         </select>
                     </div>
                     <button class="btn-add" id="btn-open-add-modal">
@@ -48,7 +53,7 @@
                                 <th>Giá vốn</th>
                                 <th>Tồn kho</th>
                                 <th>Trạng thái</th>
-                                <th>Hành động</th>
+                                <th id="product-actions-header">Hành động</th>
                             </tr>
                         </thead>
                         <tbody id="product-table-body">
@@ -159,6 +164,7 @@
     const filterCategory = document.getElementById('filter-category');
     const filterStatus = document.getElementById('filter-status');
     const tableBody = document.getElementById('product-table-body');
+    const actionsHeader = document.getElementById('product-actions-header');
     const productPager = window.AdminPagination.create({
         container: 'product-pagination',
         pageSize: 10,
@@ -196,16 +202,27 @@
         const products = Shop.filterProducts({ keyword, status, category_id });
         const paged = productPager.slice(products);
         productPager.render(paged.total);
+        const showActions = paged.items.some(p => {
+            const category = Shop.getAllCategoryIgnoreHidden(p.category_id);
+            return category && !category.is_deleted;
+        });
+        actionsHeader.hidden = !showActions;
 
         if (products.length === 0) {
-            tableBody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: #777; padding: 20px;">Không tìm thấy sản phẩm nào.</td></tr>`;
+            tableBody.innerHTML = `<tr><td colspan="${showActions ? 8 : 7}" style="text-align: center; color: #777; padding: 20px;">Không tìm thấy sản phẩm nào.</td></tr>`;
             return;
         }
 
         tableBody.innerHTML = paged.items.map(p => {
             const isHidden = p.is_hidden;
-            const statusClass = isHidden ? 'locked' : 'active';
-            const statusText = isHidden ? 'Đang ẩn' : 'Hiển thị';
+            const category = Shop.getAllCategoryIgnoreHidden(p.category_id);
+            const categoryDeleted = !category || category.is_deleted;
+            const categoryHidden = category && category.is_hidden;
+            const effectiveStatus = Shop.getProductDisplayStatus(p, category);
+            const statusClass = effectiveStatus === 'active' ? 'active' : 'locked';
+            const statusText = category && category.is_deleted ? 'Đã xóa (loại)' :
+                category && category.is_hidden ? 'Đang ẩn (loại)' :
+                effectiveStatus === 'deleted' ? 'Đã xóa' : effectiveStatus === 'hidden' ? 'Đang ẩn' : 'Hiển thị';
             const eyeIcon = isHidden ? 'fa-eye-slash' : 'fa-eye';
             const eyeTitle = isHidden ? 'Hiển thị sản phẩm' : 'Ẩn sản phẩm';
             const formattedPrice = Number(p.cost_price || 0).toLocaleString('vi-VN') + ' đ';
@@ -220,11 +237,15 @@
                     <td>${formattedPrice}</td>
                     <td>${p.stock_qty ?? 0}</td>
                     <td><span class="status-badge ${statusClass}">${statusText}</span></td>
-                    <td>
-                        <button class="btn-action edit" onclick="window.editProduct(${p.id})" title="Chỉnh sửa"><i class="fa-solid fa-pen"></i></button>
-                        <button class="btn-action lock" onclick="window.toggleHideProduct(${p.id})" title="${eyeTitle}"><i class="fa-solid ${eyeIcon}"></i></button>
-                        <button class="btn-action delete" onclick="window.removeProduct(${p.id})" title="Xóa sản phẩm"><i class="fa-solid fa-trash"></i></button>
-                    </td>
+                    ${showActions ? `<td>
+                        ${categoryDeleted ? '' : categoryHidden
+                            ? `<button class="btn-action edit" onclick="window.editProduct(${p.id})" title="Chỉnh sửa"><i class="fa-solid fa-pen"></i></button>`
+                            : p.is_deleted
+                            ? `<button class="btn-action lock" onclick="window.restoreProduct(${p.id})" title="Khôi phục sản phẩm"><i class="fa-solid fa-rotate-left"></i></button>`
+                            : `<button class="btn-action edit" onclick="window.editProduct(${p.id})" title="Chỉnh sửa"><i class="fa-solid fa-pen"></i></button>
+                               <button class="btn-action lock" onclick="window.toggleHideProduct(${p.id})" title="${eyeTitle}"><i class="fa-solid ${eyeIcon}"></i></button>
+                               <button class="btn-action delete" onclick="window.removeProduct(${p.id})" title="Xóa sản phẩm"><i class="fa-solid fa-trash"></i></button>`}
+                    </td>` : ''}
                 </tr>
             `;
         }).join('');
@@ -247,6 +268,7 @@
         modalTitle.innerText = 'Thêm sản phẩm mới';
         inputId.value = '';
         inputCode.value = '';
+        inputCategory.innerHTML = '<option value="">-- Chọn danh mục --</option>' + getCategoryOptions();
         inputCategory.value = '';
         inputName.value = '';
         inputBrand.value = '';
@@ -320,6 +342,7 @@
         modalTitle.innerText = 'Chỉnh sửa thông tin sản phẩm';
         inputId.value = product.id;
         inputCode.value = product.code || '';
+        inputCategory.innerHTML = '<option value="">-- Chọn danh mục --</option>' + getCategoryOptions(product.category_id);
         inputCategory.value = product.category_id || '';
         inputName.value = product.name || '';
         inputBrand.value = product.brand || '';
@@ -347,11 +370,16 @@
     };
 
     window.removeProduct = function (id) {
-        if (confirm('Bạn có chắc chắn muốn xóa sản phẩm này?')) {
-            const res = Shop.deleteProduct(id);
-            alert(res.message);
-            renderTable();
-        }
+        if (!confirm('Xóa mềm sản phẩm này? Dữ liệu và lịch sử vẫn được giữ lại.')) return;
+        const res = Shop.deleteProduct(id);
+        alert(res.message);
+        renderTable();
+    };
+
+    window.restoreProduct = function (id) {
+        const res = Shop.restoreProduct(id);
+        alert(res.message);
+        renderTable();
     };
 
     renderTable();

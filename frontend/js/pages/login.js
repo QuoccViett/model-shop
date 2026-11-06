@@ -37,7 +37,7 @@
             form.elements.username.nextElementSibling.textContent = 'Vui lòng nhập tên đăng nhập.';
             return;
         }
-        if (form.elements.password.value.length < 6) {
+        if (!Shop.validatePassword(form.elements.password.value)) {
             form.elements.password.classList.add('auth-invalid');
             form.elements.password.nextElementSibling.textContent = 'Mật khẩu tối thiểu 6 ký tự.';
             return;

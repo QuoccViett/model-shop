@@ -22,6 +22,7 @@
                             <option value="all">Tất cả trạng thái</option>
                             <option value="active">Đang hoạt động</option>
                             <option value="locked">Đã bị khóa</option>
+                            <option value="deleted">Đã xóa</option>
                         </select>
                     </div>
                     <button class="btn-add" id="btn-open-add-modal">
@@ -83,6 +84,22 @@
                             <label>Số điện thoại</label>
                             <input type="text" id="customer-phone" placeholder="Nhập số điện thoại...">
                         </div>
+                        <div class="form-group">
+                            <label>Số nhà, đường</label>
+                            <input type="text" id="customer-address-detail" placeholder="Nhập số nhà, đường...">
+                        </div>
+                        <div class="form-group">
+                            <label>Phường, xã</label>
+                            <input type="text" id="customer-ward" placeholder="Nhập phường, xã...">
+                        </div>
+                        <div class="form-group">
+                            <label>Quận, huyện</label>
+                            <input type="text" id="customer-district" placeholder="Nhập quận, huyện...">
+                        </div>
+                        <div class="form-group">
+                            <label>Tỉnh, thành phố</label>
+                            <input type="text" id="customer-city" placeholder="Nhập tỉnh, thành phố...">
+                        </div>
                     </form>
                 </div>
                 <div class="modal-footer">
@@ -120,6 +137,10 @@
     const inputFullname = document.getElementById('customer-fullname');
     const inputEmail = document.getElementById('customer-email');
     const inputPhone = document.getElementById('customer-phone');
+    const inputAddressDetail = document.getElementById('customer-address-detail');
+    const inputWard = document.getElementById('customer-ward');
+    const inputDistrict = document.getElementById('customer-district');
+    const inputCity = document.getElementById('customer-city');
     const groupPassword = document.getElementById('group-password');
 
     // Hàm render bảng danh sách
@@ -139,8 +160,8 @@
 
         tableBody.innerHTML = paged.items.map(c => {
             const isLocked = c.is_locked;
-            const statusClass = isLocked ? 'locked' : 'active';
-            const statusText = isLocked ? 'Bị khóa' : 'Hoạt động';
+            const statusClass = c.is_deleted || isLocked ? 'locked' : 'active';
+            const statusText = c.is_deleted ? 'Đã xóa' : (isLocked ? 'Bị khóa' : 'Hoạt động');
             const lockIcon = isLocked ? 'fa-lock-open' : 'fa-lock';
             const lockTitle = isLocked ? 'Mở khóa tài khoản' : 'Khóa tài khoản';
             const formattedDate = c.created_at ? new Date(c.created_at).toLocaleDateString('vi-VN') : 'N/A';
@@ -155,10 +176,12 @@
                     <td><span class="status-badge ${statusClass}">${statusText}</span></td>
                     <td>${formattedDate}</td>
                     <td>
-                        <button class="btn-action edit" onclick="window.editCustomer(${c.id})" title="Chỉnh sửa"><i class="fa-solid fa-pen"></i></button>
-                        <button class="btn-action password" onclick="window.resetPasswordModal(${c.id})" title="Đặt lại mật khẩu"><i class="fa-solid fa-key"></i></button>
-                        <button class="btn-action lock" onclick="window.toggleLock(${c.id})" title="${lockTitle}"><i class="fa-solid ${lockIcon}"></i></button>
-                        <button class="btn-action delete" onclick="window.removeCustomer(${c.id})" title="Xóa tài khoản"><i class="fa-solid fa-trash"></i></button>
+                        ${c.is_deleted
+                            ? `<button class="btn-action lock" onclick="window.restoreCustomer(${c.id})" title="Khôi phục khách hàng"><i class="fa-solid fa-rotate-left"></i></button>`
+                            : `<button class="btn-action edit" onclick="window.editCustomer(${c.id})" title="Chỉnh sửa"><i class="fa-solid fa-pen"></i></button>
+                               <button class="btn-action password" onclick="window.resetPasswordModal(${c.id})" title="Đặt lại mật khẩu"><i class="fa-solid fa-key"></i></button>
+                               <button class="btn-action lock" onclick="window.toggleLock(${c.id})" title="${lockTitle}"><i class="fa-solid ${lockIcon}"></i></button>
+                               <button class="btn-action delete" onclick="window.removeCustomer(${c.id})" title="Xóa khách hàng"><i class="fa-solid fa-trash"></i></button>`}
                     </td>
                 </tr>
             `;
@@ -186,6 +209,10 @@
         inputFullname.value = '';
         inputEmail.value = '';
         inputPhone.value = '';
+        inputAddressDetail.value = '';
+        inputWard.value = '';
+        inputDistrict.value = '';
+        inputCity.value = '';
         modal.classList.add('show');
     });
 
@@ -219,10 +246,10 @@
                 full_name: full_name,
                 email: email,
                 phone: phone,
-                address_detail: '', 
-                ward: '',
-                district: '',
-                city: ''
+                address_detail: inputAddressDetail.value.trim(),
+                ward: inputWard.value.trim(),
+                district: inputDistrict.value.trim(),
+                city: inputCity.value.trim()
             };
 
             const res = Shop.updateProfile(id, inputData);
@@ -240,7 +267,13 @@
                 alert('Vui lòng nhập tên đăng nhập!');
                 return;
             }
-            const res = Shop.addCustomer({ username, password, full_name, email, phone });
+            const res = Shop.addCustomer({
+                username, password, full_name, email, phone,
+                address_detail: inputAddressDetail.value.trim(),
+                ward: inputWard.value.trim(),
+                district: inputDistrict.value.trim(),
+                city: inputCity.value.trim()
+            });
             
             if (res && res.success) {
                 alert(res.message);
@@ -265,6 +298,10 @@
         inputFullname.value = customer.full_name || '';
         inputEmail.value = customer.email || '';
         inputPhone.value = customer.phone || '';
+        inputAddressDetail.value = customer.address_detail || '';
+        inputWard.value = customer.ward || '';
+        inputDistrict.value = customer.district || '';
+        inputCity.value = customer.city || '';
 
         modal.classList.add('show');
     };
@@ -273,7 +310,7 @@
         const customer = Shop.getUserById(id);
         if (!customer) return;
 
-        const newPass = prompt(`Nhập mật khẩu mới cho tài khoản "${customer.username}":`, customer.password);
+        const newPass = prompt(`Nhập mật khẩu mới cho tài khoản "${customer.username}" (ít nhất 6 ký tự):`);
         if (newPass !== null && newPass.trim() !== '') {
             const res = Shop.resetCustomerPassword(id, newPass.trim());
             alert(res.message);
@@ -290,11 +327,16 @@
     };
 
     window.removeCustomer = function (id) {
-        if (confirm('Bạn có chắc chắn muốn xóa vĩnh viễn tài khoản khách hàng này khỏi hệ thống?')) {
-            const res = Shop.deleteCustomer(id);
-            alert(res.message);
-            renderTable();
-        }
+        if (!confirm('Xóa mềm khách hàng này? Hồ sơ và lịch sử đơn hàng vẫn được giữ lại.')) return;
+        const res = Shop.deleteCustomer(id);
+        alert(res.message);
+        renderTable();
+    };
+
+    window.restoreCustomer = function (id) {
+        const res = Shop.restoreCustomer(id);
+        alert(res.message);
+        renderTable();
     };
 
     // Khởi chạy render lần đầu
