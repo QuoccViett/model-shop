@@ -12,8 +12,42 @@
     color: #5a4630;
 }
 
-.price-section + .price-section {
-    margin-top: 20px;
+/* Thanh tab */
+.price-tabs {
+    display: flex;
+    gap: 6px;
+    border-bottom: 2px solid var(--border-color);
+    margin-bottom: 20px;
+}
+
+.price-tab {
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+    padding: 10px 20px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #777;
+    cursor: pointer;
+    transition: color 0.2s, border-color 0.2s;
+}
+
+.price-tab i {
+    margin-right: 6px;
+}
+
+.price-tab:hover {
+    color: var(--primary-color);
+}
+
+.price-tab.active {
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
+}
+
+.price-panel[hidden] {
+    display: none;
 }
 
 .price-section h3 {

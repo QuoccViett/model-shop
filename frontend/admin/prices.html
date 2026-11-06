@@ -34,9 +34,19 @@
                     Giá vốn do phiếu nhập hàng quyết định, sản phẩm chưa nhập hàng thì chưa có giá bán.
                 </div>
 
-                <!-- 1. % LỢI NHUẬN THEO LOẠI -->
-                <div class="data-table-section price-section">
-                    <h3>1. % lợi nhuận theo loại sản phẩm</h3>
+                <!-- THANH TAB -->
+                <div class="price-tabs" role="tablist">
+                    <button type="button" class="price-tab active" role="tab" aria-selected="true" data-tab="profit">
+                        <i class="fa-solid fa-percent"></i> % Lợi nhuận
+                    </button>
+                    <button type="button" class="price-tab" role="tab" aria-selected="false" data-tab="cost">
+                        <i class="fa-solid fa-coins"></i> Giá vốn
+                    </button>
+                </div>
+
+                <!-- TAB 1. % LỢI NHUẬN THEO LOẠI -->
+                <div class="data-table-section price-section price-panel" id="tab-profit" role="tabpanel">
+                    <h3>% lợi nhuận theo loại sản phẩm</h3>
                     <p class="section-note">Áp dụng cho mọi sản phẩm trong loại chưa có % riêng.</p>
                     <div class="table-responsive">
                         <table>
@@ -58,9 +68,9 @@
                     <div class="admin-pagination" id="category-price-pagination"></div>
                 </div>
 
-                <!-- 2. GIÁ VỐN, % LỢI NHUẬN, GIÁ BÁN THEO SẢN PHẨM -->
-                <div class="data-table-section price-section">
-                    <h3>2. Giá vốn, % lợi nhuận và giá bán theo sản phẩm</h3>
+                <!-- TAB 2. GIÁ VỐN, % LỢI NHUẬN, GIÁ BÁN THEO SẢN PHẨM -->
+                <div class="data-table-section price-section price-panel" id="tab-cost" role="tabpanel" hidden>
+                    <h3>Giá vốn, % lợi nhuận và giá bán theo sản phẩm</h3>
                     <p class="section-note">Gõ % riêng rồi bấm Lưu (hoặc Enter). Giá bán xem trước ngay khi gõ.</p>
                     <div class="table-actions-bar">
                         <div class="search-filter-group import-filters-inline">

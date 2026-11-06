@@ -199,6 +199,25 @@
         renderCategories();
     }
 
+    /* CHUYỂN TAB */
+    const tabButtons = document.querySelectorAll('.price-tab');
+    const tabPanels = document.querySelectorAll('.price-panel');
+
+    function switchTab(name) {
+        tabButtons.forEach(function (btn) {
+            const active = btn.dataset.tab === name;
+            btn.classList.toggle('active', active);
+            btn.setAttribute('aria-selected', active ? 'true' : 'false');
+        });
+        tabPanels.forEach(function (panel) {
+            panel.hidden = panel.id !== 'tab-' + name;
+        });
+    }
+
+    tabButtons.forEach(function (btn) {
+        btn.addEventListener('click', function () { switchTab(btn.dataset.tab); });
+    });
+
     /* SỰ KIỆN */
     searchInput.addEventListener('input', function () {
         productPager.reset();
