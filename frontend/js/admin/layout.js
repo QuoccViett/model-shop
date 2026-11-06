@@ -3,6 +3,13 @@
 
     const root = document.body.dataset.root || '';
     const file = location.pathname.split('/').pop();
+    window.AdminAuthenticated = Boolean(Shop.getCurrentAdmin());
+    if (!window.AdminAuthenticated) {
+        if (!window.AdminRedirecting) {
+            location.replace(root + 'login.html?redirect=' + encodeURIComponent(file + location.search + location.hash));
+        }
+        return;
+    }
 
     // Danh sách menu quản trị
     const MENU = [

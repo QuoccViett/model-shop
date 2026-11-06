@@ -1,6 +1,7 @@
 /*QUẢN LÝ ĐƠN HÀNG - MODEL SHOP*/
 (function () {
     'use strict';
+    if (!window.AdminAuthenticated) return;
     // KHỞI TẠO
     if (!window.Shop) {
         console.error('Cần tải common.js trước orders.js');

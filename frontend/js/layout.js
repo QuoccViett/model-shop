@@ -181,6 +181,10 @@
     document.addEventListener('click', function (event) {
         const button = event.target.closest('[data-add-to-cart]');
         if (!button || !window.Cart || button.disabled) return;
+        if (!Shop.getCurrentUser()) {
+            location.href = root + 'pages/login.html?redirect=' + encodeURIComponent(location.pathname + location.search + location.hash);
+            return;
+        }
         const productId = Number(button.dataset.addToCart);
         const qtyInput = button.closest('.product-card')
             ? button.closest('.product-card').querySelector('[data-product-qty]')

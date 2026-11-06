@@ -5,19 +5,19 @@
     const errorBox = document.getElementById('form-error');
     const params = new URLSearchParams(location.search);
 
-    if (Shop.getCurrentAdmin()) {
-        location.replace('index.html');
-        return;
-    }
-
     // if (params.get('registered')) {
     //     document.getElementById('form-success').hidden = false;
     // }
 
     function getRedirect() {
         const target = params.get('redirect') || '';
-        if (!target || /^[a-z][a-z0-9+.-]*:|^\/\//i.test(target)) return 'index.html';
+        if (!target || !/^(?:index|users|categories|products|imports|prices|orders|inventory)\.html(?:[?#]|$)/.test(target)) return 'index.html';
         return target;
+    }
+
+    if (Shop.getCurrentAdmin()) {
+        location.replace(getRedirect());
+        return;
     }
 
     form.addEventListener('submit', function (e) {
