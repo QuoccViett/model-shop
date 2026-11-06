@@ -7,17 +7,27 @@
     const app = document.getElementById('app');
     const esc = Shop.escapeHtml;
     const money = Shop.formatPrice;
+    let renderedSnapshot;
+    const shownWarnings = [];
 
     function draw() {
         const lines = Cart.getCartDetailed();
+        renderedSnapshot = Cart.getCartSnapshot();
+        Cart.takeCartWarnings().forEach(function (item) {
+            shownWarnings.push(item);
+        });
+        const notice = shownWarnings.length ? '<div class="shop-error" role="alert">' + shownWarnings.map(function (item) {
+            return '<div>' + esc(item.name) + ': Sản phẩm đã ngừng kinh doanh và tự động xóa khỏi giỏ hàng.</div>';
+        }).join('') + '</div>' : '';
         if (!lines.length) {
             app.innerHTML = '<div class="breadcrumb"><a href="../index.html">Trang chủ</a> / Giỏ hàng</div>' +
                 '<div class="shop-empty"><h1>Giỏ hàng đang trống</h1><p>Hãy chọn sản phẩm mô hình bạn yêu thích.</p>' +
                 '<a class="btn" href="products.html">Tiếp tục mua sắm</a></div>';
+            app.insertAdjacentHTML('afterbegin', notice);
             return;
         }
         app.innerHTML = '<div class="breadcrumb"><a href="../index.html">Trang chủ</a> / Giỏ hàng</div>' +
-            '<h1>Giỏ hàng của bạn (' + Cart.getCartCount() + ' sản phẩm)</h1>' +
+            notice + '<h1>Giỏ hàng của bạn (' + Cart.getCartCount() + ' sản phẩm)</h1>' +
             '<div class="shop-order-grid"><section class="shop-panel"><h2>Sản phẩm đã chọn</h2>' +
             lines.map(function (line) {
                 const p = line.product;
@@ -43,6 +53,12 @@
             '<div class="shop-error" id="cart-error" hidden></div>';
     }
     app.addEventListener('click', function (e) {
+        if (e.target.closest('a[href="checkout.html"]') && Cart.getCartSnapshot() !== renderedSnapshot) {
+            e.preventDefault();
+            draw();
+            alert('Giỏ hàng đã thay đổi. Vui lòng xem lại trước khi thanh toán.');
+            return;
+        }
         const step = e.target.closest('[data-qty-minus], [data-qty-plus]');
         if (step) {
             const productId = step.dataset.qtyMinus || step.dataset.qtyPlus;
@@ -71,5 +87,9 @@
         const badge = document.getElementById('cart-count');
         if (badge) badge.textContent = Cart.getCartCount();
     });
+    window.addEventListener('storage', draw);
+    window.addEventListener('modelshop:db-updated', draw);
+    window.addEventListener('modelshop:cart-updated', draw);
+    window.addEventListener('focus', draw);
     draw();
 })();

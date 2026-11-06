@@ -36,7 +36,7 @@
     }
 
     function orderCode(id) {
-        return 'DH' + String(id).padStart(4, '0');
+        return Shop.getOrderCode(id);
     }
 
     function showDateTime(value) {
@@ -100,6 +100,23 @@
 
     function getProduct(productId, db = getDB()) {
         return findById(db.products, productId);
+    }
+
+    // Đơn cũ có thể chưa lưu các thành phần tiền; giữ tổng tiền đã chốt.
+    function orderTotals(order, items) {
+        function amount(value, fallback) {
+            if (value === null || value === undefined || value === '') return fallback;
+            const number = Number(value);
+            return Number.isFinite(number) ? number : fallback;
+        }
+        const shipping = amount(order.shipping_fee, 0);
+        const discount = amount(order.discount_amount, 0);
+        const itemSubtotal = items.reduce(function (sum, item) {
+            return sum + amount(item.unit_price, 0) * amount(item.quantity, 0);
+        }, 0);
+        const total = amount(order.total_amount, amount(order.subtotal, itemSubtotal) + shipping - discount);
+        const subtotal = amount(order.subtotal, total - shipping + discount);
+        return { subtotal: subtotal, shipping: shipping, discount: discount, total: total };
     }
 
     function getAddress(order) {
@@ -290,6 +307,7 @@
 
                 const searchableText = [
                     orderCode(order.id),
+                    'DH' + String(order.id).padStart(4, '0'),
                     order.id,
                     order.receiver_name,
                     order.receiver_phone,
@@ -447,6 +465,7 @@
 
         // Lấy danh sách sản phẩm
         const items = getOrderItems(orderId, db);
+        const totals = orderTotals(order, items);
 
         const customerName =
             order.receiver_name ||
@@ -596,6 +615,9 @@
                         <div class="detail-item">
                             ${esc(getAddress(order))}
                         </div>
+                        <div class="detail-item">
+                            <strong>Ghi chú:</strong> ${esc(order.order_note || '—')}
+                        </div>
 
                     </div>
 
@@ -646,9 +668,10 @@
 
                         </div>
 
-                        <div class="detail-total">
-                            Tổng tiền: ${money(order.total_amount)}
-                        </div>
+                        <div class="detail-item">Tạm tính: ${money(totals.subtotal)}</div>
+                        <div class="detail-item">Phí vận chuyển: ${money(totals.shipping)}</div>
+                        <div class="detail-item">Giảm giá: ${money(totals.discount)}</div>
+                        <div class="detail-total">Tổng tiền: ${money(totals.total)}</div>
 
                     </div>
 
@@ -682,6 +705,8 @@
                         <div
                             id="order-message"
                             class="message"
+                            role="status"
+                            aria-live="polite"
                         ></div>
 
                     </div>
@@ -792,10 +817,27 @@
         function showMessage(message, isError) {
             messageBox.className = 'message ' + (isError ? 'error' : 'success');
             messageBox.textContent = message;
+            messageBox.scrollIntoView({ block: 'nearest' });
         }
         if (oldStatus === newStatus) return showMessage('Trạng thái đơn hàng không thay đổi.', true);
-        const result = Shop.changeOrderStatus(orderId, newStatus);
-        if (!result.ok) return showMessage(result.error, true);
+        let result;
+        try {
+            // API dùng chung lưu trạng thái và gọi Shop.createNotification cho khách.
+            result = Shop.changeOrderStatus(orderId, newStatus);
+        } catch (error) {
+            console.error('Không thể cập nhật đơn hàng:', error);
+            // Đọc lại trạng thái nếu lỗi xảy ra sau khi lưu.
+            renderTable();
+            openOrderDetail(orderId);
+            const errorBox = document.querySelector('.order-modal-overlay #order-message');
+            if (errorBox) {
+                errorBox.className = 'message error';
+                errorBox.textContent = 'Có lỗi khi cập nhật đơn hàng. Vui lòng kiểm tra trạng thái hiện tại trước khi thử lại.';
+                errorBox.scrollIntoView({ block: 'nearest' });
+            }
+            return;
+        }
+        if (!result || !result.ok) return showMessage(result && result.error || 'Không thể cập nhật trạng thái đơn hàng.', true);
         renderTable();
         openOrderDetail(orderId);
         const updatedModal = document.querySelector('.order-modal-overlay');
@@ -808,6 +850,25 @@
         }
     }
 
+    window.addEventListener('modelshop:db-updated', function () {
+        renderTable();
+        if (currentOrderId === null) return;
+        const orderId = currentOrderId;
+        if (!findById(getDB().orders, orderId)) {
+            closeOrderDetail();
+            return;
+        }
+        const body = document.querySelector('.order-modal-body');
+        const scrollTop = body ? body.scrollTop : 0;
+        openOrderDetail(orderId);
+        const updatedBody = document.querySelector('.order-modal-body');
+        if (updatedBody) updatedBody.scrollTop = scrollTop;
+    });
+
     renderTable();
+    const linkedOrderId = new URLSearchParams(location.search).get('order');
+    if (linkedOrderId && /^\d+$/.test(linkedOrderId) && findById(getDB().orders, Number(linkedOrderId))) {
+        openOrderDetail(Number(linkedOrderId));
+    }
 
 })();

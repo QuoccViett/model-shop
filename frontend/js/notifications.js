@@ -1,6 +1,7 @@
 (function (global) {
     'use strict';
     const labels = {
+        cart_removed: 'Giỏ hàng',
         order_created: 'Đơn mới',
         payment_success: 'Thanh toán',
         order_confirmed: 'Đã xác nhận',
@@ -46,19 +47,20 @@
                 '<div class="notif-head"><strong>Thông báo</strong><button type="button" id="notif-mark-all">Đánh dấu đã đọc tất cả</button></div>' +
                 '<div class="notif-tabs"><button type="button" class="notif-tab ' + (filter === 'all' ? 'is-active' : '') + '" data-notif-filter="all">Tất cả</button><button type="button" class="notif-tab ' + (filter === 'orders' ? 'is-active' : '') + '" data-notif-filter="orders">Đơn hàng</button></div>' +
                 '<div class="notif-list">' + (list.length ? list.map(function (item) {
-                    const type = ORDER_STATUS.notifications[item.type] ? item.type : Shop.normalizeStatus(item.type);
-                    const meta = ORDER_STATUS.notifications[item.type] || ORDER_STATUS.get(type);
+                    const type = item.order_id ? Shop.normalizeStatus(item.type) : item.type;
+                    const meta = ORDER_STATUS.notifications[type] || (item.order_id ? ORDER_STATUS.get(type) : null);
                     const detail = item.order_id ? '<a class="notif-detail" href="' + root + 'pages/profile.html#orders/' + item.order_id + '" data-notif-id="' + item.id + '" data-order-id="' + item.order_id + '">Xem chi tiết</a>' : '<span class="notif-detail">Đã cập nhật</span>';
                     return '<div class="notif-item ' + (!item.is_read ? 'is-unread' : '') + '" data-notif-id="' + item.id + '"' + (item.order_id ? ' data-order-id="' + item.order_id + '"' : '') + ' tabindex="0"><div><div class="notif-message">' + Shop.escapeHtml(item.message) + '</div><div class="notif-meta"><span>' + (labels[type] || (meta && meta.label) || 'Thông báo') + '</span><time datetime="' + Shop.escapeHtml(item.created_at) + '" title="' + Shop.escapeHtml(notificationDate(item.created_at)) + '">' + relativeTime(item.created_at) + ' - ' + notificationDate(item.created_at) + '</time>' + detail + '</div></div></div>';
                 }).join('') : '<div class="notif-empty">Bạn chưa có thông báo nào</div>') + '</div><button type="button" class="notif-close" id="notif-close">Đóng</button>';
             popup.querySelectorAll('[data-notif-filter]').forEach(function (tab) { tab.addEventListener('click', function (event) { event.preventDefault(); event.stopPropagation(); filter = tab.dataset.notifFilter; render(); popup.hidden = false; }); });
-            popup.querySelector('#notif-mark-all').addEventListener('click', function () { Shop.markAllRead(); render(); refreshBadge(); });
+            popup.querySelector('#notif-mark-all').addEventListener('click', function (event) { event.stopPropagation(); Shop.markAllRead(); render(); refreshBadge(); });
             popup.querySelectorAll('.notif-item[data-notif-id]').forEach(function (item) {
                 item.addEventListener('click', function (event) {
                     event.preventDefault();
+                    event.stopPropagation();
+                    if (item.dataset.orderId) window.open(root + 'pages/profile.html#orders/' + item.dataset.orderId, '_blank', 'noopener');
                     Shop.markRead(item.dataset.notifId);
                     refreshBadge();
-                    if (item.dataset.orderId) location.href = root + 'pages/profile.html#orders/' + item.dataset.orderId;
                 });
                 item.addEventListener('keydown', function (event) {
                     if (event.key === 'Enter' || event.key === ' ') item.click();
@@ -76,7 +78,7 @@
         });
         document.addEventListener('click', function (event) { if (!popup.contains(event.target) && !button.contains(event.target)) close(); });
         document.addEventListener('keydown', function (event) { if (event.key === 'Escape') close(); });
-        global.addEventListener('storage', refreshBadge);
+        global.addEventListener('modelshop:db-updated', function () { refreshBadge(); if (!popup.hidden) render(); });
         global.addEventListener('modelshop:notifications', function () { refreshBadge(); if (!popup.hidden) render(); });
         refreshBadge();
         global.setInterval(function () { refreshBadge(); if (!popup.hidden) render(); }, 7000);

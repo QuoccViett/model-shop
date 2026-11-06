@@ -112,7 +112,6 @@
 //       [3, 'Mô hình xe', 'Xe mô hình đúc hợp kim (diecast)', 20, false],
 //       [4, 'Mô hình quân sự', 'Tàu, máy bay, xe tăng lắp ráp', 22, false],
 //       [5, 'Phụ kiện & dụng cụ', 'Kìm cắt, sơn, keo, hộp và đế trưng bày', 35, false],
-//       [6, 'Hàng ngừng kinh doanh', 'Loại đã ẩn (demo chức năng ẩn loại)', 20, true]
 //     ],
 
 //     // [id, category_id, code, name, image, description, brand, scale, material, size,
@@ -358,15 +357,14 @@
     ],
 
     // [id, name, description, profit_percent, is_hidden]
-    // Thứ tự id 1-6 tương ứng: gundam, one-piece, metal-build, bandai, 30mm-30ms, tools-accessories; 7 = hàng ngừng kinh doanh (ẩn)
+    // Thứ tự id 1-6 tương ứng: gundam, one-piece, metal-build, bandai, 30mm-30ms, tools-accessories
     categories: [
       [1, 'Mô hình Gundam', 'Mô hình lắp ráp Gundam các dòng SD, HG, RG, MG cùng phụ kiện đi kèm', 25, false],
       [2, 'Mô hình One Piece', 'Mô hình lắp ráp tàu, Chopper Robo và figure nhân vật One Piece', 30, false],
       [3, 'Mô hình Metal Build', 'Mô hình Metal Build khung kim loại, ráp sẵn, dành cho người sưu tầm', 20, false],
       [4, 'Mô hình Lắp Ráp Bandai', 'Mô hình lắp ráp chính hãng Bandai: HG, RG, MG, Plannosaurus và các dòng khác', 25, false],
       [5, 'Mô hình 30MM - 30MS', 'Mô hình lắp ráp 30 Minutes Missions, 30 Minutes Sisters, 30MF và Option Parts', 30, false],
-      [6, 'Dụng cụ & Phụ kiện', 'Kìm, nhíp, dũa, nhám, khoan tay, băng keo che sơn và phụ kiện lắp ráp, sơn, sửa mô hình', 35, false],
-      [7, 'Hàng ngừng kinh doanh', 'Loại đã ẩn (demo chức năng ẩn loại)', 20, true]
+      [6, 'Dụng cụ & Phụ kiện', 'Kìm, nhíp, dũa, nhám, khoan tay, băng keo che sơn và phụ kiện lắp ráp, sơn, sửa mô hình', 35, false]
     ],
 
     // [id, category_id, code, name, image, description, brand, scale, material, size,

@@ -31,7 +31,7 @@
             title: 'Phụ kiện & dụng cụ',
             text: 'Kìm cắt, sơn, keo cho người lắp ráp',
             button: 'Xem phụ kiện',
-            link: 'pages/products.html?category=5'
+            link: 'pages/products.html?category=6'
         }
     );
 
@@ -103,4 +103,4 @@
         productSection('Mới nhập kho', Shop.getNewest(4), 'pages/products.html?sort=newest') +
         productSection('Đang giảm giá', Shop.getOnSale(4), 'pages/products.html?sale=1');
 
-})();``
+})();
