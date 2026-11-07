@@ -306,15 +306,26 @@
         modal.classList.add('show');
     };
 
+    // window.resetPasswordModal = function (id) {
+    //     const customer = Shop.getUserById(id);
+    //     if (!customer) return;
+
+    //     const newPass = prompt(`Nhập mật khẩu mới cho tài khoản "${customer.username}" (ít nhất 6 ký tự):`);
+    //     if (newPass !== null && newPass.trim() !== '') {
+    //         const res = Shop.resetCustomerPassword(id, newPass.trim());
+    //         alert(res.message);
+    //     }
+    // };
+
     window.resetPasswordModal = function (id) {
         const customer = Shop.getUserById(id);
         if (!customer) return;
 
-        const newPass = prompt(`Nhập mật khẩu mới cho tài khoản "${customer.username}" (ít nhất 6 ký tự):`);
-        if (newPass !== null && newPass.trim() !== '') {
-            const res = Shop.resetCustomerPassword(id, newPass.trim());
-            alert(res.message);
-        }
+        const confirmed = confirm(`Reset mật khẩu của tài khoản "${customer.username}" về 123456?`);
+        if (!confirmed) return;
+
+        const res = Shop.resetCustomerPassword(id, '123456');
+        alert(res.message);
     };
 
     window.toggleLock = function (id) {
