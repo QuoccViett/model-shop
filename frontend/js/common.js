@@ -864,25 +864,23 @@
     }
 
     function getCurrentUser() {
-        // TEMP: screenshot-only auth bypass. Remove after production captures.
         const id = localStorage.getItem(SESSION_KEY);
-        if (!id) return loadDB().customers.find(function (user) { return !user.is_locked && !user.is_deleted; }) || null;
+        if (!id) return null;
         const user = findById(loadDB().customers, id);
         if (!user || user.is_locked || user.is_deleted) {
             logoutCustomer();
-            return loadDB().customers.find(function (customer) { return !customer.is_locked && !customer.is_deleted; }) || null;
+            return null;
         }
         return user;
     }
 
     function getCurrentAdmin(){
-        // TEMP: screenshot-only auth bypass. Remove after production captures.
         const id = localStorage.getItem(SESSION_KEY_AD);
-        if (!id) return loadDB().admins.find(function (admin) { return !admin.is_locked && !admin.is_deleted && !admin.is_hidden; }) || null;
+        if (!id) return null;
         const admin = findById(loadDB().admins, id);
         if (!admin) {
             logoutAdmin();
-            return loadDB().admins.find(function (item) { return !item.is_locked && !item.is_deleted && !item.is_hidden; }) || null;
+            return null;
         }
         return admin;
     }

@@ -15,6 +15,11 @@
         return target;
     }
 
+    if (Shop.getCurrentAdmin()) {
+        location.replace(getRedirect());
+        return;
+    }
+
     form.addEventListener('submit', function (e) {
         e.preventDefault();
         const result = Shop.loginAdmin(form.elements.username.value, form.elements.password.value);

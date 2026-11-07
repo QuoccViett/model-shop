@@ -3,6 +3,11 @@
 
     const form = document.getElementById('register-form');
     const errorBox = document.getElementById('form-error');
+    if (Shop.getCurrentUser()) {
+        location.replace('../index.html');
+        return;
+    }
+
     form.querySelectorAll('input').forEach(function (input) {
         const error = document.createElement('small');
         error.className = 'auth-error';
