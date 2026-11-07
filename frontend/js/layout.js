@@ -33,7 +33,20 @@
 
     // Render header dùng chung cho phía khách hàng
     function headerHTML() {
-        const menu = MENU.map(function (m) { return menuLink(m.href, m.label, m.key); }).join('');
+        const categories = Shop.getCategories();
+        const categoryId = new URLSearchParams(location.search).get('category');
+        const menu = MENU.map(function (m) {
+            const link = menuLink(m.href, m.label, m.key);
+            if (m.key !== 'products' || !categories.length) return link;
+            const children = categories.map(function (category) {
+                const selected = active === 'products' && String(category.id) === categoryId;
+                return '<a href="' + root + 'pages/products.html?category=' + encodeURIComponent(category.id) + '"' +
+                    (selected ? ' class="active" aria-current="page"' : '') + '>' + Shop.escapeHtml(category.name) + '</a>';
+            }).join('');
+            return '<div class="hdr-menu-group"><div class="hdr-menu-parent">' + link +
+                '<button class="hdr-submenu-toggle" type="button" aria-label="Mở danh mục sản phẩm" aria-expanded="false" aria-controls="header-product-categories">&#9662;</button></div>' +
+                '<div class="hdr-submenu" id="header-product-categories" hidden>' + children + '</div></div>';
+        }).join('');
         return '<header class="header"><div class="container"><a class="logo" href="' + root + 'index.html">ModelShop</a>' +
             '<form class="search-form" id="header-search-form" role="search" action="' + productsUrl('') + '" method="get" autocomplete="off">' +
             '<div class="search-control"><input id="header-search-input" type="search" name="q" placeholder="Tìm mô hình theo tên..." aria-label="Tìm sản phẩm" aria-autocomplete="list" aria-controls="search-suggestions" aria-expanded="false">' +
@@ -154,6 +167,41 @@
             const open = list.classList.toggle('is-open');
             menuToggle.setAttribute('aria-expanded', String(open));
         });
+        const group = headerBox.querySelector('.hdr-menu-group');
+        if (group) {
+            const toggle = group.querySelector('.hdr-submenu-toggle');
+            const submenu = group.querySelector('.hdr-submenu');
+            const setOpen = function (open) {
+                submenu.hidden = !open;
+                toggle.setAttribute('aria-expanded', String(open));
+            };
+            toggle.addEventListener('click', function () { setOpen(submenu.hidden); });
+            group.addEventListener('mouseenter', function () {
+                if (window.matchMedia('(hover: hover) and (min-width: 769px)').matches) setOpen(true);
+            });
+            group.addEventListener('mouseleave', function () {
+                if (!group.contains(document.activeElement)) setOpen(false);
+            });
+            group.addEventListener('focusin', function (event) {
+                if (event.target !== toggle) setOpen(true);
+            });
+            group.addEventListener('focusout', function (event) {
+                if (!group.contains(event.relatedTarget)) setOpen(false);
+            });
+            document.addEventListener('click', function (event) {
+                if (!group.contains(event.target)) setOpen(false);
+            });
+            group.addEventListener('keydown', function (event) {
+                if (event.key === 'Escape') {
+                    setOpen(false);
+                    toggle.focus();
+                    event.stopPropagation();
+                }
+            });
+            if (menuToggle) menuToggle.addEventListener('click', function () {
+                if (menuToggle.getAttribute('aria-expanded') === 'false') setOpen(false);
+            });
+        }
         if (globalThis.Notifications && typeof globalThis.Notifications.init === 'function') globalThis.Notifications.init(root);
     }
     if (footerBox) footerBox.innerHTML = footerHTML();
