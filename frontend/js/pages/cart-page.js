@@ -1,9 +1,5 @@
 (function () {
     'use strict';
-    if (!Shop.getCurrentUser()) {
-        location.replace('login.html?redirect=' + encodeURIComponent(location.pathname + location.search + location.hash));
-        return;
-    }
     const app = document.getElementById('app');
     const esc = Shop.escapeHtml;
     const money = Shop.formatPrice;
