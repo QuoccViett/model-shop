@@ -24,11 +24,6 @@
         return url.origin === location.origin ? url.href : '../index.html';
     }
 
-    if (Shop.getCurrentUser()) {
-        location.replace(getRedirect());
-        return;
-    }
-
     form.addEventListener('submit', function (e) {
         e.preventDefault();
         form.querySelectorAll('input').forEach(function (input) { input.classList.remove('auth-invalid'); input.nextElementSibling.textContent = ''; });
