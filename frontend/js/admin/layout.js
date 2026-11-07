@@ -226,6 +226,10 @@
     // Xử lý thông tin Admin và sự kiện Đăng xuất
     function initAdminAccount() {
         const admin = Shop.getCurrentAdmin();
+        if (!admin) {
+            location.href = root + 'login.html';
+            return;
+        }
         const nameSpan = document.getElementById('admin-name');
         if (admin && nameSpan) {
             nameSpan.innerHTML = 'Xin chào, <strong>' + Shop.escapeHtml(admin.full_name) + '</strong>';
