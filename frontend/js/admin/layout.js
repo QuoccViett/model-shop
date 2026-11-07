@@ -109,13 +109,14 @@
             if (!container) return;
 
             total = Number(total) || 0;
-            if (total === 0) {
+            clampPage(total);
+            container.dataset.total = String(total);
+            container.hidden = total <= pageSize;
+            if (container.hidden) {
                 container.innerHTML = '';
-                container.dataset.total = '0';
                 return;
             }
 
-            clampPage(total);
             const totalPages = totalPagesOf(total);
             const start = (page - 1) * pageSize + 1;
             const end = Math.min(total, page * pageSize);

@@ -813,3 +813,7 @@ td img {
     }
 
 }
+
+.admin-pagination[hidden] {
+    display: none;
+}
