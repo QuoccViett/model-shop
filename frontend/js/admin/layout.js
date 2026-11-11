@@ -52,21 +52,13 @@
             return allPages;
         }
 
-        let start = Math.max(2, current - 1);
-        let end = Math.min(totalPages - 1, current + 1);
-
-        if (current <= 4) {
-            start = 2;
-            end = 5;
-        }
-        if (current >= totalPages - 3) {
-            start = totalPages - 4;
-            end = totalPages - 1;
-        }
-
-        const pages = [1, '...'];
+        const start = Math.max(2, Math.min(current - 1, totalPages - 4));
+        const end = Math.min(totalPages - 1, Math.max(current + 1, 5));
+        const pages = [1];
+        if (start > 2) pages.push('...');
         for (let i = start; i <= end; i++) pages.push(i);
-        pages.push('...', totalPages);
+        if (end < totalPages - 1) pages.push('...');
+        pages.push(totalPages);
         return pages;
     }
 
@@ -107,11 +99,12 @@
 
         function render(total) {
             if (!container) return;
+            const focusedControl = container.contains(document.activeElement) ? document.activeElement : null;
 
             total = Number(total) || 0;
             clampPage(total);
             container.dataset.total = String(total);
-            container.hidden = total <= pageSize;
+            container.hidden = total <= Math.min(pageSize, ...pageSizes);
             if (container.hidden) {
                 container.innerHTML = '';
                 return;
@@ -131,7 +124,7 @@
 
             const pageNumbers = buildPageNumbers(page, totalPages).map(function (item) {
                 if (item === '...') {
-                    return '<span class="admin-pagination-ellipsis">…</span>';
+                    return '<span class="admin-pagination-ellipsis" aria-hidden="true">…</span>';
                 }
                 const isCurrent = item === page;
                 return '<button type="button" class="admin-pagination-btn' + (isCurrent ? ' active' : '') + '" data-page="' + item + '"' +
@@ -140,17 +133,28 @@
 
             container.dataset.total = String(total);
             container.innerHTML =
-                '<span class="admin-pagination-info">Hiển thị <strong>' + start + '–' + end + '</strong> trong <strong>' + total + '</strong> ' + label + '</span>' +
-                '<div class="admin-pagination-controls">' +
-                    '<label class="admin-pagination-size">Số dòng ' +
+                '<div class="admin-pagination-summary">' +
+                    '<span class="admin-pagination-info" aria-live="polite" aria-atomic="true"><strong>' + start + '–' + end + '</strong> trên <strong>' + total + '</strong> ' + label + '</span>' +
+                    '<label class="admin-pagination-size">' +
                         '<select class="admin-page-size" aria-label="Số dòng mỗi trang">' + sizeOptions + '</select>' +
+                        '<span>/ trang</span>' +
                     '</label>' +
-                    '<button type="button" class="admin-pagination-btn" data-page="1" title="Trang đầu" aria-label="Trang đầu"' + (page === 1 ? ' disabled' : '') + '><i class="fa-solid fa-angles-left"></i></button>' +
-                    '<button type="button" class="admin-pagination-btn" data-page="' + (page - 1) + '" title="Trang trước" aria-label="Trang trước"' + (page === 1 ? ' disabled' : '') + '><i class="fa-solid fa-angle-left"></i></button>' +
-                    pageNumbers +
-                    '<button type="button" class="admin-pagination-btn" data-page="' + (page + 1) + '" title="Trang sau" aria-label="Trang sau"' + (page === totalPages ? ' disabled' : '') + '><i class="fa-solid fa-angle-right"></i></button>' +
-                    '<button type="button" class="admin-pagination-btn" data-page="' + totalPages + '" title="Trang cuối" aria-label="Trang cuối"' + (page === totalPages ? ' disabled' : '') + '><i class="fa-solid fa-angles-right"></i></button>' +
-                '</div>';
+                '</div>' +
+                '<nav class="admin-pagination-controls" aria-label="Phân trang ' + label + '">' +
+                    '<button type="button" class="admin-pagination-btn admin-pagination-direction" data-page="' + (page - 1) + '" aria-label="Trang trước"' + (page === 1 ? ' disabled' : '') + '><i class="fa-solid fa-chevron-left" aria-hidden="true"></i><span>Trước</span></button>' +
+                    '<div class="admin-pagination-pages">' + pageNumbers + '</div>' +
+                    '<span class="admin-pagination-position">Trang <strong>' + page + '</strong> / ' + totalPages + '</span>' +
+                    '<button type="button" class="admin-pagination-btn admin-pagination-direction" data-page="' + (page + 1) + '" aria-label="Trang sau"' + (page === totalPages ? ' disabled' : '') + '><span>Sau</span><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></button>' +
+                '</nav>';
+            if (focusedControl) {
+                const replacement = focusedControl.classList.contains('admin-page-size')
+                    ? container.querySelector('.admin-page-size')
+                    : Array.from(container.querySelectorAll('.admin-pagination-btn')).find(function (button) {
+                        return button.getAttribute('aria-label') === focusedControl.getAttribute('aria-label');
+                    });
+                const target = replacement && !replacement.disabled ? replacement : container.querySelector('[aria-current="page"]');
+                target?.focus({ preventScroll: true });
+            }
         }
 
         if (container) {
@@ -193,7 +197,7 @@
     // Tạo HTML cho từng mục trong Sidebar
     function menuLink(item) {
         const isActive = item.key === active ? ' class="active"' : '';
-        return '<li><a href="' + root + item.href + '"' + isActive + '><i class="' + item.icon + '"></i> ' + item.label + '</a></li>';
+        return '<li><a href="' + root + item.href + '" title="' + item.label + '"' + isActive + '><i class="' + item.icon + '" aria-hidden="true"></i> ' + item.label + '</a></li>';
     }
 
     // Render Sidebar
