@@ -33,7 +33,20 @@
 
     // Render header dùng chung cho phía khách hàng
     function headerHTML() {
-        const menu = MENU.map(function (m) { return menuLink(m.href, m.label, m.key); }).join('');
+        const categories = Shop.getCategories();
+        const categoryId = new URLSearchParams(location.search).get('category');
+        const menu = MENU.map(function (m) {
+            const link = menuLink(m.href, m.label, m.key);
+            if (m.key !== 'products' || !categories.length) return link;
+            const children = categories.map(function (category) {
+                const selected = active === 'products' && String(category.id) === categoryId;
+                return '<a href="' + root + 'pages/products.html?category=' + encodeURIComponent(category.id) + '"' +
+                    (selected ? ' class="active" aria-current="page"' : '') + '>' + Shop.escapeHtml(category.name) + '</a>';
+            }).join('');
+            return '<div class="hdr-menu-group"><div class="hdr-menu-parent">' + link +
+                '<button class="hdr-submenu-toggle" type="button" aria-label="Mở danh mục sản phẩm" aria-expanded="false" aria-controls="header-product-categories">&#9662;</button></div>' +
+                '<div class="hdr-submenu" id="header-product-categories" hidden>' + children + '</div></div>';
+        }).join('');
         return '<header class="header"><div class="container"><a class="logo" href="' + root + 'index.html">ModelShop</a>' +
             '<form class="search-form" id="header-search-form" role="search" action="' + productsUrl('') + '" method="get" autocomplete="off">' +
             '<div class="search-control"><input id="header-search-input" type="search" name="q" placeholder="Tìm mô hình theo tên..." aria-label="Tìm sản phẩm" aria-autocomplete="list" aria-controls="search-suggestions" aria-expanded="false">' +
@@ -64,33 +77,73 @@
     }
 
     // Render sản phẩm hoặc từ khóa xu hướng trong dropdown
+
     function renderSuggestions(panel, query, activeIndex) {
         const esc = Shop.escapeHtml;
-        if (query.length < 2) {
-            const trends = ['Gundam', 'Figure', 'Xe mô hình', 'Mô hình quân sự'];
-            panel.innerHTML = '<div class="suggestion-heading">Từ khóa xu hướng</div>' + trends.map(function (term) {
-                return '<a class="suggestion-item trend-item" role="option" aria-selected="false" data-suggestion href="' + productsUrl(term) + '"><span class="suggestion-copy"><strong>' + esc(term) + '</strong><small>Tìm sản phẩm</small></span></a>';
-            }).join('');
-            panel.hidden = false;
-            return;
-        }
-        const suggestions = query.length >= 2
-            ? Shop.queryProducts({ keyword: query }).slice(0, 5).map(function (product) {
-                return '<a class="suggestion-item" role="option" aria-selected="false" data-suggestion href="' + productUrl(product) + '"><img ' + UI.imageAttrs(product.image) + ' alt=""><span class="suggestion-copy"><strong>' + esc(product.name) + '</strong><small>' + esc(Shop.formatPrice(Shop.getSalePrice(product))) + '</small></span></a>';
-            })
-            : Shop.getBestSellers(5).concat(Shop.getNewest(5)).filter(function (p, i, list) { return list.findIndex(function (item) { return item.id === p.id; }) === i; }).slice(0, 5).map(function (product) {
-                return '<a class="suggestion-item" role="option" aria-selected="false" data-suggestion href="' + productUrl(product) + '"><img ' + UI.imageAttrs(product.image) + ' alt=""><span class="suggestion-copy"><strong>' + esc(product.name) + '</strong><small>' + esc(Shop.formatPrice(Shop.getSalePrice(product))) + '</small></span></a>';
+        let suggestions = [];
+        let heading = '';
+
+        if (query.length === 0) {
+            // Không nhập: lấy sản phẩm bán chạy và mới nhập
+            const products = Shop.getBestSellers(3)
+                .concat(Shop.getNewest(5))
+                .filter(function (p, i, list) {
+                    return list.findIndex(function (item) {
+                        return item.id === p.id;
+                    }) === i;
+                })
+                .slice(0, 5);
+
+            heading = 'Sản phẩm nổi bật';
+
+            suggestions = products.map(function (product) {
+                return '<a class="suggestion-item" role="option" aria-selected="false" data-suggestion href="' +
+                    productUrl(product) +
+                    '"><img ' + UI.imageAttrs(product.image) +
+                    ' alt=""><span class="suggestion-copy"><strong>' +
+                    esc(product.name) +
+                    '</strong><small>' +
+                    esc(Shop.formatPrice(Shop.getSalePrice(product))) +
+                    '</small></span></a>';
             });
-        const heading = 'Gợi ý sản phẩm';
+        } else {
+            // Có nhập: tìm sản phẩm theo tên
+            heading = 'Gợi ý sản phẩm';
+
+            suggestions = Shop.queryProducts({ keyword: query })
+                .slice(0, 5)
+                .map(function (product) {
+                    return '<a class="suggestion-item" role="option" aria-selected="false" data-suggestion href="' +
+                        productUrl(product) +
+                        '"><img ' + UI.imageAttrs(product.image) +
+                        ' alt=""><span class="suggestion-copy"><strong>' +
+                        esc(product.name) +
+                        '</strong><small>' +
+                        esc(Shop.formatPrice(Shop.getSalePrice(product))) +
+                        '</small></span></a>';
+                });
+        }
+
         const content = suggestions.length
-            ? '<div class="suggestion-heading">' + heading + '</div>' + suggestions.map(function (html, index) {
-                return activeIndex === index ? html.replace('class="suggestion-item"', 'class="suggestion-item is-active"').replace('aria-selected="false"', 'aria-selected="true"') : html;
+            ? '<div class="suggestion-heading">' + heading + '</div>' +
+            suggestions.map(function (html, index) {
+                return activeIndex === index
+                    ? html.replace('class="suggestion-item"', 'class="suggestion-item is-active"')
+                        .replace('aria-selected="false"', 'aria-selected="true"')
+                    : html;
             }).join('')
             : '<div class="suggestion-empty">Không tìm thấy sản phẩm phù hợp.</div>';
-        const all = query ? '<a class="suggestion-all" data-suggestion href="' + productsUrl(query) + '">Xem tất cả kết quả cho “' + esc(query) + '”</a>' : '';
+
+        const all = query
+            ? '<a class="suggestion-all" data-suggestion href="' +
+            productsUrl(query) +
+            '">Xem tất cả kết quả cho “' + esc(query) + '”</a>'
+            : '';
+
         panel.innerHTML = content + all;
         panel.hidden = false;
     }
+
 
     // Kết nối debounce, phím điều hướng và hành vi đóng dropdown
     function bindHeaderSearch() {
@@ -154,11 +207,46 @@
             const open = list.classList.toggle('is-open');
             menuToggle.setAttribute('aria-expanded', String(open));
         });
+        const group = headerBox.querySelector('.hdr-menu-group');
+        if (group) {
+            const toggle = group.querySelector('.hdr-submenu-toggle');
+            const submenu = group.querySelector('.hdr-submenu');
+            const setOpen = function (open) {
+                submenu.hidden = !open;
+                toggle.setAttribute('aria-expanded', String(open));
+            };
+            toggle.addEventListener('click', function () { setOpen(submenu.hidden); });
+            group.addEventListener('mouseenter', function () {
+                if (window.matchMedia('(hover: hover) and (min-width: 769px)').matches) setOpen(true);
+            });
+            group.addEventListener('mouseleave', function () {
+                if (!group.contains(document.activeElement)) setOpen(false);
+            });
+            group.addEventListener('focusin', function (event) {
+                if (event.target !== toggle) setOpen(true);
+            });
+            group.addEventListener('focusout', function (event) {
+                if (!group.contains(event.relatedTarget)) setOpen(false);
+            });
+            document.addEventListener('click', function (event) {
+                if (!group.contains(event.target)) setOpen(false);
+            });
+            group.addEventListener('keydown', function (event) {
+                if (event.key === 'Escape') {
+                    setOpen(false);
+                    toggle.focus();
+                    event.stopPropagation();
+                }
+            });
+            if (menuToggle) menuToggle.addEventListener('click', function () {
+                if (menuToggle.getAttribute('aria-expanded') === 'false') setOpen(false);
+            });
+        }
         if (globalThis.Notifications && typeof globalThis.Notifications.init === 'function') globalThis.Notifications.init(root);
     }
     if (footerBox) footerBox.innerHTML = footerHTML();
-    
-        function refreshCartCount() {
+
+    function refreshCartCount() {
         const badge = document.getElementById('cart-count');
         if (badge && window.Cart) badge.textContent = String(Cart.getCartCount());
     }
@@ -196,5 +284,5 @@
     });
     window.addEventListener('modelshop:db-updated', refreshCartCount);
     window.addEventListener('modelshop:cart-updated', refreshCartCount);
-refreshCartCount();
+    refreshCartCount();
 })();
