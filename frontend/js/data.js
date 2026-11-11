@@ -1102,6 +1102,7 @@
     GD006: 'Mô Hình Lắp Ráp Gundam Bandai SD Zhang Fei God Gundam Trương Phi 03',
     GD007: 'Mô Hình Lắp Ráp Gundam Bandai SD 002 Guan Yu Yun Chang V Gundam',
     GD008: 'Mô hình lắp ráp Gundam Bandai SD Liu Bei Unicorn Gundam 01',
+    GD009: 'Bandai Mô hình lắp ráp SD UNICORN Banshee Norn Sinanju 013 00 QANT RX-93 Nu Zero EW 00 Gundam',
     GD021: 'Mô Hình Lắp Ráp Hello KITTYRX-78-2 Gundam [SD Ex-standard] Bandai',
     MB001: 'Mô Hình 172 Metal Build ZhuKui - Thiên Sư Chung Quỳ Cangdao',
     MB002: 'Mô Hình Metal Build 1100 Sun Wukong Moshow - Tề Thiên Võ Thánh',
