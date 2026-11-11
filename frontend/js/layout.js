@@ -77,33 +77,73 @@
     }
 
     // Render sản phẩm hoặc từ khóa xu hướng trong dropdown
+
     function renderSuggestions(panel, query, activeIndex) {
         const esc = Shop.escapeHtml;
-        if (query.length < 2) {
-            const trends = ['Gundam', 'Figure', 'Xe mô hình', 'Mô hình quân sự'];
-            panel.innerHTML = '<div class="suggestion-heading">Từ khóa xu hướng</div>' + trends.map(function (term) {
-                return '<a class="suggestion-item trend-item" role="option" aria-selected="false" data-suggestion href="' + productsUrl(term) + '"><span class="suggestion-copy"><strong>' + esc(term) + '</strong><small>Tìm sản phẩm</small></span></a>';
-            }).join('');
-            panel.hidden = false;
-            return;
-        }
-        const suggestions = query.length >= 2
-            ? Shop.queryProducts({ keyword: query }).slice(0, 5).map(function (product) {
-                return '<a class="suggestion-item" role="option" aria-selected="false" data-suggestion href="' + productUrl(product) + '"><img ' + UI.imageAttrs(product.image) + ' alt=""><span class="suggestion-copy"><strong>' + esc(product.name) + '</strong><small>' + esc(Shop.formatPrice(Shop.getSalePrice(product))) + '</small></span></a>';
-            })
-            : Shop.getBestSellers(5).concat(Shop.getNewest(5)).filter(function (p, i, list) { return list.findIndex(function (item) { return item.id === p.id; }) === i; }).slice(0, 5).map(function (product) {
-                return '<a class="suggestion-item" role="option" aria-selected="false" data-suggestion href="' + productUrl(product) + '"><img ' + UI.imageAttrs(product.image) + ' alt=""><span class="suggestion-copy"><strong>' + esc(product.name) + '</strong><small>' + esc(Shop.formatPrice(Shop.getSalePrice(product))) + '</small></span></a>';
+        let suggestions = [];
+        let heading = '';
+
+        if (query.length === 0) {
+            // Không nhập: lấy sản phẩm bán chạy và mới nhập
+            const products = Shop.getBestSellers(3)
+                .concat(Shop.getNewest(5))
+                .filter(function (p, i, list) {
+                    return list.findIndex(function (item) {
+                        return item.id === p.id;
+                    }) === i;
+                })
+                .slice(0, 5);
+
+            heading = 'Sản phẩm nổi bật';
+
+            suggestions = products.map(function (product) {
+                return '<a class="suggestion-item" role="option" aria-selected="false" data-suggestion href="' +
+                    productUrl(product) +
+                    '"><img ' + UI.imageAttrs(product.image) +
+                    ' alt=""><span class="suggestion-copy"><strong>' +
+                    esc(product.name) +
+                    '</strong><small>' +
+                    esc(Shop.formatPrice(Shop.getSalePrice(product))) +
+                    '</small></span></a>';
             });
-        const heading = 'Gợi ý sản phẩm';
+        } else {
+            // Có nhập: tìm sản phẩm theo tên
+            heading = 'Gợi ý sản phẩm';
+
+            suggestions = Shop.queryProducts({ keyword: query })
+                .slice(0, 5)
+                .map(function (product) {
+                    return '<a class="suggestion-item" role="option" aria-selected="false" data-suggestion href="' +
+                        productUrl(product) +
+                        '"><img ' + UI.imageAttrs(product.image) +
+                        ' alt=""><span class="suggestion-copy"><strong>' +
+                        esc(product.name) +
+                        '</strong><small>' +
+                        esc(Shop.formatPrice(Shop.getSalePrice(product))) +
+                        '</small></span></a>';
+                });
+        }
+
         const content = suggestions.length
-            ? '<div class="suggestion-heading">' + heading + '</div>' + suggestions.map(function (html, index) {
-                return activeIndex === index ? html.replace('class="suggestion-item"', 'class="suggestion-item is-active"').replace('aria-selected="false"', 'aria-selected="true"') : html;
+            ? '<div class="suggestion-heading">' + heading + '</div>' +
+            suggestions.map(function (html, index) {
+                return activeIndex === index
+                    ? html.replace('class="suggestion-item"', 'class="suggestion-item is-active"')
+                        .replace('aria-selected="false"', 'aria-selected="true"')
+                    : html;
             }).join('')
             : '<div class="suggestion-empty">Không tìm thấy sản phẩm phù hợp.</div>';
-        const all = query ? '<a class="suggestion-all" data-suggestion href="' + productsUrl(query) + '">Xem tất cả kết quả cho “' + esc(query) + '”</a>' : '';
+
+        const all = query
+            ? '<a class="suggestion-all" data-suggestion href="' +
+            productsUrl(query) +
+            '">Xem tất cả kết quả cho “' + esc(query) + '”</a>'
+            : '';
+
         panel.innerHTML = content + all;
         panel.hidden = false;
     }
+
 
     // Kết nối debounce, phím điều hướng và hành vi đóng dropdown
     function bindHeaderSearch() {
@@ -205,8 +245,8 @@
         if (globalThis.Notifications && typeof globalThis.Notifications.init === 'function') globalThis.Notifications.init(root);
     }
     if (footerBox) footerBox.innerHTML = footerHTML();
-    
-        function refreshCartCount() {
+
+    function refreshCartCount() {
         const badge = document.getElementById('cart-count');
         if (badge && window.Cart) badge.textContent = String(Cart.getCartCount());
     }
@@ -244,5 +284,5 @@
     });
     window.addEventListener('modelshop:db-updated', refreshCartCount);
     window.addEventListener('modelshop:cart-updated', refreshCartCount);
-refreshCartCount();
+    refreshCartCount();
 })();
