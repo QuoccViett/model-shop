@@ -69,6 +69,8 @@
 .overview-notices-counts i { color: #ea580c; }
 .overview-notices-counts strong { margin-left: auto; color: #b54708; }
 .overview-notices-list { padding: 6px 24px 24px; }
+.overview-notices > .admin-pagination { margin: 0; padding: 16px 24px; }
+.overview-contacts > .admin-pagination { margin-top: 16px; }
 .overview-notices-group { scroll-margin-top: 90px; }
 .overview-notices-group h3 {
     display: flex;
@@ -131,6 +133,7 @@
     .overview-notices-heading,
     .overview-notices-counts,
     .overview-notices-list,
+    .overview-notices > .admin-pagination,
     .overview-contacts { padding-left: 16px; padding-right: 16px; }
     .overview-notices-counts { grid-template-columns: 1fr; }
     .overview-notice-item { align-items: flex-start; }

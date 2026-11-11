@@ -35,12 +35,25 @@
         { type: 'contact', label: 'Liên hệ', icon: 'fa-envelope' }
     ];
     let activeNoticeGroup = 'orders';
+    const noticePager = window.AdminPagination.create({
+        container: 'overview-notices-pagination',
+        pageSize: 10,
+        label: 'thông báo',
+        onChange: renderOverviewNotices
+    });
+    const contactPager = window.AdminPagination.create({
+        container: 'contact-messages-pagination',
+        pageSize: 10,
+        label: 'liên hệ',
+        onChange: function () { renderContactMessages(); }
+    });
     function renderOverviewNotices() {
         const list = document.getElementById('overview-notices-list');
         if (!list || !window.AdminNotices) return;
         const admin = Shop.getCurrentAdmin();
         if (!admin || admin.is_locked || admin.is_deleted || admin.is_hidden) {
             list.replaceChildren();
+            noticePager.render(0);
             return;
         }
         const notices = AdminNotices.list();
@@ -60,11 +73,13 @@
         }).join('');
         list.innerHTML = noticeGroups.filter(group => group.type === activeNoticeGroup).map(group => {
             const items = notices.filter(item => item.type === group.type);
+            const paged = noticePager.slice(items);
+            noticePager.render(paged.total);
             if (!items.length) return '<p class="overview-notices-empty">Chưa có thông báo ' + group.label.toLowerCase() + '.</p>';
             return '<section class="overview-notices-group" id="overview-notices-' + group.type + '" aria-label="' + group.label + '">' +
                 '<h3><i class="fa-solid ' + group.icon + '" aria-hidden="true"></i>' + group.label +
                 '<span>' + items.length.toLocaleString('vi-VN') + '</span></h3><div class="overview-notices-items">' +
-                items.map(item => {
+                paged.items.map(item => {
                     const severity = group.type === 'stock' ? (item.meta === 'Hết hàng' ? ' is-out' : ' is-low') : '';
                     const date = AdminNotices.formatDate(item.date);
                     return '<a class="overview-notice-item overview-notice-' + group.type + severity + (item.isRead ? '' : ' is-unread') +
@@ -80,23 +95,34 @@
     document.getElementById('overview-notices-counts')?.addEventListener('click', function (event) {
         const tab = event.target.closest('[data-notice-group]');
         if (!tab) return;
+        if (activeNoticeGroup !== tab.dataset.noticeGroup) noticePager.reset();
         activeNoticeGroup = tab.dataset.noticeGroup;
         renderOverviewNotices();
     });
-    function renderContactMessages() {
+    function renderContactMessages(revealFromHash) {
         const box = document.getElementById('contact-messages');
         if (!box) return;
         const admin = Shop.getCurrentAdmin();
         if (!admin || admin.is_locked || admin.is_deleted || admin.is_hidden) {
             box.replaceChildren();
+            contactPager.render(0);
             return;
         }
         const messages = (Shop.loadDB().contact_messages || []).filter(item => !item.is_deleted && !item.is_hidden).slice().sort(function (a, b) {
             return String(b.created_at).localeCompare(String(a.created_at)) || b.id - a.id;
         });
         const esc = Shop.escapeHtml;
+        let targetId = '';
+        if (revealFromHash === true) {
+            try { targetId = decodeURIComponent(location.hash.slice(1)); }
+            catch (_) { /* Ignore malformed fragments. */ }
+            const index = messages.findIndex(item => 'contact-' + String(item.id) === targetId);
+            if (index !== -1) contactPager.goTo(Math.floor(index / contactPager.getPageSize()) + 1);
+        }
+        const paged = contactPager.slice(messages);
+        contactPager.render(paged.total);
         const openIds = new Set(Array.from(box.querySelectorAll('details[open]'), detail => detail.id));
-        box.innerHTML = messages.length ? messages.map(function (item) {
+        box.innerHTML = messages.length ? paged.items.map(function (item) {
             const id = 'contact-' + String(item.id);
             return '<details id="' + esc(id) + '" data-contact-id="' + esc(String(item.id)) + '"' + (openIds.has(id) ? ' open' : '') + '><summary>' +
                 (item.is_read ? '' : '[Chưa đọc] ') + esc(item.full_name) + ' — ' + esc(item.created_at) + '</summary>' +
@@ -118,17 +144,16 @@
                 }
             });
         });
-        revealContact();
+        if (targetId) {
+            const detail = document.getElementById(targetId);
+            if (detail && detail.closest('#contact-messages')) {
+                detail.open = true;
+                detail.scrollIntoView({ block: 'start' });
+            }
+        }
     }
     function revealContact() {
-        let id;
-        try { id = decodeURIComponent(location.hash.slice(1)); }
-        catch (_) { return; }
-        if (!id.startsWith('contact-')) return;
-        const detail = document.getElementById(id);
-        if (!detail || !detail.closest('#contact-messages')) return;
-        detail.open = true;
-        detail.scrollIntoView({ block: 'start' });
+        renderContactMessages(true);
     }
     document.getElementById('overview-notices-list')?.addEventListener('click', function (event) {
         const row = event.target.closest('[data-notice-id]');
@@ -140,7 +165,7 @@
         location.href = href;
         if (href.includes('#contact-')) setTimeout(revealContact, 0);
     });
-    renderContactMessages();
+    renderContactMessages(true);
     window.addEventListener('hashchange', revealContact);
     window.addEventListener('admin:notices-updated', renderOverviewNotices);
     window.addEventListener('focus', renderContactMessages);
