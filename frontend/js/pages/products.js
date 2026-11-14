@@ -2,7 +2,7 @@
     'use strict';
 
     // Đọc từ khóa và bộ lọc từ URL
-    const params = new URLSearchParams(location.search);
+    const params = new URLSearchParams(App.location.search);
     const keyword = (params.get('q') || '').trim();
     const categoryId = params.get('category') || '';
     const brandParam = params.get('brand') || '';
@@ -33,30 +33,30 @@
         { value: 'name-desc', label: 'Tên Z đến A' }
     ];
 
-    // Tạo nút radio an toàn cho các bộ lọc
+    // Trả về HTML radio từ tên nhóm, giá trị, nhãn và trạng thái chọn đã được escape
     function radio(name, value, label, checked) {
         return '<label><input type="radio" name="' + esc(name) + '" value="' + esc(value) + '"' + (checked ? ' checked' : '') + '> ' + esc(label) + '</label>';
     }
 
-    // Tạo URL danh sách và giữ các điều kiện hiện tại
+    // Nhận URLSearchParams đã cập nhật và trả về URL nội bộ để router hiển thị danh sách
     function productsUrl(nextParams) {
         const query = nextParams.toString();
         return 'products.html' + (query ? '?' + query : '');
     }
 
-    // Tìm tên hãng chính tắc từ giá trị trên URL
+    // Tìm tên hãng chính tắc trong brands, giữ tham số gốc nếu không tìm thấy
     function getSelectedBrand(brands) {
         return brands.find(function (item) { return item.toLocaleLowerCase() === brandParam.toLocaleLowerCase(); }) || brandParam;
     }
 
-    // Giữ giá trị 0 khác với trường bỏ trống.
+    // Đọc ô giá thành số hoặc null khi bỏ trống, giữ giá trị 0 để lọc miễn phí chính xác
     function readCustomPrice(input) {
         if (input.value.trim() === '') return null;
         const value = Number(input.value);
         return value;
     }
 
-    // Lấy khoảng giá tùy chỉnh hoặc khoảng giá radio
+    // Trả về min, max và cờ invalid, ưu tiên ô giá tùy chỉnh trước radio khoảng giá
     function getPriceFilter() {
         const min = readCustomPrice(minInput);
         const max = readCustomPrice(maxInput);
@@ -67,7 +67,7 @@
         return { min: selected ? selected.min : null, max: selected ? selected.max : null, invalid: false };
     }
 
-    // Lọc sản phẩm đồng thời theo từ khóa, giá, danh mục, hãng và khuyến mãi
+    // Nhận bộ điều kiện filters và trả về danh sách đã lọc, điều kiện giá sai trả về mảng rỗng
     function filterProducts(filters) {
         if (filters.invalid) return [];
         return Shop.queryProducts({
@@ -81,13 +81,13 @@
         });
     }
 
-    // Hiển thị hoặc xóa thông báo khoảng giá không hợp lệ
+    // Hiển thị message cho khoảng giá sai, chuỗi rỗng sẽ ẩn thông báo
     function showPriceError(message) {
         priceError.textContent = message || '';
         priceError.hidden = !message;
     }
 
-    // Đồng bộ giá trị từ URL vào các trường lọc
+    // Khôi phục ô giá từ URL và báo lỗi nếu giá tối thiểu lớn hơn tối đa
     function restorePriceInputs() {
         minInput.value = minParam === null ? '' : minParam;
         maxInput.value = maxParam === null ? '' : maxParam;
@@ -104,7 +104,7 @@
     }
 
     const categories = Shop.getCategories();
-    // Lấy hãng từ kết quả tìm kiếm hoặc toàn bộ dữ liệu
+    // Trả về danh sách hãng duy nhất theo từ khóa hiện tại hoặc toàn bộ hãng khi không tìm kiếm
     function getBrandsForSearch() {
         if (!keyword) return Shop.getBrands();
         const matchingProducts = Shop.queryProducts({ keyword: keyword });
@@ -125,7 +125,7 @@
     document.getElementById('filter-sale').checked = onSale;
     restorePriceInputs();
 
-    // Render tag hãng và làm nổi bật hãng đang chọn
+    // Render nút hãng bằng innerHTML và đồng bộ trạng thái chọn với tham số brand
     function renderBrandFilters() {
         const options = [{ name: 'Tất cả', value: '' }].concat(brands.map(function (item) { return { name: item, value: item }; }));
         document.getElementById('brand-filter-list').innerHTML = options.map(function (item) {
@@ -137,12 +137,12 @@
     }
     renderBrandFilters();
 
-    // Lưu hãng đã chọn mà vẫn giữ các điều kiện lọc khác
+    // Nhận value của hãng, giữ bộ lọc khác và về trang đầu thông qua App.location của router
     function selectBrand(value) {
-        const next = new URLSearchParams(location.search);
+        const next = new URLSearchParams(App.location.search);
         if (value) next.set('brand', value); else next.delete('brand');
         next.delete('page');
-        location.href = productsUrl(next);
+        App.location.href = productsUrl(next);
     }
 
     // Bắt sự kiện chọn hãng từ danh sách tag
@@ -151,7 +151,7 @@
         if (button) selectBrand(button.dataset.brand);
     });
 
-    // Cập nhật URL từ các điều kiện chọn hiện tại
+    // Kiểm tra khoảng giá rồi dựng URL bộ lọc từ form, router cập nhật History và render màn hình
     function applyFilters() {
         const priceFilter = getPriceFilter();
         if (priceFilter.invalid) {
@@ -174,10 +174,10 @@
                 if (selectedRadio && selectedRadio.value) next.set('price', selectedRadio.value);
             }
         }
-        location.href = productsUrl(next);
+        App.location.href = productsUrl(next);
     }
 
-    // Lưu bộ lọc khi người dùng đổi lựa chọn sidebar
+    // Listener thuộc scope màn hình, đổi radio sẽ xóa giá tùy chỉnh trước khi điều hướng
     form.addEventListener('change', function (event) {
         if (event.target === minInput || event.target === maxInput) return;
         if (event.target.name === 'price') {
@@ -222,25 +222,20 @@
     document.getElementById('list-count').textContent = 'Tìm thấy ' + page.total + ' sản phẩm';
 
     // Render breadcrumb theo danh mục đang chọn
-    document.getElementById('breadcrumb').innerHTML = '<a href="../index.html">Trang chủ</a> / ' +
-        (category ? '<a href="products.html">Sản phẩm</a> / ' + esc(category.name) : 'Sản phẩm');
+    document.getElementById('breadcrumb').innerHTML = '<a data-route="../index.html">Trang chủ</a> / ' +
+        (category ? '<a data-route="products.html">Sản phẩm</a> / ' + esc(category.name) : 'Sản phẩm');
 
-    // Render card skeleton trước khi hiển thị danh sách sản phẩm
+    // Dữ liệu đã có trong bộ nhớ nên render ngay, tránh chờ timer và thay DOM hai lần
     const productGrid = document.getElementById('product-grid');
     productGrid.innerHTML = page.items.length
-        ? UI.productSkeletons(page.items.length)
+        ? page.items.map(function (product) {
+            return UI.productCard(product, { hideQuantity: true });
+        }).join('')
         : '<div class="empty-box">Không có sản phẩm nào phù hợp.</div>';
-    if (page.items.length) {
-        setTimeout(function () {
-            productGrid.innerHTML = page.items.map(function (product) {
-                return UI.productCard(product, { hideQuantity: true });
-            }).join('');
-        }, 400);
-    }
 
-    // Tạo URL phân trang và giữ lại toàn bộ bộ lọc
+    // Nhận số trang number và trả về URL phân trang giữ nguyên các điều kiện lọc
     function pageUrl(number) {
-        const next = new URLSearchParams(location.search);
+        const next = new URLSearchParams(App.location.search);
         if (number > 1) next.set('page', number); else next.delete('page');
         return productsUrl(next);
     }

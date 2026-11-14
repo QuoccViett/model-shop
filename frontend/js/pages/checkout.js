@@ -2,7 +2,7 @@
     'use strict';
     const user = Shop.getCurrentUser();
     if (!user) {
-        location.replace('login.html?redirect=checkout.html');
+        App.location.replace('login.html?redirect=checkout.html');
         return;
     }
     const lines = Cart.getCartDetailed();
@@ -14,7 +14,7 @@
     const shippingFee = subtotal >= 1000000 ? 0 : 30000;
     if (!lines.length) {
         app.innerHTML = '<div class="shop-empty"><h1>Giỏ hàng đang trống</h1><p>Không có sản phẩm để thanh toán.</p>' +
-            '<a class="btn" href="products.html">Chọn sản phẩm</a></div>';
+            '<a class="btn" data-route="products.html">Chọn sản phẩm</a></div>';
         return;
     }
 
@@ -31,7 +31,7 @@
         field('district', 'Quận / Huyện', '', 'Tên quận hoặc huyện') +
         field('city', 'Tỉnh / Thành phố', '', 'Ví dụ: TP. Hồ Chí Minh', true);
 
-    app.innerHTML = '<div class="breadcrumb"><a href="../index.html">Trang chủ</a> / <a href="cart.html">Giỏ hàng</a> / Thanh toán</div>' +
+    app.innerHTML = '<div class="breadcrumb"><a data-route="../index.html">Trang chủ</a> / <a data-route="cart.html">Giỏ hàng</a> / Thanh toán</div>' +
         '<h1>Thông tin thanh toán</h1><div class="shop-order-grid"><div>' +
         '<section class="shop-panel"><h2>Địa chỉ giao hàng</h2>' +
         (hasSaved ? '<label class="shop-choice"><input type="radio" name="address-source" value="saved" checked>' +
@@ -67,8 +67,8 @@
         '<div class="checkout-result-actions"><button type="button" data-payment-result="success">Thanh toán thành công</button>' +
         '<button type="button" data-payment-result="failed">Thanh toán thất bại</button>' +
         '<button type="button" data-payment-result="cancelled">Hủy thanh toán</button></div></div>' +
-        '<p class="checkout-terms">Bằng việc đặt hàng, bạn đồng ý với <a href="#">Điều khoản dịch vụ của ModelShop</a>.</p>' +
-        '<a href="cart.html" class="shop-outline-link">Quay lại giỏ hàng</a></aside></div>';
+        '<p class="checkout-terms">Bằng việc đặt hàng, bạn đồng ý với <a data-route="#">Điều khoản dịch vụ của ModelShop</a>.</p>' +
+        '<a data-route="cart.html" class="shop-outline-link">Quay lại giỏ hàng</a></aside></div>';
 
     const newAddress = document.getElementById('new-address');
     const onlineInfo = document.getElementById('online-payment-info');
@@ -128,7 +128,7 @@
     app.addEventListener('change', function (event) {
         if (pending && event.target.matches('input[name="payment-channel"]')) resetPending();
     });
-    window.addEventListener('pageshow', function (event) { if (event.persisted) location.reload(); });
+    window.addEventListener('pageshow', function (event) { if (event.persisted) App.location.reload(); });
 
     function completeOrder(selection) {
         if (submitting) return;
@@ -153,7 +153,7 @@
                 showError(result.error);
                 return;
             }
-            location.href = 'profile.html#orders/' + result.order_id;
+            App.location.href = 'profile.html#orders/' + result.order_id;
         } catch (error) {
             console.error('Checkout failed:', error);
             resetPending();

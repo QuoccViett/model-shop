@@ -26,13 +26,13 @@
 
         return '' +
             '<article class="product-card">' +
-                '<a class="pc-img" href="' + url + '">' +
+                '<a class="pc-img" data-route="' + url + '">' +
                     '<img ' + imageAttrs(p.image) + ' alt="' + Shop.escapeHtml(p.name) + '" loading="lazy">' +
                         (hasSale ? '<span class="pc-badge">-' + p.sale_percent + '%</span>' : '') +
                 '</a>' +
                 '<div class="pc-body">' +
                     '<div class="pc-brand">' + Shop.escapeHtml(p.brand || '') + '</div>' +
-                    '<a class="pc-name" href="' + url + '">' + Shop.escapeHtml(p.name) + '</a>' +
+                    '<a class="pc-name" data-route="' + url + '">' + Shop.escapeHtml(p.name) + '</a>' +
                     '<div class="pc-price">' +
                         '<span class="pc-now">' + Shop.formatPrice(salePrice) + '</span>' +
                             (hasSale ? '<del class="pc-old">' + Shop.formatPrice(price) + '</del>' : '') +
@@ -68,7 +68,7 @@
     function pagination(page, totalPages, hrefOf){
         if (totalPages <= 1) return '';
         function link(n, label) {
-            return '<a href="' + Shop.escapeHtml(hrefOf(n)) + '">' + label + '</a>';
+            return '<a data-route="' + Shop.escapeHtml(hrefOf(n)) + '">' + label + '</a>';
         }
 
         const items = [];

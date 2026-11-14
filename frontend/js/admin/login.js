@@ -3,7 +3,7 @@
 
     const form = document.getElementById('admin-login-form');
     const errorBox = document.getElementById('form-error');
-    const params = new URLSearchParams(location.search);
+    const params = new URLSearchParams(App.location.search);
 
     // if (params.get('registered')) {
     //     document.getElementById('form-success').hidden = false;
@@ -16,7 +16,7 @@
     }
 
     if (Shop.getCurrentAdmin()) {
-        location.replace(getRedirect());
+        App.location.replace(getRedirect());
         return;
     }
 
@@ -31,6 +31,6 @@
             return;
         }
 
-        location.href = getRedirect();
+        App.location.href = getRedirect();
     });
 })();
