@@ -59,7 +59,7 @@
     }
 ];
     const esc = Shop.escapeHtml;
-    const params = new URLSearchParams(location.search);
+    const params = new URLSearchParams(App.location.search);
     const pageSize = 4;
     const pageCount = Math.ceil(articles.length / pageSize);
     const requestedPage = Number(params.get('page'));
@@ -70,7 +70,7 @@
     function meta(article) { return '<p class="news-item__meta">Ngày đăng: ' + article.day + '/' + article.month + '</p>'; }
     if (params.has('id')) {
         const article = articles.find(function (item) { return String(item.id) === params.get('id'); });
-        const back = '<p><a href="news.html?page=' + page + '">← Trở về tin tức</a></p>';
+        const back = '<p><a data-route="news.html?page=' + page + '">← Trở về tin tức</a></p>';
         content.innerHTML = article ? '<article><h2>' + esc(article.title) + '</h2>' + meta(article) +
             '<p style="white-space:pre-line;line-height:1.8">' + esc(article.content) + '</p>' + back + '</article>' : '<p>Không tìm thấy bài viết.</p>' + back;
         if (article) document.title = article.title + ' - ModelShop';
@@ -79,13 +79,13 @@
     }
     content.innerHTML = articles.slice((page - 1) * pageSize, page * pageSize).map(function (article) {
         const url = articleUrl(article);
-        return '<article class="news-item"><a class="news-item__date" href="' + url + '" aria-label="' + esc(article.title) + '">' +
+        return '<article class="news-item"><a class="news-item__date" data-route="' + url + '" aria-label="' + esc(article.title) + '">' +
             '<span class="news-item__day">' + article.day + '</span><span class="news-item__month">' + article.month + '</span></a>' +
-            '<div class="news-item__body"><h3 class="news-item__title"><a href="' + url + '">' + esc(article.title) + '</a></h3>' +
+            '<div class="news-item__body"><h3 class="news-item__title"><a data-route="' + url + '">' + esc(article.title) + '</a></h3>' +
             meta(article) + '<p class="news-item__excerpt">' + esc(article.content) + '</p></div></article>';
     }).join('');
     function pageLink(number, label) {
-        return '<a href="news.html?page=' + number + '"' + (number === page ? ' class="is-active" aria-current="page"' : '') +
+        return '<a data-route="news.html?page=' + number + '"' + (number === page ? ' class="is-active" aria-current="page"' : '') +
             ' aria-label="Trang ' + number + '">' + label + '</a>';
     }
     let links = page > 1 ? pageLink(page - 1, '«') : '';

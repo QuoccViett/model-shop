@@ -4,7 +4,7 @@
     const form = document.getElementById('register-form');
     const errorBox = document.getElementById('form-error');
     if (Shop.getCurrentUser()) {
-        location.replace('../index.html');
+        App.location.replace('../index.html');
         return;
     }
 
@@ -39,7 +39,7 @@
             errorBox.hidden = false;
             return;
         }
-        const redirect = new URLSearchParams(location.search).get('redirect');
-        location.href = redirect && !/^([a-z][a-z0-9+.-]*:|\/\/)/i.test(redirect) ? redirect : '../index.html';
+        const redirect = new URLSearchParams(App.location.search).get('redirect');
+        App.location.href = redirect && !/^([a-z][a-z0-9+.-]*:|\/\/)/i.test(redirect) ? redirect : '../index.html';
     });
 })();

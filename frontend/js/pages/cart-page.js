@@ -1,7 +1,7 @@
 (function () {
     'use strict';
     if (!Shop.getCurrentUser()) {
-        location.replace('login.html?redirect=' + encodeURIComponent(location.pathname + location.search + location.hash));
+        App.location.replace('login.html?redirect=' + encodeURIComponent(App.location.pathname + App.location.search + App.location.hash));
         return;
     }
     const app = document.getElementById('app');
@@ -20,20 +20,20 @@
             return '<div>' + esc(item.name) + ': Sản phẩm đã ngừng kinh doanh và tự động xóa khỏi giỏ hàng.</div>';
         }).join('') + '</div>' : '';
         if (!lines.length) {
-            app.innerHTML = '<div class="breadcrumb"><a href="../index.html">Trang chủ</a> / Giỏ hàng</div>' +
+            app.innerHTML = '<div class="breadcrumb"><a data-route="../index.html">Trang chủ</a> / Giỏ hàng</div>' +
                 '<div class="shop-empty"><h1>Giỏ hàng đang trống</h1><p>Hãy chọn sản phẩm mô hình bạn yêu thích.</p>' +
-                '<a class="btn" href="products.html">Tiếp tục mua sắm</a></div>';
+                '<a class="btn" data-route="products.html">Tiếp tục mua sắm</a></div>';
             app.insertAdjacentHTML('afterbegin', notice);
             return;
         }
-        app.innerHTML = '<div class="breadcrumb"><a href="../index.html">Trang chủ</a> / Giỏ hàng</div>' +
+        app.innerHTML = '<div class="breadcrumb"><a data-route="../index.html">Trang chủ</a> / Giỏ hàng</div>' +
             notice + '<h1>Giỏ hàng của bạn (' + Cart.getCartCount() + ' sản phẩm)</h1>' +
             '<div class="shop-order-grid"><section class="shop-panel"><h2>Sản phẩm đã chọn</h2>' +
             lines.map(function (line) {
                 const p = line.product;
                 return '<div class="shop-cart-item">' +
-                    '<a href="product.html?id=' + p.id + '"><img class="shop-cart-thumb" ' + UI.imageAttrs(p.image) + ' alt="' + esc(p.name) + '"></a>' +
-                    '<div><a class="shop-cart-title" href="product.html?id=' + p.id + '">' + esc(p.name) + '</a>' +
+                    '<a data-route="product.html?id=' + p.id + '"><img class="shop-cart-thumb" ' + UI.imageAttrs(p.image) + ' alt="' + esc(p.name) + '"></a>' +
+                    '<div><a class="shop-cart-title" data-route="product.html?id=' + p.id + '">' + esc(p.name) + '</a>' +
                     '<div class="shop-muted">Đơn giá: ' + money(line.unit_price) + '</div>' +
                     '<div class="shop-muted">Tồn kho: ' + line.stock + '</div>' +
                     (line.quantity > line.stock ? '<div class="shop-error">Số lượng vượt tồn kho.</div>' : '') + '</div>' +
@@ -47,13 +47,13 @@
             '<aside class="shop-panel"><h2>Tóm tắt giỏ hàng</h2>' +
             '<div class="shop-summary-line"><span>Số lượng</span><strong>' + Cart.getCartCount() + '</strong></div>' +
             '<div class="shop-summary-line shop-summary-total"><span>Tổng cộng</span><strong>' + money(Cart.getCartTotal()) + '</strong></div>' +
-            '<a href="checkout.html" class="btn shop-block-button">Tiến hành thanh toán</a>' +
-            '<a class="shop-outline-link" href="products.html">Tiếp tục mua sắm</a></aside></div>' +
+            '<a data-route="checkout.html" class="btn shop-block-button">Tiến hành thanh toán</a>' +
+            '<a class="shop-outline-link" data-route="products.html">Tiếp tục mua sắm</a></aside></div>' +
             '<p class="shop-muted">Giá được tính lại theo giá bán hiện tại khi đặt hàng.</p>' +
             '<div class="shop-error" id="cart-error" hidden></div>';
     }
     app.addEventListener('click', function (e) {
-        if (e.target.closest('a[href="checkout.html"]') && Cart.getCartSnapshot() !== renderedSnapshot) {
+        if (e.target.closest('a[data-route="checkout.html"]') && Cart.getCartSnapshot() !== renderedSnapshot) {
             e.preventDefault();
             draw();
             alert('Giỏ hàng đã thay đổi. Vui lòng xem lại trước khi thanh toán.');

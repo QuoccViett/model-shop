@@ -3,9 +3,9 @@
 
     const form = document.getElementById('login-form');
     const errorBox = document.getElementById('form-error');
-    const params = new URLSearchParams(location.search);
+    const params = new URLSearchParams(App.location.search);
     const registerLink = document.getElementById('register-link');
-    if (params.has('redirect')) registerLink.href += '?redirect=' + encodeURIComponent(params.get('redirect'));
+    if (params.has('redirect')) registerLink.dataset.route += '?redirect=' + encodeURIComponent(params.get('redirect'));
 
     if (params.get('registered')) {
         document.getElementById('form-success').hidden = false;
@@ -20,12 +20,12 @@
     function getRedirect() {
         const target = params.get('redirect') || '';
         if (!target || /^[a-z][a-z0-9+.-]*:|^\/\//i.test(target)) return '../index.html';
-        const url = new URL(target, location.href);
-        return url.origin === location.origin ? url.href : '../index.html';
+        const url = new URL(target, App.location.href);
+        return url.origin === App.location.origin ? url.href : '../index.html';
     }
 
     if (Shop.getCurrentUser()) {
-        location.replace(getRedirect());
+        App.location.replace(getRedirect());
         return;
     }
 
@@ -50,6 +50,6 @@
             return;
         }
 
-        location.href = getRedirect();
+        App.location.href = getRedirect();
     });
 })();

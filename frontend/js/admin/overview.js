@@ -83,7 +83,7 @@
                     const severity = group.type === 'stock' ? (item.meta === 'Hết hàng' ? ' is-out' : ' is-low') : '';
                     const date = AdminNotices.formatDate(item.date);
                     return '<a class="overview-notice-item overview-notice-' + group.type + severity + (item.isRead ? '' : ' is-unread') +
-                        '" href="' + esc(item.href) + '" data-notice-id="' + esc(item.id) + '">' +
+                        '" data-route="' + esc(item.href) + '" data-notice-id="' + esc(item.id) + '">' +
                         '<span class="overview-notice-icon"><i class="fa-solid ' + group.icon + '" aria-hidden="true"></i></span>' +
                         '<span class="overview-notice-body"><strong>' + esc(item.title) + '</strong><span class="overview-notice-detail">' + esc(item.detail) +
                         '</span><span class="overview-notice-meta"><span class="overview-notice-pill">' + esc(item.meta) + '</span>' +
@@ -114,7 +114,7 @@
         const esc = Shop.escapeHtml;
         let targetId = '';
         if (revealFromHash === true) {
-            try { targetId = decodeURIComponent(location.hash.slice(1)); }
+            try { targetId = decodeURIComponent(App.location.hash.slice(1)); }
             catch (_) { /* Ignore malformed fragments. */ }
             const index = messages.findIndex(item => 'contact-' + String(item.id) === targetId);
             if (index !== -1) contactPager.goTo(Math.floor(index / contactPager.getPageSize()) + 1);
@@ -160,9 +160,9 @@
         if (!row) return;
         if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
         event.preventDefault();
-        const href = row.href;
+        const href = row.dataset.route;
         AdminNotices.markRead([row.dataset.noticeId]);
-        location.href = href;
+        App.location.href = href;
         if (href.includes('#contact-')) setTimeout(revealContact, 0);
     });
     renderContactMessages(true);
