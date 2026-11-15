@@ -671,6 +671,7 @@ td img {
     align-items: center;
     gap: 8px;
     margin-left: auto;
+    flex-wrap: wrap;
 }
 
 .admin-pagination-pages {

@@ -128,7 +128,7 @@
                 }
                 const isCurrent = item === page;
                 return '<button type="button" class="admin-pagination-btn' + (isCurrent ? ' active' : '') + '" data-page="' + item + '"' +
-                    (isCurrent ? ' aria-current="page"' : '') + ' aria-label="Trang ' + item + '">' + item + '</button>';
+                    (isCurrent ? ' aria-current="page"' : '') + ' title="Trang ' + item + '">' + item + '</button>';
             }).join('');
 
             container.dataset.total = String(total);
@@ -141,10 +141,12 @@
                     '</label>' +
                 '</div>' +
                 '<nav class="admin-pagination-controls" aria-label="Phân trang ' + label + '">' +
-                    '<button type="button" class="admin-pagination-btn admin-pagination-direction" data-page="' + (page - 1) + '" aria-label="Trang trước"' + (page === 1 ? ' disabled' : '') + '><i class="fa-solid fa-chevron-left" aria-hidden="true"></i><span>Trước</span></button>' +
+                    '<button type="button" class="admin-pagination-btn admin-pagination-direction" data-page="1" title="Trang đầu"' + (page === 1 ? ' disabled' : '') + '><i class="fa-solid fa-angles-left" aria-hidden="true"></i><span></span></button>' +
+                    '<button type="button" class="admin-pagination-btn admin-pagination-direction" data-page="' + (page - 1) + '" title="Trang trước"' + (page === 1 ? ' disabled' : '') + '><i class="fa-solid fa-chevron-left" aria-hidden="true"></i><span></span></button>' +
                     '<div class="admin-pagination-pages">' + pageNumbers + '</div>' +
                     '<span class="admin-pagination-position">Trang <strong>' + page + '</strong> / ' + totalPages + '</span>' +
-                    '<button type="button" class="admin-pagination-btn admin-pagination-direction" data-page="' + (page + 1) + '" aria-label="Trang sau"' + (page === totalPages ? ' disabled' : '') + '><span>Sau</span><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></button>' +
+                    '<button type="button" class="admin-pagination-btn admin-pagination-direction" data-page="' + (page + 1) + '" title="Trang sau"' + (page === totalPages ? ' disabled' : '') + '><span></span><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></button>' +
+                    '<button type="button" class="admin-pagination-btn admin-pagination-direction" data-page="' + totalPages + '" title="Trang cuối"' + (page === totalPages ? ' disabled' : '') + '><span></span><i class="fa-solid fa-angles-right" aria-hidden="true"></i></button>' +
                 '</nav>';
             if (focusedControl) {
                 const replacement = focusedControl.classList.contains('admin-page-size')
