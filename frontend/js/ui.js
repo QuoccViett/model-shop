@@ -116,7 +116,7 @@
             if (n === page) {
                 return '<span class="pagination-page is-current" aria-current="page">' + n + '</span>';
             }
-            return '<a class="pagination-page" data-route="' + Shop.escapeHtml(hrefOf(n)) + '" aria-label="Trang ' + n + '">' + n + '</a>';
+            return '<a class="pagination-page" data-route="' + Shop.escapeHtml(hrefOf(n)) + '" title="Trang ' + n + '">' + n + '</a>';
         }).join('');
 
         return '<nav class="pagination" aria-label="Phân trang sản phẩm">' +
