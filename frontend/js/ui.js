@@ -65,26 +65,67 @@
         return Array.from({ length: count }, productCardSkeleton).join('');
     }
 
-    function pagination(page, totalPages, hrefOf){
+    // Render phân trang: nút trang trước/sau và dải số trang quanh trang hiện tại
+    function pagination(page, totalPages, hrefOf) {
+        totalPages = Math.max(1, Number(totalPages) || 1);
+        page = Math.min(Math.max(1, Number(page) || 1), totalPages);
         if (totalPages <= 1) return '';
-        function link(n, label) {
-            return '<a data-route="' + Shop.escapeHtml(hrefOf(n)) + '">' + label + '</a>';
+
+        const WINDOW = 2; // số trang hiển thị mỗi bên trang hiện tại
+        const start = Math.max(1, page - WINDOW);
+        const end = Math.min(totalPages, page + WINDOW);
+        const pages = [];
+
+        if (start > 1) {
+            pages.push(1);
+            if (start > 2) pages.push('...');
+        }
+        for (let n = start; n <= end; n++) pages.push(n);
+        if (end < totalPages) {
+            if (end < totalPages - 1) pages.push('...');
+            pages.push(totalPages);
         }
 
-        const items = [];
-        items.push(page > 1 ? link(page - 1, '&laquo;') : '<span class="disabled">&laquo;</span>');
+        function link(n, text, ariaLabel, className, rel) {
+            return '<a class="pagination-btn ' + className + '" data-route="' + Shop.escapeHtml(hrefOf(n)) + '"' +
+                (rel ? ' rel="' + rel + '"' : '') + ' title="' + ariaLabel + '">' + text + '</a>';
+        }
+        function disabled(text, ariaLabel, className) {
+            return '<span class="pagination-btn ' + className + ' is-disabled" title="' + ariaLabel + '" aria-disabled="true">' + text + '</span>';
+        }
 
+        const first = page > 1
+            ? link(1, '&laquo;', 'Trang đầu', 'pagination-first', 'first')
+            : disabled('&laquo;', 'Trang đầu', 'pagination-first');
+        const prev = page > 1
+            ? link(page - 1, '&lsaquo;', 'Trang trước', 'pagination-prev', 'prev')
+            : disabled('&lsaquo;', 'Trang trước', 'pagination-prev');
 
-        let last = 0;
-        for (let n = 1; n <= totalPages; n++) {
-            if (n === 1 || n === totalPages || Math.abs(n-page) < 1) {
-                if (n - last > 1) items.push('<span class="disabled">&hellip;</span>');
-                items.push(n === page ? '<span class="current">' + n + '</span>' : link(n, n));
-                last = n;
+        const next = page < totalPages
+            ? link(page + 1, '&rsaquo;', 'Trang sau', 'pagination-next', 'next')
+            : disabled('&rsaquo;', 'Trang sau', 'pagination-next');
+
+        const last = page < totalPages
+            ? link(totalPages, '&raquo;', 'Trang cuối', 'pagination-last', 'last')
+            : disabled('&raquo;', 'Trang cuối', 'pagination-last');
+
+        const list = pages.map(function (n) {
+            if (n === '...') {
+                return '<span class="pagination-ellipsis" aria-hidden="true">&hellip;</span>';
             }
-        }
-        items.push(page < totalPages ? link(page + 1, '&raquo;') : '<span class="disabled">&raquo;</span>');
-        return '<nav class="pagination">' + items.join('') + '</nav>';
+            if (n === page) {
+                return '<span class="pagination-page is-current" aria-current="page">' + n + '</span>';
+            }
+            return '<a class="pagination-page" data-route="' + Shop.escapeHtml(hrefOf(n)) + '" aria-label="Trang ' + n + '">' + n + '</a>';
+        }).join('');
+
+        return '<nav class="pagination" aria-label="Phân trang sản phẩm">' +
+            first +
+            prev +
+            '<div class="pagination-pages">' + list + '</div>' +
+            next +
+            last +
+            '</nav>';
     }
     
       global.UI = {
