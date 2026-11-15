@@ -2,7 +2,7 @@
     'use strict';
 
     const root = document.body.dataset.root || '';
-    const file = location.pathname.split('/').pop();
+    const file = App.location.pathname.split('/').pop();
     function guard() {
         const admin = Shop.getCurrentAdmin();
         window.AdminAuthenticated = Boolean(admin && !admin.is_locked && !admin.is_deleted && !admin.is_hidden);
@@ -10,7 +10,7 @@
             document.documentElement.style.visibility = 'hidden';
             if (!window.AdminRedirecting) {
                 window.AdminRedirecting = true;
-                location.replace(root + 'login.html?redirect=' + encodeURIComponent((file || 'index.html') + location.search + location.hash));
+                App.location.replace(root + 'login.html?redirect=' + encodeURIComponent((file || 'index.html') + App.location.search + App.location.hash));
             }
         }
         return window.AdminAuthenticated;
@@ -197,7 +197,7 @@
     // Tạo HTML cho từng mục trong Sidebar
     function menuLink(item) {
         const isActive = item.key === active ? ' class="active"' : '';
-        return '<li><a href="' + root + item.href + '" title="' + item.label + '"' + isActive + '><i class="' + item.icon + '" aria-hidden="true"></i> ' + item.label + '</a></li>';
+        return '<li><a data-route="' + root + item.href + '" title="' + item.label + '"' + isActive + '><i class="' + item.icon + '" aria-hidden="true"></i> ' + item.label + '</a></li>';
     }
 
     // Render Sidebar
@@ -213,7 +213,7 @@
                 menuItems +
             '</ul>' +
             '<div class="sidebar-footer">' +
-                '<a href="#" id="admin-logout"><i class="fa-solid fa-right-from-bracket"></i> Đăng xuất</a>' +
+                '<a data-route="#" id="admin-logout"><i class="fa-solid fa-right-from-bracket"></i> Đăng xuất</a>' +
             '</div>';
     }
 
@@ -232,7 +232,7 @@
     function initAdminAccount() {
         const admin = Shop.getCurrentAdmin();
         if (!admin) {
-            location.href = root + 'login.html';
+            App.location.href = root + 'login.html';
             return;
         }
         const nameSpan = document.getElementById('admin-name');
@@ -245,7 +245,7 @@
             logoutBtn.addEventListener('click', function (e) {
                 e.preventDefault();
                 Shop.logoutAdmin();
-                location.href = root + 'login.html';
+                App.location.href = root + 'login.html';
             });
         }
     }
@@ -349,7 +349,7 @@
     let noticeFilter = 'all';
     const noticeTabs = [['all', 'Tất cả'], ['orders', 'Đơn hàng'], ['stock', 'Tồn kho'], ['customers', 'Khách hàng'], ['contact', 'Liên hệ']];
     function noticeRow(item) {
-        return '<a class="admin-notice-row' + (item.isRead ? '' : ' is-unread') + '" href="' + esc(item.href) + '" data-notice-id="' + esc(item.id) + '">' +
+        return '<a class="admin-notice-row' + (item.isRead ? '' : ' is-unread') + '" data-route="' + esc(item.href) + '" data-notice-id="' + esc(item.id) + '">' +
             '<span class="admin-notice-icon"><i class="fa-solid ' + item.icon + '"></i></span><span class="admin-notice-content"><strong>' + esc(item.title) + '</strong><span class="admin-notice-detail">' + esc(item.detail) + '</span>' +
             '<span class="admin-notice-meta"><span class="admin-type-pill">' + esc(item.meta) + '</span><time datetime="' + esc(item.date) + '" title="' + esc(formatDate(item.date)) + '">' + esc(relativeTime(item.date)) + ' · ' + esc(formatDate(item.date)) + '</time></span></span>' +
             (item.isRead ? '' : '<span class="admin-unread-dot" aria-label="Chưa đọc"></span>') + '</a>';
@@ -388,7 +388,7 @@
         const results = [];
         function collect(key, page, type, icon, title, description, fields, term) {
             list(db, key).filter(item => !item.is_deleted && !item.is_hidden && Shop.normalize(fields(item)).includes(query)).slice(0, 5).forEach(item => {
-                results.push('<a class="admin-search-card" href="' + esc(link(page, term(item))) + '"><span class="admin-search-icon"><i class="fa-solid ' + icon + '"></i></span><span><span class="admin-search-type">' + esc(type) + '</span><strong>' + esc(title(item)) + '</strong><small>' + esc(description(item)) + '</small></span><i class="fa-solid fa-arrow-up-right-from-square"></i></a>');
+                results.push('<a class="admin-search-card" data-route="' + esc(link(page, term(item))) + '"><span class="admin-search-icon"><i class="fa-solid ' + icon + '"></i></span><span><span class="admin-search-type">' + esc(type) + '</span><strong>' + esc(title(item)) + '</strong><small>' + esc(description(item)) + '</small></span><i class="fa-solid fa-arrow-up-right-from-square"></i></a>');
             });
         }
         collect('orders', 'orders.html', 'Đơn hàng', 'fa-cart-shopping', o => orderCode(o), o => [o.receiver_name, o.receiver_phone, statusLabel(Shop.normalizeStatus(o.status))].filter(Boolean).join(' · '), o => [orderCode(o), o.receiver_name, o.receiver_phone].join(' '), orderCode);
@@ -418,7 +418,7 @@
             const row = event.target.closest('[data-notice-id]');
             if (row) {
                 event.preventDefault();
-                window.open(row.href, '_blank', 'noopener');
+                App.navigate(row.dataset.route);
                 markRead([row.dataset.noticeId]);
             }
         });
@@ -434,7 +434,7 @@
         if (bell) bell.setAttribute('aria-expanded', 'false');
     }
     function applyQuickFilter() {
-        const query = new URLSearchParams(location.search).get('admin_q');
+        const query = new URLSearchParams(App.location.search).get('admin_q');
         if (!query || !guard()) return;
         const input = document.getElementById(active === 'orders' ? 'order-search' : active === 'inventory' ? 'inventory-search' : 'search-input');
         if (input) { input.value = query; input.dispatchEvent(new Event('input', { bubbles: true })); }

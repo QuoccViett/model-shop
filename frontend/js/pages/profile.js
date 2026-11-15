@@ -1,7 +1,7 @@
 (function () {
     'use strict';
     const user = Shop.getCurrentUser();
-    if (!user) { location.replace('login.html?redirect=profile.html'); return; }
+    if (!user) { App.location.replace('login.html?redirect=profile.html'); return; }
     const infoForm = document.getElementById('info-form');
     const pwForm = document.getElementById('pw-form');
     const infoMsg = document.getElementById('info-msg');
@@ -21,7 +21,7 @@
             if (button.dataset.profTab === 'orders') renderOrders();
         });
     });
-    document.getElementById('profile-logout').addEventListener('click', function () { Shop.logoutCustomer(); location.href = '../index.html'; });
+    document.getElementById('profile-logout').addEventListener('click', function () { Shop.logoutCustomer(); App.location.href = '../index.html'; });
     infoForm.addEventListener('submit', function (event) {
         event.preventDefault();
         const result = Shop.updateProfile(user.id, Object.fromEntries(new FormData(infoForm)));
@@ -105,7 +105,7 @@
             document.querySelectorAll('[data-order-group]').forEach(function (tab) { tab.classList.toggle('is-active', tab.dataset.orderGroup === 'all'); });
         }
         document.querySelector('[data-prof-tab="orders"]').click();
-        history.replaceState(null, '', '#orders/' + id);
+        App.replaceState(null, '', '#orders/' + id);
         renderOrders();
     }
     document.getElementById('orders-list').addEventListener('click', function (event) {
@@ -123,7 +123,7 @@
         if (reorder) {
             const result = Cart.reorderOrder(Number(reorder.dataset.reorderOrder));
             if (!result.ok) { alert(result.error); return; }
-            location.href = 'cart.html';
+            App.location.href = 'cart.html';
         }
     });
     const processingTab = document.querySelector('[data-order-group="processing"]');
@@ -135,7 +135,7 @@
         processingTab.insertAdjacentElement('afterend', paidTab);
     }
     document.querySelectorAll('[data-order-group]').forEach(function (tab) { tab.addEventListener('click', function () { orderGroup = tab.dataset.orderGroup; document.querySelectorAll('[data-order-group]').forEach(function (item) { item.classList.toggle('is-active', item === tab); }); renderOrders(); }); });
-    function readHash() { const match = location.hash.match(/^#orders\/(\d+)/); if (match) openOrder(Number(match[1])); }
+    function readHash() { const match = App.location.hash.match(/^#orders\/(\d+)/); if (match) openOrder(Number(match[1])); }
     globalThis.addEventListener('hashchange', readHash);
     globalThis.addEventListener('modelshop:db-updated', function () {
         if (selectedOrderId !== null && !Shop.getOrderById(selectedOrderId)) selectedOrderId = null;

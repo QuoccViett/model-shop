@@ -7,6 +7,6 @@
     // Chạy trong <head> để trang quản trị chưa được hiển thị trước khi chuyển hướng.
     document.documentElement.style.visibility = 'hidden';
     window.AdminRedirecting = true;
-    const file = location.pathname.split('/').pop() || 'index.html';
-    location.replace('login.html?redirect=' + encodeURIComponent(file + location.search + location.hash));
+    const file = App.location.pathname.split('/').pop() || 'index.html';
+    App.location.replace('login.html?redirect=' + encodeURIComponent(file + App.location.search + App.location.hash));
 })();

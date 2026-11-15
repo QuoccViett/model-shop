@@ -866,7 +866,7 @@
     });
 
     renderTable();
-    const linkedOrderId = new URLSearchParams(location.search).get('order');
+    const linkedOrderId = new URLSearchParams(App.location.search).get('order');
     if (linkedOrderId && /^\d+$/.test(linkedOrderId) && findById(getDB().orders, Number(linkedOrderId))) {
         openOrderDetail(Number(linkedOrderId));
     }

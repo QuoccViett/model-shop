@@ -1,15 +1,17 @@
 (function () {
     'use strict'
 
+    // Đọc ID từ URL nội bộ và chỉ cập nhật vùng nội dung chi tiết, giữ nguyên khung trang
     const app = document.getElementById('app');
     const esc = Shop.escapeHtml;
-    const productId = new URLSearchParams(location.search).get('id');
+    const productId = new URLSearchParams(App.location.search).get('id');
     const p = Shop.getProductById(productId);
 
+    // ID không hợp lệ hiển thị thông báo cùng đường dẫn quay lại danh sách
     if (!p) {
         document.title = 'Không tìm thấy sản phẩm';
         app.innerHTML = '<div class="empty-box">Không tìm thấy sản phẩm này. ' +
-            '<a href="products.html"><strong>Xem tất cả sản phẩm</strong></a></div>';
+            '<a data-route="products.html"><strong>Xem tất cả sản phẩm</strong></a></div>';
         return;
     }
 
@@ -19,6 +21,7 @@
     const hasSale = Number(p.sale_percent) > 0;
     const soldOut = p.stock_qty <= 0;
 
+    // Đồng bộ nhãn tồn kho và trạng thái nút mua theo lượng hàng hiện tại
     let stockClass = 'in';
     let stockText = 'Còn hàng';
     if (soldOut) {
@@ -41,11 +44,12 @@
     document.title = p.name + ' - ModelShop';
     const images = (Array.isArray(p.images) && p.images.length ? p.images : [p.image]).filter(Boolean).slice(0, 2);
 
+    // Dựng thông tin và thư viện ảnh cùng lượt khởi tạo của router trước khi gắn listener
     app.innerHTML = '' +
         '<div class="breadcrumb">' +
-        '<a href="../index.html">Trang chủ</a> / ' +
-        '<a href="products.html">Sản phẩm</a> / ' +
-        '<a href="products.html?category=' + category.id + '">' + esc(category.name) + '</a> / ' + esc(p.name) +
+        '<a data-route="../index.html">Trang chủ</a> / ' +
+        '<a data-route="products.html">Sản phẩm</a> / ' +
+        '<a data-route="products.html?category=' + category.id + '">' + esc(category.name) + '</a> / ' + esc(p.name) +
         '</div>' +
 
         '<div class="detail">' +
@@ -84,6 +88,7 @@
 
         '<div class="section-box"><h2>Mô tả sản phẩm</h2><p>' + esc(p.description || 'Chưa có mô tả.') + '</p></div>';
 
+    // Listener thuộc scope trang, chỉ áp dụng ảnh bất đồng bộ nếu lựa chọn chưa thay đổi
     const mainImage = document.getElementById('detail-main-image');
     let selectedImageIndex = 0;
     document.querySelectorAll('.detail-thumbnail').forEach(function (button) {
@@ -92,6 +97,7 @@
             selectedImageIndex = index;
             delete mainImage.dataset.imageRef;
             const image = images[index];
+            // Ảnh IndexedDB cần Promise để lấy URL, ảnh thông thường dùng đường dẫn từ UI
             const source = image.startsWith('idb:') ? ShopImages.url(image) : Promise.resolve(UI.imageSrc(image));
             source.then(function (url) {
                 if (selectedImageIndex === index) mainImage.src = url;
@@ -106,6 +112,7 @@
 
     const qty = document.getElementById('qty');
     if (qty) {
+        // Nhận số lượng n và giới hạn từ một đến tồn kho cho nút cộng, trừ và ô nhập
         function setQty(n) {
             qty.value = Math.min(Math.max(1, n), p.stock_qty);
         }
@@ -114,20 +121,18 @@
         qty.addEventListener('change', function () { setQty(parseInt(qty.value, 10) || 1); });
     }
 
+    // Lấy tối đa bốn sản phẩm cùng danh mục, bỏ sản phẩm đang xem
     const related = Shop.getVisibleProducts().filter(function (x) {
         return x.category_id === p.category_id && x.id !== p.id;
     }).slice(0, 4);
 
     if (related.length) {
+        // Render card có sẵn ngay, không dùng skeleton hoặc timer tạo thêm lần thay DOM
+        const cards = related.map(function (product) {
+            return UI.productCard(product, { hideQuantity: true });
+        }).join('');
         app.insertAdjacentHTML('beforeend',
             '<section class="related"><h2>Sản phẩm cùng loại</h2>' +
-            '<div class="product-grid" id="related-product-grid">' + UI.productSkeletons(related.length) + '</div></section>');
-        // Render card sản phẩm liên quan sau khi skeleton hoàn tất
-        setTimeout(function () {
-            const relatedGrid = document.getElementById('related-product-grid');
-            if (relatedGrid) relatedGrid.innerHTML = related.map(function (product) {
-                return UI.productCard(product, { hideQuantity: true });
-            }).join('');
-        }, 400);
+            '<div class="product-grid" id="related-product-grid">' + cards + '</div></section>');
     }
 })();

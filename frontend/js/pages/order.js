@@ -1,8 +1,8 @@
 (function () {
     'use strict';
-    const params = new URLSearchParams(location.search);
+    const params = new URLSearchParams(App.location.search);
     if (!Shop.getCurrentUser()) {
-        location.replace('login.html?redirect=order.html%3Fid%3D' + encodeURIComponent(params.get('id') || ''));
+        App.location.replace('login.html?redirect=order.html%3Fid%3D' + encodeURIComponent(params.get('id') || ''));
         return;
     }
     const app = document.getElementById('app');
@@ -11,7 +11,7 @@
     const detail = Cart.getOrderDetail(params.get('id'));
     if (!detail) {
         app.innerHTML = '<div class="shop-empty"><h1>Không tìm thấy đơn hàng</h1><p>Đơn này không tồn tại hoặc không thuộc tài khoản của bạn.</p>' +
-            '<a class="btn" href="profile.html#orders">Về lịch sử đơn hàng</a></div>';
+            '<a class="btn" data-route="profile.html#orders">Về lịch sử đơn hàng</a></div>';
         return;
     }
     // Dựng nội dung chi tiết đơn hàng
@@ -23,8 +23,8 @@
     const subtotal = amount(order.subtotal, total - shipping + discount);
     const success = params.get('success') === '1';
     const address = [order.ship_address_detail, order.ship_ward, order.ship_district, order.ship_city].filter(Boolean).join(', ');
-    app.innerHTML = '<div class="breadcrumb"><a href="../index.html">Trang chủ</a> / ' +
-        '<a href="profile.html#orders/' + order.id + '">Đơn hàng của tôi</a> / Đơn #' + code + '</div>' +
+    app.innerHTML = '<div class="breadcrumb"><a data-route="../index.html">Trang chủ</a> / ' +
+        '<a data-route="profile.html#orders/' + order.id + '">Đơn hàng của tôi</a> / Đơn #' + code + '</div>' +
         (success ? '<section class="shop-panel shop-confirmation"><span class="check">✓</span><h1>Đặt hàng thành công!</h1>' +
             '<p>Đơn hàng #' + code + ' đã được ghi nhận. Cửa hàng sẽ tiếp nhận và xử lý đơn.</p></section>' : '') +
         '<h1>Chi tiết đơn hàng #' + code + '</h1><section class="shop-panel">' +
@@ -40,7 +40,7 @@
         '<div style="overflow-x:auto"><table class="shop-table"><thead><tr><th>Sản phẩm</th><th>Đơn giá</th><th>Số lượng</th><th>Thành tiền</th></tr></thead><tbody>' +
         detail.items.map(function (item) {
             const p = item.product;
-            return '<tr><td>' + (p ? '<a class="shop-text-link" href="product.html?id=' + p.id + '">' + esc(p.name) + '</a>' :
+            return '<tr><td>' + (p ? '<a class="shop-text-link" data-route="product.html?id=' + p.id + '">' + esc(p.name) + '</a>' :
                 'Sản phẩm #' + item.product_id + ' (đã xóa)') + '</td><td>' + Shop.formatPrice(item.unit_price) + '</td>' +
                 '<td>' + item.quantity + '</td><td>' + Shop.formatPrice(item.subtotal) + '</td></tr>';
         }).join('') + '</tbody></table></div>' +
@@ -50,13 +50,13 @@
         '<div class="shop-summary-line shop-summary-total"><span>Tổng tiền đơn hàng</span><strong>' +
         Shop.formatPrice(total) + '</strong></div></section>' +
         (['cancelled', 'delivered'].indexOf(Shop.normalizeStatus(order.status)) !== -1 ? '<button type="button" class="btn" id="reorder-cancelled-order">Đặt lại đơn</button> ' : '') +
-        '<a href="profile.html#orders/' + order.id + '" class="btn">Xem trong tài khoản</a> ' +
-        '<a href="products.html" class="shop-text-link" style="margin-left:15px">Tiếp tục mua sắm</a>';
+        '<a data-route="profile.html#orders/' + order.id + '" class="btn">Xem trong tài khoản</a> ' +
+        '<a data-route="products.html" class="shop-text-link" style="margin-left:15px">Tiếp tục mua sắm</a>';
     // Cho phép đặt lại đơn đã hủy hoặc đã giao thành công
     const reorderButton = document.getElementById('reorder-cancelled-order');
     if (reorderButton) reorderButton.addEventListener('click', function () {
         const result = Cart.reorderOrder(order.id);
         if (!result.ok) { alert(result.error); return; }
-        location.href = 'cart.html';
+        App.location.href = 'cart.html';
     });
 })();

@@ -43,13 +43,13 @@
         global.refreshNotificationBadge = refreshBadge;
         function render() {
             const list = Shop.getMyNotifications(filter === 'orders' ? 'orders' : '');
-            popup.innerHTML = '<a class="notif-profile-link" href="' + root + 'pages/profile.html">Truy cập trang cá nhân</a>' +
+            popup.innerHTML = '<a class="notif-profile-link" data-route="' + root + 'pages/profile.html">Truy cập trang cá nhân</a>' +
                 '<div class="notif-head"><strong>Thông báo</strong><button type="button" id="notif-mark-all">Đánh dấu đã đọc tất cả</button></div>' +
                 '<div class="notif-tabs"><button type="button" class="notif-tab ' + (filter === 'all' ? 'is-active' : '') + '" data-notif-filter="all">Tất cả</button><button type="button" class="notif-tab ' + (filter === 'orders' ? 'is-active' : '') + '" data-notif-filter="orders">Đơn hàng</button></div>' +
                 '<div class="notif-list">' + (list.length ? list.map(function (item) {
                     const type = item.order_id ? Shop.normalizeStatus(item.type) : item.type;
                     const meta = ORDER_STATUS.notifications[type] || (item.order_id ? ORDER_STATUS.get(type) : null);
-                    const detail = item.order_id ? '<a class="notif-detail" href="' + root + 'pages/profile.html#orders/' + item.order_id + '" data-notif-id="' + item.id + '" data-order-id="' + item.order_id + '">Xem chi tiết</a>' : '<span class="notif-detail">Đã cập nhật</span>';
+                    const detail = item.order_id ? '<a class="notif-detail" data-route="' + root + 'pages/profile.html#orders/' + item.order_id + '" data-notif-id="' + item.id + '" data-order-id="' + item.order_id + '">Xem chi tiết</a>' : '<span class="notif-detail">Đã cập nhật</span>';
                     return '<div class="notif-item ' + (!item.is_read ? 'is-unread' : '') + '" data-notif-id="' + item.id + '"' + (item.order_id ? ' data-order-id="' + item.order_id + '"' : '') + ' tabindex="0"><div><div class="notif-message">' + Shop.escapeHtml(item.message) + '</div><div class="notif-meta"><span>' + (labels[type] || (meta && meta.label) || 'Thông báo') + '</span><time datetime="' + Shop.escapeHtml(item.created_at) + '" title="' + Shop.escapeHtml(notificationDate(item.created_at)) + '">' + relativeTime(item.created_at) + ' - ' + notificationDate(item.created_at) + '</time>' + detail + '</div></div></div>';
                 }).join('') : '<div class="notif-empty">Bạn chưa có thông báo nào</div>') + '</div><button type="button" class="notif-close" id="notif-close">Đóng</button>';
             popup.querySelectorAll('[data-notif-filter]').forEach(function (tab) { tab.addEventListener('click', function (event) { event.preventDefault(); event.stopPropagation(); filter = tab.dataset.notifFilter; render(); popup.hidden = false; }); });

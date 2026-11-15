@@ -2,7 +2,7 @@
     'use strict';
 
     const root = document.body.dataset.root || '';
-    const file = location.pathname.split('/').pop();
+    const file = App.location.pathname.split('/').pop();
     const MENU = [
         { key: 'home', label: 'Trang chủ', href: 'index.html' },
         { key: 'products', label: 'Sản phẩm', href: 'pages/products.html' },
@@ -28,30 +28,30 @@
 
     // Tạo một liên kết trong menu chính
     function menuLink(href, label, key) {
-        return '<a href="' + root + href + '"' + (key === active ? ' class="active"' : '') + '>' + label + '</a>';
+        return '<a data-route="' + root + href + '"' + (key === active ? ' class="active"' : '') + '>' + label + '</a>';
     }
 
     // Render header dùng chung cho phía khách hàng
     function headerHTML() {
         const categories = Shop.getCategories();
-        const categoryId = new URLSearchParams(location.search).get('category');
+        const categoryId = new URLSearchParams(App.location.search).get('category');
         const menu = MENU.map(function (m) {
             const link = menuLink(m.href, m.label, m.key);
             if (m.key !== 'products' || !categories.length) return link;
             const children = categories.map(function (category) {
                 const selected = active === 'products' && String(category.id) === categoryId;
-                return '<a href="' + root + 'pages/products.html?category=' + encodeURIComponent(category.id) + '"' +
+                return '<a data-route="' + root + 'pages/products.html?category=' + encodeURIComponent(category.id) + '"' +
                     (selected ? ' class="active" aria-current="page"' : '') + '>' + Shop.escapeHtml(category.name) + '</a>';
             }).join('');
             return '<div class="hdr-menu-group"><div class="hdr-menu-parent">' + link +
                 '<button class="hdr-submenu-toggle" type="button" aria-label="Mở danh mục sản phẩm" aria-expanded="false" aria-controls="header-product-categories">&#9662;</button></div>' +
                 '<div class="hdr-submenu" id="header-product-categories" hidden>' + children + '</div></div>';
         }).join('');
-        return '<header class="header"><div class="container"><a class="logo" href="' + root + 'index.html">ModelShop</a>' +
+        return '<header class="header"><div class="container"><a class="logo" data-route="' + root + 'index.html">ModelShop</a>' +
             '<form class="search-form" id="header-search-form" role="search" action="' + productsUrl('') + '" method="get" autocomplete="off">' +
             '<div class="search-control"><input id="header-search-input" type="search" name="q" placeholder="Tìm mô hình theo tên..." aria-label="Tìm sản phẩm" aria-autocomplete="list" aria-controls="search-suggestions" aria-expanded="false">' +
             '<div class="search-suggestions" id="search-suggestions" role="listbox" hidden></div></div><button type="submit">Tìm</button></form>' +
-            '<div class="header-actions"><a class="cart-link hdr-action" href="' + root + 'pages/cart.html"><span class="hdr-icon">🛒</span><span>Giỏ hàng</span><span class="cart-count" id="cart-count">0</span></a><div class="account-wrap" id="account-wrap"></div></div></div></header>' +
+            '<div class="header-actions"><a class="cart-link hdr-action" data-route="' + root + 'pages/cart.html"><span class="hdr-icon">🛒</span><span>Giỏ hàng</span><span class="cart-count" id="cart-count">0</span></a><div class="account-wrap" id="account-wrap"></div></div></div></header>' +
             '<nav class="main-nav"><div class="container"><button class="hdr-menu-toggle" type="button" aria-expanded="false">☰ Menu</button><div class="hdr-menu-list">' + menu + '</div></div></nav>';
     }
 
@@ -60,7 +60,7 @@
         const box = document.getElementById('account-wrap');
         const user = Shop.getCurrentUser();
         if (!user) {
-            box.innerHTML = '<a class="hdr-action hdr-account" href="' + root + 'pages/login.html"><span class="hdr-icon">♙</span><span>Đăng nhập</span></a>';
+            box.innerHTML = '<a class="hdr-action hdr-account" data-route="' + root + 'pages/login.html"><span class="hdr-icon">♙</span><span>Đăng nhập</span></a>';
             return;
         }
         box.innerHTML = '<button type="button" class="hdr-action hdr-account" id="account-button" aria-expanded="false"><span class="hdr-account-icon"><span class="hdr-icon">♙</span><span class="notif-badge" id="notification-badge" hidden></span></span><span class="hdr-account-name">' + Shop.escapeHtml(user.full_name || user.username) + '</span></button>' +
@@ -70,7 +70,7 @@
     // Render footer cùng danh sách danh mục
     function footerHTML() {
         const cats = Shop.getCategories().map(function (c) {
-            return '<li><a href="' + root + 'pages/products.html?category=' + encodeURIComponent(c.id) + '">' + Shop.escapeHtml(c.name) + '</a></li>';
+            return '<li><a data-route="' + root + 'pages/products.html?category=' + encodeURIComponent(c.id) + '">' + Shop.escapeHtml(c.name) + '</a></li>';
         }).join('');
         return '<footer class="footer"><div class="container"><div><h4>ModelShop</h4><p>Cửa hàng mô hình Gundam, Figure, xe mô hình, mô hình quân sự và phụ kiện.</p></div>' +
             '<div><h4>Danh mục</h4><ul>' + cats + '</ul></div><div><h4>Liên hệ</h4><ul><li><strong>Địa chỉ:</strong> 273 An Dương Vương, Phường Chợ Quán</li><li><strong>Email:</strong> admin@example.com</li><li><strong>Hotline:</strong> 0900 00 00 01 -0900 00 00 02</li></ul></div>';
@@ -97,7 +97,7 @@
             heading = 'Sản phẩm nổi bật';
 
             suggestions = products.map(function (product) {
-                return '<a class="suggestion-item" role="option" aria-selected="false" data-suggestion href="' +
+                return '<a class="suggestion-item" role="option" aria-selected="false" data-suggestion data-route="' +
                     productUrl(product) +
                     '"><img ' + UI.imageAttrs(product.image) +
                     ' alt=""><span class="suggestion-copy"><strong>' +
@@ -113,7 +113,7 @@
             suggestions = Shop.queryProducts({ keyword: query })
                 .slice(0, 5)
                 .map(function (product) {
-                    return '<a class="suggestion-item" role="option" aria-selected="false" data-suggestion href="' +
+                    return '<a class="suggestion-item" role="option" aria-selected="false" data-suggestion data-route="' +
                         productUrl(product) +
                         '"><img ' + UI.imageAttrs(product.image) +
                         ' alt=""><span class="suggestion-copy"><strong>' +
@@ -135,7 +135,7 @@
             : '<div class="suggestion-empty">Không tìm thấy sản phẩm phù hợp.</div>';
 
         const all = query
-            ? '<a class="suggestion-all" data-suggestion href="' +
+            ? '<a class="suggestion-all" data-suggestion data-route="' +
             productsUrl(query) +
             '">Xem tất cả kết quả cho “' + esc(query) + '”</a>'
             : '';
@@ -172,7 +172,7 @@
         });
         form.addEventListener('submit', function (event) {
             event.preventDefault();
-            location.href = productsUrl(input.value.trim());
+            App.location.href = productsUrl(input.value.trim());
         });
         input.addEventListener('keydown', function (event) {
             if (event.key === 'Escape') { close(); return; }
@@ -185,7 +185,7 @@
                 open(input.value.trim());
             } else if (event.key === 'Enter' && activeIndex >= 0 && panel.querySelectorAll('[data-suggestion]')[activeIndex]) {
                 event.preventDefault();
-                location.href = panel.querySelectorAll('[data-suggestion]')[activeIndex].href;
+                App.location.href = panel.querySelectorAll('[data-suggestion]')[activeIndex].dataset.route;
             }
         });
         document.addEventListener('click', function (event) { if (!form.contains(event.target)) close(); });
@@ -270,7 +270,7 @@
         const button = event.target.closest('[data-add-to-cart]');
         if (!button || !window.Cart || button.disabled) return;
         if (!Shop.getCurrentUser()) {
-            location.href = root + 'pages/login.html?redirect=' + encodeURIComponent(location.pathname + location.search + location.hash);
+            App.location.href = root + 'pages/login.html?redirect=' + encodeURIComponent(App.location.pathname + App.location.search + App.location.hash);
             return;
         }
         const productId = Number(button.dataset.addToCart);
