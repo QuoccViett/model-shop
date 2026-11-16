@@ -27,7 +27,6 @@
         if (!result.ok) {
             errorBox.textContent = result.error;
             errorBox.hidden = false;
-            errorBox.style.display = 'flex';
             return;
         }
 
