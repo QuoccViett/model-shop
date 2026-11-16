@@ -6,7 +6,6 @@
     const keyword = (params.get('q') || '').trim();
     const categoryId = params.get('category') || '';
     const brandParam = params.get('brand') || '';
-    const priceKey = params.get('price') || '';
     const minParam = params.get('min');
     const maxParam = params.get('max');
     let invalidPriceUrl = [minParam, maxParam].some(function (value) {
@@ -15,17 +14,11 @@
     const sort = params.get('sort') || '';
     const onSale = params.get('sale') === '1';
     const form = document.getElementById('filter-form');
+    const keywordInput = document.getElementById('filter-keyword');
     const minInput = document.getElementById('filter-min-price');
     const maxInput = document.getElementById('filter-max-price');
     const priceError = document.getElementById('price-filter-error');
     const esc = Shop.escapeHtml;
-    const PRICE_RANGES = [
-        { key: '1', label: 'Dưới 200.000 đ', max: 199999 },
-        { key: '2', label: '200.000 đ - 500.000 đ', min: 200000, max: 499999 },
-        { key: '3', label: '500.000 đ - 1.000.000 đ', min: 500000, max: 999999 },
-        { key: '4', label: '1.000.000 đ - 2.000.000 đ', min: 1000000, max: 1999999 },
-        { key: '5', label: 'Trên 2.000.000 đ', min: 2000000 }
-    ];
     const SORTS = [
         { value: '', label: 'Mặc định' }, { value: 'newest', label: 'Mới nhập nhất' },
         { value: 'bestseller', label: 'Bán chạy nhất' }, { value: 'price-asc', label: 'Giá tăng dần' },
@@ -56,15 +49,12 @@
         return value;
     }
 
-    // Trả về min, max và cờ invalid, ưu tiên ô giá tùy chỉnh trước radio khoảng giá
+    // Đọc khoảng giá nhập tay và kiểm tra hai đầu khoảng giá
     function getPriceFilter() {
         const min = readCustomPrice(minInput);
         const max = readCustomPrice(maxInput);
         if (invalidPriceUrl || [min, max].some(function (value) { return value !== null && (!Number.isFinite(value) || value < 0); })) return { min: min, max: max, invalid: true };
-        if (min !== null || max !== null) return { min: min, max: max, invalid: min !== null && max !== null && min > max };
-        const selectedRadio = form.querySelector('input[name="price"]:checked');
-        const selected = PRICE_RANGES.find(function (range) { return selectedRadio && range.key === selectedRadio.value; });
-        return { min: selected ? selected.min : null, max: selected ? selected.max : null, invalid: false };
+        return { min: min, max: max, invalid: min !== null && max !== null && min > max };
     }
 
     // Nhận bộ điều kiện filters và trả về danh sách đã lọc, điều kiện giá sai trả về mảng rỗng
@@ -114,11 +104,10 @@
 
     const brands = getBrandsForSearch();
     const selectedBrand = getSelectedBrand(brands);
-    // Render các lựa chọn danh mục, giá và sắp xếp
+    // Khôi phục từ khóa từ header và render các lựa chọn danh mục, sắp xếp
+    keywordInput.value = keyword;
     document.getElementById('filter-categories').innerHTML = radio('category', '', 'Tất cả', categoryId === '') +
         categories.map(function (category) { return radio('category', String(category.id), category.name, String(category.id) === categoryId); }).join('');
-    document.getElementById('filter-prices').innerHTML = radio('price', '', 'Tất cả', !priceKey && minParam === null && maxParam === null) +
-        PRICE_RANGES.map(function (range) { return radio('price', range.key, range.label, range.key === priceKey && minParam === null && maxParam === null); }).join('');
     document.getElementById('sort-select').innerHTML = SORTS.map(function (item) {
         return '<option value="' + esc(item.value) + '"' + (item.value === sort ? ' selected' : '') + '>' + esc(item.label) + '</option>';
     }).join('');
@@ -160,39 +149,27 @@
         }
         showPriceError('');
         const next = new URLSearchParams();
-        if (keyword) next.set('q', keyword);
+        const nextKeyword = keywordInput.value.trim();
+        if (nextKeyword) next.set('q', nextKeyword);
         if (brandParam) next.set('brand', brandParam);
         new FormData(form).forEach(function (value, key) {
-            if (value && key !== 'min' && key !== 'max' && key !== 'price') next.set(key, value);
+            if (value && key !== 'q' && key !== 'min' && key !== 'max') next.set(key, value);
         });
-        if (priceFilter.min !== null || priceFilter.max !== null) {
-            if (minInput.value !== '' || maxInput.value !== '') {
-                if (priceFilter.min !== null) next.set('min', priceFilter.min);
-                if (priceFilter.max !== null) next.set('max', priceFilter.max);
-            } else {
-                const selectedRadio = form.querySelector('input[name="price"]:checked');
-                if (selectedRadio && selectedRadio.value) next.set('price', selectedRadio.value);
-            }
-        }
+        if (priceFilter.min !== null) next.set('min', priceFilter.min);
+        if (priceFilter.max !== null) next.set('max', priceFilter.max);
         App.location.href = productsUrl(next);
     }
 
-    // Listener thuộc scope màn hình, đổi radio sẽ xóa giá tùy chỉnh trước khi điều hướng
+    // Tự áp dụng khi đổi lựa chọn; ô từ khóa và giá chờ nút áp dụng hoặc Enter
     form.addEventListener('change', function (event) {
-        if (event.target === minInput || event.target === maxInput) return;
-        if (event.target.name === 'price') {
-            invalidPriceUrl = false;
-            minInput.value = '';
-            maxInput.value = '';
-        }
+        if (event.target === keywordInput || event.target === minInput || event.target === maxInput) return;
         applyFilters();
     });
 
-    // Bỏ radio khoảng giá khi người dùng nhập giá tùy chỉnh
+    // Xóa thông báo cũ khi người dùng sửa khoảng giá
     [minInput, maxInput].forEach(function (input) {
         input.addEventListener('input', function () {
             invalidPriceUrl = false;
-            form.querySelectorAll('input[name="price"]').forEach(function (radioInput) { radioInput.checked = false; });
             showPriceError('');
         });
     });
